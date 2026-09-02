@@ -1,7 +1,9 @@
 import NextAuth from 'next-auth';
 import { authConfig } from '@/lib/auth/auth.config';
 
-export default NextAuth(authConfig).auth;
+export const proxy = NextAuth(authConfig).auth;
+
+export default proxy;
 
 export const config = {
   // Exclude static assets, api routes, images, fonts, and manifests from NextAuth execution
