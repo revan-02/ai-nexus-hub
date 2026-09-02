@@ -1,0 +1,719 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  Admin
+  Manager
+  Editor
+  Instructor
+  Analyst
+  Moderator
+  User
+}
+
+enum UserStatus {
+  Active
+  Inactive
+  Pending
+  Suspended
+  Deleted
+}
+
+enum CourseLevel {
+  Beginner
+  Intermediate
+  Advanced
+  Expert
+}
+
+enum CourseStatus {
+  Published
+  Draft
+  InReview
+  Archived
+}
+
+enum ProjectLevel {
+  Beginner
+  Intermediate
+  Advanced
+}
+
+enum ProjectStatus {
+  Published
+  Draft
+  InReview
+  Archived
+}
+
+enum DatasetStatus {
+  Public
+  Private
+  InReview
+  Archived
+}
+
+enum AssessmentType {
+  Quiz
+  Assignment
+  Test
+  Practical
+}
+
+enum AssessmentDifficulty {
+  Easy
+  Medium
+  Hard
+}
+
+enum AssessmentStatus {
+  Published
+  Draft
+  InReview
+  Archived
+}
+
+enum AlgorithmComplexity {
+  Easy
+  Medium
+  Hard
+}
+
+enum AlgorithmStatus {
+  Published
+  Draft
+  InReview
+  Deprecated
+}
+
+enum RoleType {
+  System
+  Custom
+}
+
+enum RoleStatus {
+  Active
+  Inactive
+}
+
+enum PermissionType {
+  System
+  Custom
+}
+
+enum PermissionState {
+  granted
+  denied
+  notSet
+}
+
+enum ContentType {
+  Course
+  Article
+  Tutorial
+  Dataset
+  Video
+  Quiz
+  Guide
+}
+
+enum ContentStatus {
+  Published
+  Draft
+  PendingReview
+  Archived
+  Rejected
+}
+
+enum AuditLogType {
+  user
+  ai
+  dataset
+  course
+  security
+}
+
+// ─────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  username      String     @unique
+  email         String     @unique
+  phone         String?
+  password      String?
+  avatar        String?
+  role          UserRole   @default(User)
+  organization  String?
+  status        UserStatus @default(Active)
+  emailVerified Boolean    @default(false)
+  lastActive    DateTime   @default(now())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  courses       Course[]           @relation("InstructorCourses")
+  projects      Project[]          @relation("AuthorProjects")
+  contents      Content[]          @relation("AuthorContents")
+  auditLogs     AuditLog[]
+  userRoles     UserRoleMap[]
+  sessions            UserSession[]
+  taskProgress        UserTaskProgress[]
+  certificates        UserCertificate[]
+  contentInteractions ContentInteraction[]
+  contentComments     ContentComment[]
+  lessonProgress      UserLessonProgress[]
+  courseProgress      UserCourseProgress[]
+  quizAttempts        UserQuizAttempt[]
+  projectProgress     UserProjectProgress[]
+  projectComments     ProjectComment[]
+  activities          UserActivity[]
+
+  @@map("users")
+}
+
+model Course {
+  id            String       @id @default(cuid())
+  title         String
+  description   String
+  category      String
+  level         CourseLevel
+  price         String       @default("Free")
+  students      String       @default("0")
+  status        CourseStatus @default(Draft)
+  thumbnailIcon String?
+  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime     @default(now())
+
+  // Relations
+  instructorId  String
+  instructor    User         @relation("InstructorCourses", fields: [instructorId], references: [id])
+  assessments   Assessment[]
+  phaseId       String?
+  phase         LearningPhase? @relation(fields: [phaseId], references: [id])
+  lessons       Lesson[]
+  userProgress  UserCourseProgress[]
+
+  @@map("courses")
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  name          String
+  description   String
+  category      String
+  level         ProjectLevel
+  technologies  String[]
+  status        ProjectStatus @default(Draft)
+  views         String        @default("0")
+  price         String        @default("Free")
+  downloads     Int           @default(0)
+  rating        Float         @default(4.9)
+  aim           String?
+  objectives    String[]      @default([])
+  requirements  String[]      @default([])
+  scope         String?
+  codeFiles     Json?
+  thumbnailIcon String?
+  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime      @default(now())
+
+  // Relations
+  authorId      String
+  author        User          @relation("AuthorProjects", fields: [authorId], references: [id])
+  userProgress  UserProjectProgress[]
+  comments      ProjectComment[]
+
+  @@map("projects")
+}
+
+model ProjectComment {
+  id        String   @id @default(cuid())
+  text      String
+  rating    Int?     @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_comments")
+}
+
+model Dataset {
+  id          String        @id @default(cuid())
+  name        String
+  description String
+  category    String
+  domain      String
+  size        String
+  format      String
+  license     String
+  status      DatasetStatus @default(Public)
+  downloads   String        @default("0")
+  iconName    String?
+  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime      @default(now())
+
+  @@map("datasets")
+}
+
+model Assessment {
+  id             String               @id @default(cuid())
+  name           String
+  description    String
+  type           AssessmentType
+  category       String
+  difficulty     AssessmentDifficulty
+  questionsCount Int                  @default(0)
+  duration       String
+  attempts       String               @default("0")
+  status         AssessmentStatus     @default(Draft)
+  iconName       String?
+  updatedAt      DateTime             @updatedAt
+  createdAt      DateTime             @default(now())
+
+  // Relations
+  courseId        String?
+  course          Course?              @relation(fields: [courseId], references: [id])
+  userAttempts    UserQuizAttempt[]
+
+  @@map("assessments")
+}
+
+model Algorithm {
+  id                   String              @id @default(cuid())
+  name                 String
+  description          String
+  category             String
+  complexity           AlgorithmComplexity
+  topic                String
+  implementationsCount Int                 @default(0)
+  languages            String[]
+  status               AlgorithmStatus     @default(Draft)
+  iconName             String?
+  updatedAt            DateTime            @updatedAt
+  createdAt            DateTime            @default(now())
+
+  @@map("algorithms")
+}
+
+model Role {
+  id               String        @id @default(cuid())
+  name             String        @unique
+  type             RoleType      @default(Custom)
+  usersCount       Int           @default(0)
+  userPercentage   Float         @default(0)
+  permissionsCount Int           @default(0)
+  description      String
+  status           RoleStatus    @default(Active)
+  iconName         String?
+  iconBg           String?
+  iconColor        String?
+  isProtected      Boolean       @default(false)
+  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime      @default(now())
+
+  // Relations
+  rolePermissions  RolePermissionMap[]
+  userRoles        UserRoleMap[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String         @id @default(cuid())
+  key         String         @unique
+  name        String
+  module      String
+  resource    String
+  action      String
+  type        PermissionType @default(System)
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  rolePermissions RolePermissionMap[]
+
+  @@map("permissions")
+}
+
+model Content {
+  id            String        @id @default(cuid())
+  title         String
+  description   String
+  type          ContentType
+  category      String
+  subCategory   String?
+  status        ContentStatus @default(Draft)
+  views         String        @default("0")
+  thumbnailIcon String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  authorId      String
+  author        User                 @relation("AuthorContents", fields: [authorId], references: [id])
+  interactions  ContentInteraction[]
+  comments      ContentComment[]
+
+  @@map("contents")
+}
+
+model AuditLog {
+  id        String       @id @default(cuid())
+  action    String
+  target    String
+  type      AuditLogType
+  timestamp DateTime     @default(now())
+
+  // Relations
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────
+// Join Tables
+// ─────────────────────────────────────────────
+
+model UserRoleMap {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermissionMap {
+  roleId       String
+  permissionId String
+  state        PermissionState @default(granted)
+  role         Role            @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission      @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+enum SessionStatus {
+  Active
+  Idle
+  Flagged
+  Revoked
+}
+
+model UserSession {
+  id         String        @id @default(cuid())
+  ip         String
+  location   String
+  device     String
+  authMethod String        @default("2FA / Password")
+  duration   String        @default("0m")
+  status     SessionStatus @default(Active)
+  lastActive String        @default("Just now")
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+enum RoomLevel {
+  Novice
+  Intermediate
+  Advanced
+  Expert
+}
+
+enum RoomTier {
+  Free
+  Pro
+}
+
+enum TaskType {
+  READ
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  MATCHING
+  DRAG_DROP
+  ORDERING
+  IMAGE_IDENTIFICATION
+  IMAGE_MATCHING
+  FILL_BLANK
+  CODE_TASK
+  MINI_PROJECT
+  PUZZLE
+  MEMORY_GAME
+  CLASSIFICATION_GAME
+  AI_CONCEPT_GAME
+  SCENARIO
+  QUIZ
+  VIDEO_LESSON
+  SIMULATION
+  CHALLENGE
+}
+
+enum AgeGroup {
+  KIDS
+  ABSOLUTE_BEGINNER
+  UNDERGRADUATE
+  POSTGRADUATE
+  PROFESSIONAL
+  RESEARCHER
+}
+
+model LearningRoom {
+  id                 String         @id @default(cuid())
+  title              String
+  description        String
+  level              RoomLevel      @default(Novice)
+  tier               RoomTier       @default(Free)
+  category           String         @default("AI Foundations")
+  estimatedTime      String         @default("45 mins")
+  xpReward           Int            @default(200)
+  iconName           String         @default("Brain")
+  ageGroup           AgeGroup       @default(ABSOLUTE_BEGINNER)
+  isPublished        Boolean        @default(true)
+  prerequisiteRoomId String?
+  prerequisiteRoom   LearningRoom?  @relation("RoomPrerequisites", fields: [prerequisiteRoomId], references: [id])
+  dependentRooms     LearningRoom[] @relation("RoomPrerequisites")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  tasks              LearningTask[]
+
+  @@map("learning_rooms")
+}
+
+model LearningTask {
+  id                  String             @id @default(cuid())
+  orderNumber         Int
+  title               String
+  instructions        String
+  taskType            TaskType           @default(MULTIPLE_CHOICE)
+  // Legacy fields (preserved for backward compatibility with existing seed data)
+  codeSnippet         String?
+  hint                String?
+  questionText        String             @default("")
+  options             String[]
+  correctAnswer       String             @default("")
+  // New flexible content fields
+  taskContent         Json?              // Type-specific content: items, targets, images, video URLs, code templates, etc.
+  correctData         Json?              // Backend-only validation data (NEVER sent to client)
+  explanation         String?            // Shown after correct submission
+  explanationWrong    String?            // Shown after incorrect submission
+  imageUrl            String?            // Primary task image/illustration
+  difficulty          String             @default("Medium")
+  ageGroup            AgeGroup           @default(ABSOLUTE_BEGINNER)
+  isRequired          Boolean            @default(true)
+  prerequisiteTaskId  String?
+  prerequisiteTask    LearningTask?      @relation("TaskPrerequisites", fields: [prerequisiteTaskId], references: [id])
+  dependentTasks      LearningTask[]     @relation("TaskPrerequisites")
+  passingScore        Int                @default(100)
+  xpReward            Int                @default(50)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  roomId              String
+  room                LearningRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  progress            UserTaskProgress[]
+
+  @@map("learning_tasks")
+}
+
+model UserTaskProgress {
+  id              String       @id @default(cuid())
+  completed       Boolean      @default(false)
+  userAnswer      String?
+  submittedAnswer Json?        // Full structured interaction data
+  xpEarned        Int          @default(0)
+  score           Int          @default(0)
+  passed          Boolean      @default(false)
+  attempts        Int          @default(0)
+  startedAt       DateTime     @default(now())
+  timeSpentSec    Int          @default(0)
+  completedAt     DateTime     @default(now())
+
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId          String
+  task            LearningTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId])
+  @@map("user_task_progress")
+}
+
+model UserCertificate {
+  id             String   @id @default(cuid())
+  certificateHash String  @unique @default(cuid())
+  trackName      String
+  scorePercent   Int      @default(100)
+  issuedAt       DateTime @default(now())
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_certificates")
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+  NONE
+}
+
+model ContentInteraction {
+  id        String       @id @default(cuid())
+  reaction  ReactionType @default(NONE)
+  rating    Int?         // 1 to 5 stars
+  shared    Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId String
+  content   Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  // Security Constraint: Guarantees 1 interaction record per user per content item to prevent fake vote manipulation
+  @@unique([userId, contentId])
+  @@map("content_interactions")
+}
+
+model ContentComment {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("content_comments")
+}
+
+model LearningPhase {
+  id                    String          @id @default(cuid())
+  order                 Int             @unique
+  title                 String
+  description           String
+  level                 CourseLevel     @default(Beginner)
+  prereqPhaseId         String?
+  prereqPhase           LearningPhase?  @relation("PhasePrerequisites", fields: [prereqPhaseId], references: [id])
+  dependentPhases       LearningPhase[] @relation("PhasePrerequisites")
+  courses               Course[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@map("learning_phases")
+}
+
+model Lesson {
+  id              String               @id @default(cuid())
+  courseId        String
+  course          Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  order           Int
+  title           String
+  description     String
+  durationMinutes Int                  @default(30)
+  isRequired      Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  userProgress    UserLessonProgress[]
+
+  @@map("lessons")
+}
+
+model UserLessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+  @@map("user_lesson_progress")
+}
+
+model UserCourseProgress {
+  id              String       @id @default(cuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status          CourseStatus @default(Draft)
+  progressPercent Float        @default(0)
+  startedAt       DateTime     @default(now())
+  completedAt     DateTime?
+
+  @@unique([userId, courseId])
+  @@map("user_course_progress")
+}
+
+model UserQuizAttempt {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  score        Int        @default(0)
+  passed       Boolean    @default(true)
+  attemptedAt  DateTime   @default(now())
+
+  @@map("user_quiz_attempts")
+}
+
+model UserProjectProgress {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status      ProjectStatus @default(Draft)
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, projectId])
+  @@map("user_project_progress")
+}
+
+model UserActivity {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType    String
+  durationSeconds Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("user_activities")
+}
+
+
+
+

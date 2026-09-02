@@ -1,0 +1,181 @@
+export type AssessmentType = 'Quiz' | 'Assignment' | 'Test' | 'Practical';
+export type AssessmentDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type AssessmentStatus = 'Published' | 'Draft' | 'In Review' | 'Archived';
+
+export interface AssessmentItem {
+  id: string;
+  name: string;
+  description: string;
+  type: AssessmentType;
+  category: string;
+  course: string;
+  difficulty: AssessmentDifficulty;
+  questionsCount: number;
+  duration: string;
+  attempts: string;
+  status: AssessmentStatus;
+  updatedAt: string;
+  iconName: string;
+}
+
+export const mockAssessmentsMetrics = [
+  { id: 'total', title: 'Total Assessments', value: '524', change: '15.2%', trend: 'up', period: 'vs last month', variant: 'purple' },
+  { id: 'published', title: 'Published', value: '312', change: '59.5%', trend: 'flat', period: 'of total', variant: 'blue' },
+  { id: 'drafts', title: 'Drafts', value: '126', change: '24.0%', trend: 'flat', period: 'of total', variant: 'orange' },
+  { id: 'in-review', title: 'In Review', value: '48', change: '9.2%', trend: 'flat', period: 'of total', variant: 'green' },
+  { id: 'archived', title: 'Archived', value: '38', change: '7.3%', trend: 'flat', period: 'of total', variant: 'red' },
+  { id: 'attempts', title: 'Total Attempts', value: '28.6K', change: '18.7%', trend: 'up', period: 'vs last month', variant: 'cyan' },
+];
+
+export const mockAssessmentsList: AssessmentItem[] = [
+  {
+    id: 'asm-1',
+    name: 'Machine Learning Basics Quiz',
+    description: 'Test your understanding of ML basics',
+    type: 'Quiz',
+    category: 'AI / ML',
+    course: 'Machine Learning Fundamentals',
+    difficulty: 'Easy',
+    questionsCount: 20,
+    duration: '20 min',
+    attempts: '1.2K',
+    status: 'Published',
+    updatedAt: 'May 18, 2025',
+    iconName: 'ClipboardCheck',
+  },
+  {
+    id: 'asm-2',
+    name: 'Data Structures Assignment',
+    description: 'Solve problems on arrays, stacks, queues',
+    type: 'Assignment',
+    category: 'DSA',
+    course: 'Data Structures & Algorithms',
+    difficulty: 'Medium',
+    questionsCount: 8,
+    duration: '—',
+    attempts: '856',
+    status: 'Published',
+    updatedAt: 'May 17, 2025',
+    iconName: 'Code',
+  },
+  {
+    id: 'asm-3',
+    name: 'Python Programming Test',
+    description: 'Core Python concepts and syntax',
+    type: 'Test',
+    category: 'Programming',
+    course: 'Python for Beginners',
+    difficulty: 'Easy',
+    questionsCount: 35,
+    duration: '40 min',
+    attempts: '2.3K',
+    status: 'Published',
+    updatedAt: 'May 16, 2025',
+    iconName: 'FileText',
+  },
+  {
+    id: 'asm-4',
+    name: 'Deep Learning MCQ',
+    description: 'Multiple choice questions on DL',
+    type: 'Quiz',
+    category: 'AI / ML',
+    course: 'Deep Learning Specialization',
+    difficulty: 'Hard',
+    questionsCount: 30,
+    duration: '30 min',
+    attempts: '742',
+    status: 'In Review',
+    updatedAt: 'May 15, 2025',
+    iconName: 'HelpCircle',
+  },
+  {
+    id: 'asm-5',
+    name: 'SQL Query Assignment',
+    description: 'Write efficient SQL queries',
+    type: 'Assignment',
+    category: 'Database',
+    course: 'Database Management',
+    difficulty: 'Medium',
+    questionsCount: 10,
+    duration: '—',
+    attempts: '614',
+    status: 'Draft',
+    updatedAt: 'May 14, 2025',
+    iconName: 'Database',
+  },
+  {
+    id: 'asm-6',
+    name: 'Computer Networks Test',
+    description: 'Networking fundamentals test',
+    type: 'Test',
+    category: 'Networking',
+    course: 'Computer Networks',
+    difficulty: 'Medium',
+    questionsCount: 25,
+    duration: '25 min',
+    attempts: '1.1K',
+    status: 'Published',
+    updatedAt: 'May 13, 2025',
+    iconName: 'Network',
+  },
+  {
+    id: 'asm-7',
+    name: 'Statistics & Probability Quiz',
+    description: 'Probability distributions and statistics',
+    type: 'Quiz',
+    category: 'Data Science',
+    course: 'Statistics for Data Science',
+    difficulty: 'Medium',
+    questionsCount: 20,
+    duration: '20 min',
+    attempts: '938',
+    status: 'Published',
+    updatedAt: 'May 12, 2025',
+    iconName: 'Calculator',
+  },
+  {
+    id: 'asm-8',
+    name: 'Data Analysis Project',
+    description: 'Analyze dataset and answer questions',
+    type: 'Assignment',
+    category: 'Data Science',
+    course: 'Data Analysis with Python',
+    difficulty: 'Hard',
+    questionsCount: 12,
+    duration: '—',
+    attempts: '423',
+    status: 'Draft',
+    updatedAt: 'May 11, 2025',
+    iconName: 'BarChart',
+  },
+  {
+    id: 'asm-9',
+    name: 'Operating Systems Test',
+    description: 'OS concepts and process scheduling',
+    type: 'Test',
+    category: 'System',
+    course: 'Operating Systems',
+    difficulty: 'Hard',
+    questionsCount: 30,
+    duration: '35 min',
+    attempts: '817',
+    status: 'Archived',
+    updatedAt: 'May 10, 2025',
+    iconName: 'Cpu',
+  },
+  {
+    id: 'asm-10',
+    name: 'Introduction to AI Quiz',
+    description: 'AI concepts and applications',
+    type: 'Quiz',
+    category: 'AI / ML',
+    course: 'Artificial Intelligence',
+    difficulty: 'Easy',
+    questionsCount: 15,
+    duration: '15 min',
+    attempts: '1.6K',
+    status: 'Published',
+    updatedAt: 'May 9, 2025',
+    iconName: 'Bot',
+  },
+];

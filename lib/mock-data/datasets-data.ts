@@ -1,0 +1,168 @@
+export type DatasetStatus = 'Public' | 'Private' | 'In Review' | 'Archived';
+
+export interface DatasetItem {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  domain: string;
+  size: string;
+  format: string;
+  license: string;
+  status: DatasetStatus;
+  downloads: string;
+  updatedAt: string;
+  iconName: string;
+}
+
+export const mockDatasetsMetrics = [
+  { id: 'total', title: 'Total Datasets', value: '426', change: '12.6%', trend: 'up', period: 'vs last month', variant: 'purple' },
+  { id: 'public', title: 'Public Datasets', value: '218', change: '51.2%', trend: 'flat', period: 'of total', variant: 'blue' },
+  { id: 'private', title: 'Private Datasets', value: '208', change: '48.8%', trend: 'flat', period: 'of total', variant: 'orange' },
+  { id: 'in-review', title: 'In Review', value: '32', change: '7.5%', trend: 'flat', period: 'of total', variant: 'green' },
+  { id: 'archived', title: 'Archived', value: '16', change: '3.8%', trend: 'flat', period: 'of total', variant: 'red' },
+  { id: 'downloads', title: 'Total Downloads', value: '32.8K', change: '18.4%', trend: 'up', period: 'vs last month', variant: 'cyan' },
+];
+
+export const mockDatasetsList: DatasetItem[] = [
+  {
+    id: 'ds-1',
+    name: 'ImageNet Mini',
+    description: 'Subset of ImageNet for educational use',
+    category: 'Computer Vision',
+    domain: 'AI & ML',
+    size: '12.4 GB',
+    format: 'Parquet',
+    license: 'CC BY 4.0',
+    status: 'Public',
+    downloads: '4.2K',
+    updatedAt: 'May 18, 2025',
+    iconName: 'Image',
+  },
+  {
+    id: 'ds-2',
+    name: 'CIFAR-10',
+    description: 'Object recognition dataset (10 classes)',
+    category: 'Computer Vision',
+    domain: 'AI & ML',
+    size: '162 MB',
+    format: 'Binary',
+    license: 'MIT',
+    status: 'Public',
+    downloads: '6.8K',
+    updatedAt: 'May 17, 2025',
+    iconName: 'Layers',
+  },
+  {
+    id: 'ds-3',
+    name: 'COVID-19 Global Data',
+    description: 'Global COVID-19 cases and statistics',
+    category: 'Healthcare',
+    domain: 'Health',
+    size: '85 MB',
+    format: 'CSV',
+    license: 'CC0',
+    status: 'Public',
+    downloads: '3.1K',
+    updatedAt: 'May 16, 2025',
+    iconName: 'Activity',
+  },
+  {
+    id: 'ds-4',
+    name: 'IMDB Movie Reviews',
+    description: '50K movie reviews for sentiment analysis',
+    category: 'NLP',
+    domain: 'Text',
+    size: '80 MB',
+    format: 'CSV',
+    license: 'CC BY-SA 4.0',
+    status: 'Public',
+    downloads: '5.4K',
+    updatedAt: 'May 15, 2025',
+    iconName: 'FileText',
+  },
+  {
+    id: 'ds-5',
+    name: 'Twitter Sentiment Dataset',
+    description: '1.6M tweets labeled for sentiment classification',
+    category: 'NLP',
+    domain: 'Text',
+    size: '1.2 GB',
+    format: 'JSON',
+    license: 'CC BY 4.0',
+    status: 'Private',
+    downloads: '2.2K',
+    updatedAt: 'May 14, 2025',
+    iconName: 'MessageSquare',
+  },
+  {
+    id: 'ds-6',
+    name: 'House Prices Dataset',
+    description: 'Housing prices for regression analysis',
+    category: 'Tabular',
+    domain: 'Finance',
+    size: '45 MB',
+    format: 'CSV',
+    license: 'CC0',
+    status: 'In Review',
+    downloads: '1.3K',
+    updatedAt: 'May 13, 2025',
+    iconName: 'Home',
+  },
+  {
+    id: 'ds-7',
+    name: 'Fake News Dataset',
+    description: 'News articles labeled as real or fake',
+    category: 'Text Classification',
+    domain: 'Media',
+    size: '230 MB',
+    format: 'CSV',
+    license: 'CC BY 4.0',
+    status: 'Public',
+    downloads: '2.9K',
+    updatedAt: 'May 12, 2025',
+    iconName: 'ShieldAlert',
+  },
+  {
+    id: 'ds-8',
+    name: 'MNIST Handwritten Digits',
+    description: 'Handwritten digits dataset (0-9)',
+    category: 'Computer Vision',
+    domain: 'AI & ML',
+    size: '11 MB',
+    format: 'IDX',
+    license: 'CC0',
+    status: 'Public',
+    downloads: '7.6K',
+    updatedAt: 'May 11, 2025',
+    iconName: 'Grid',
+  },
+  {
+    id: 'ds-9',
+    name: 'Stock Market Data',
+    description: 'Historical stock prices and indicators',
+    category: 'Finance',
+    domain: 'Finance',
+    size: '3.6 GB',
+    format: 'Parquet',
+    license: 'Proprietary',
+    status: 'Private',
+    downloads: '892',
+    updatedAt: 'May 10, 2025',
+    iconName: 'TrendingUp',
+  },
+  {
+    id: 'ds-10',
+    name: 'NASA Exoplanet Archive',
+    description: 'Exoplanet data from NASA archive',
+    category: 'Astronomy',
+    domain: 'Science',
+    size: '1.8 GB',
+    format: 'FITS',
+    license: 'CC0',
+    status: 'Public',
+    downloads: '1.7K',
+    updatedAt: 'May 9, 2025',
+    iconName: 'Globe',
+  },
+];
