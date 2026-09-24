@@ -86,7 +86,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Primary Action - Continue Learning */}
-        <ContinueLearningCard session={dashboardData?.liveSessions?.[0]} />
+        <ContinueLearningCard session={dashboardData?.tabData?.liveSessions?.[0]} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Content (8 cols) */}
