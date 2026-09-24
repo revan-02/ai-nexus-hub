@@ -37,16 +37,42 @@ export default function DashboardPage() {
   const firstName = session?.user?.name ? session.user.name.split(' ')[0] : '';
 
   const dashboardData = apiResponse?.data;
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'expert');
+
+  useEffect(() => {
+    if (userLevel && ['beginner', 'intermediate', 'advanced', 'expert'].includes(userLevel)) {
+      setSelectedLevelFilter(userLevel);
+    }
+  }, [userLevel]);
+
   const levelMeta = {
     title: contextLevelMeta?.title || dashboardData?.levelMeta?.title || 'Welcome back, Aarav',
     completionPercent: dashboardData?.levelMeta?.completionPercent ?? 12,
   };
 
-  const activeCourses = dashboardData?.activeCourses?.slice(0, 3) || [
-    { id: 1, title: 'Generative Models Overview', desc: 'Introduction to VAEs and GANs.', progress: 15, duration: '2h 10m', difficulty: 'Intermediate' },
-    { id: 2, title: 'PyTorch for Deep Learning', desc: 'Tensors, Autograd, and Neural Networks.', progress: 5, duration: '4h 30m', difficulty: 'Beginner' },
-    { id: 3, title: 'Natural Language Processing', desc: 'Tokenization, Embeddings, and Transformers.', progress: 0, duration: '6h 15m', difficulty: 'Advanced' },
+  const rawCourses = dashboardData?.activeCourses || [
+    { id: 1, title: 'Generative Models Overview', desc: 'Introduction to VAEs and GANs.', progress: 15, duration: '2h 10m', difficulty: 'Intermediate', level: 'Intermediate' },
+    { id: 2, title: 'PyTorch for Deep Learning', desc: 'Tensors, Autograd, and Neural Networks.', progress: 5, duration: '4h 30m', difficulty: 'Beginner', level: 'Beginner' },
+    { id: 3, title: 'Natural Language Processing', desc: 'Tokenization, Embeddings, and Transformers.', progress: 0, duration: '6h 15m', difficulty: 'Advanced', level: 'Advanced' },
   ];
+
+  const activeCourses = rawCourses.filter((course: any) => {
+    if (selectedLevelFilter === 'All Levels') return true;
+    const lvl = (course.level || course.difficulty || '').toLowerCase();
+    if (selectedLevelFilter === 'expert') {
+      return lvl === 'expert' || lvl === 'advanced' || lvl === 'hard';
+    }
+    if (selectedLevelFilter === 'advanced') {
+      return lvl === 'advanced' || lvl === 'hard';
+    }
+    if (selectedLevelFilter === 'intermediate') {
+      return lvl === 'intermediate' || lvl === 'medium';
+    }
+    if (selectedLevelFilter === 'beginner') {
+      return lvl === 'beginner' || lvl === 'easy';
+    }
+    return false;
+  });
 
   if (isLoading) {
     return (
@@ -94,11 +120,28 @@ export default function DashboardPage() {
             
             {/* Recommended Learning */}
             <section className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-purple-400" />
                   Recommended For You
                 </h2>
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <span className="font-semibold text-muted-foreground">Track Level:</span>
+                  {(['All Levels', 'beginner', 'intermediate', 'advanced', 'expert'] as const).map((lvl) => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setSelectedLevelFilter(lvl)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        selectedLevelFilter === lvl
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
                 <Link href="/explore" className="text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
                   Browse Catalog →
                 </Link>

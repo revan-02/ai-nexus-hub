@@ -333,7 +333,7 @@ function PerformanceTestPageInner() {
                           : 'bg-secondary/80 text-zinc-400 hover:text-foreground'
                       }`}
                     >
-                      {(preset / 1000).toFixed(0)}k VUs
+                      {`${(preset / 1000).toFixed(0)}k VUs`}
                     </button>
                   ))}
                 </div>
@@ -367,12 +367,12 @@ function PerformanceTestPageInner() {
                 {isRunning ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Executing {selectedUserPreset.toLocaleString()} Benchmark...</span>
+                    <span>{`Executing ${selectedUserPreset.toLocaleString('en-US')} Benchmark...`}</span>
                   </>
                 ) : (
                   <>
                     <Play className="w-4 h-4 fill-white" />
-                    <span>Run {selectedUserPreset.toLocaleString()} Users Stress Test</span>
+                    <span>{`Run ${selectedUserPreset.toLocaleString('en-US')} Users Stress Test`}</span>
                   </>
                 )}
               </Button>

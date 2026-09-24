@@ -6,7 +6,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/db/prisma';
 
 vi.mock('@/lib/auth/auth', () => ({
-  auth: vi.fn().mockResolvedValue({ user: { id: 'usr-admin-1', email: 'admin@nexus.ai' } }),
+  auth: vi.fn().mockResolvedValue({ user: { id: 'usr-admin-1', email: 'admin@nexus.ai', role: 'Admin' } }),
 }));
 
 vi.mock('@/services/audit-service', () => ({
