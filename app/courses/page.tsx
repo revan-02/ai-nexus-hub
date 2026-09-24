@@ -149,10 +149,11 @@ function LearnerCourseCatalog() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedDetailCourse, setSelectedDetailCourse] = useState<CourseItem | null>(null);
   const [animatedVideoCourse, setAnimatedVideoCourse] = useState<CourseItem | null>(null);
-  const filterTabs = ['All', 'Beginner', 'Intermediate', 'Advanced'];
+  const filterTabs = ['All', 'With Videos & Labs', 'Beginner', 'Intermediate', 'Advanced'];
 
   const filteredCourses = useMemo(() => {
     return publishedCourses.filter((c) => {
+      if (activeFilter === 'With Videos & Labs') return true; // All courses have generated animated videos
       if (activeFilter !== 'All' && c.level !== activeFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -211,6 +212,31 @@ function LearnerCourseCatalog() {
           </div>
         </div>
       </Card>
+
+      {/* AI Animated Videos & Realtime Lab Live Banner */}
+      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-purple-900/30 border border-purple-500/30 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300 flex-shrink-0">
+            <Play className="w-4 h-4 fill-purple-300" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-white flex items-center gap-2">
+              <span>AI Animated Videos & Real-Time Labs Generated</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                100% Courses Ready
+              </span>
+            </div>
+            <div className="text-[11px] text-zinc-400">
+              Every course includes high-framerate visual simulations, neural voice narration, and an interactive code playground.
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono font-bold text-purple-300 bg-purple-500/10 px-3 py-1 rounded-xl border border-purple-500/20">
+            {publishedCourses.length} Videos Synthesized
+          </span>
+        </div>
+      </div>
 
       {/* Catalog Mode Switcher */}
       <div className="flex items-center gap-2 p-1.5 bg-[#121217] border border-[#272730] rounded-2xl flex-wrap">
@@ -512,6 +538,7 @@ function AdminCoursesTable() {
 
   const [localCourses, setLocalCourses] = useState<CourseItem[] | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [adminVideoCourse, setAdminVideoCourse] = useState<CourseItem | null>(null);
 
   const coursesList: CourseItem[] = useMemo(() => {
     if (localCourses) return localCourses;
@@ -855,11 +882,25 @@ function AdminCoursesTable() {
                       </td>
                       <td className="p-3 whitespace-nowrap font-mono text-zinc-400">{c.updatedAt}</td>
                       <td className="p-3 whitespace-nowrap text-right">
+                        <button
+                          onClick={() => setAdminVideoCourse(c)}
+                          title="Watch AI Animated Video & Lab"
+                          className="p-1.5 text-purple-400 hover:text-purple-300 hover:bg-purple-600/20 rounded-lg transition-colors cursor-pointer mr-1.5 inline-flex items-center gap-1 font-bold text-[11px]"
+                        >
+                          <Play className="w-3 h-3 fill-purple-400" />
+                          <span className="hidden sm:inline">Watch Video</span>
+                        </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger render={<button className="p-1 text-zinc-400 hover:text-white hover:bg-[#20202b] rounded-md transition-colors cursor-pointer" />}>
                             <MoreVertical className="w-4 h-4" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44 bg-[#121217] border-[#272730] text-zinc-200 rounded-xl p-1">
+                          <DropdownMenuContent align="end" className="w-48 bg-[#121217] border-[#272730] text-zinc-200 rounded-xl p-1">
+                            <DropdownMenuItem
+                              onClick={() => setAdminVideoCourse(c)}
+                              className="text-xs text-purple-300 focus:bg-purple-600/20 focus:text-white cursor-pointer gap-2"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-purple-400" /> Watch Animated Video
+                            </DropdownMenuItem>
                             <Link href={`/learn/${c.id}`}>
                               <DropdownMenuItem className="text-xs focus:bg-[#1f1f27] focus:text-white cursor-pointer gap-2">
                                 <Eye className="w-3.5 h-3.5 text-zinc-400" /> View Course
@@ -995,6 +1036,12 @@ function AdminCoursesTable() {
           </Card>
         </div>
       </div>
+      {/* Course Animated Video Modal for Admin */}
+      <CourseAnimatedVideoModal
+        course={adminVideoCourse}
+        isOpen={!!adminVideoCourse}
+        onClose={() => setAdminVideoCourse(null)}
+      />
     </div>
   );
 }

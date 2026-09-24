@@ -6,13 +6,15 @@ import { NexusShell } from '@/components/nexus/nexus-shell';
 import { useNexus } from '@/context/nexus-context';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play } from 'lucide-react';
 import Link from 'next/link';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
 import { CompactRoadmap } from '@/components/dashboard/compact-roadmap';
 import { useLearnerDashboard } from '@/hooks/api/use-dashboard';
+import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
+import type { CourseItem } from '@/lib/mock-data/courses-data';
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -38,6 +40,30 @@ export default function DashboardPage() {
 
   const dashboardData = apiResponse?.data;
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'expert');
+  const [selectedVideoCourse, setSelectedVideoCourse] = useState<any | null>(null);
+
+  const modalCourse: CourseItem | null = selectedVideoCourse
+    ? {
+        id: String(selectedVideoCourse.id),
+        title: selectedVideoCourse.title,
+        description: selectedVideoCourse.desc || selectedVideoCourse.description || '',
+        category: selectedVideoCourse.category || 'AI Foundations',
+        level: (selectedVideoCourse.difficulty === 'Easy'
+          ? 'Beginner'
+          : selectedVideoCourse.difficulty === 'Medium'
+          ? 'Intermediate'
+          : 'Advanced') as any,
+        price: 'Free',
+        students: '12,420',
+        status: 'Published',
+        updatedAt: 'Recently',
+        thumbnailIcon: 'Brain',
+        instructor: {
+          name: 'Dr. Alex Morgan',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        },
+      }
+    : null;
 
   useEffect(() => {
     if (userLevel && ['beginner', 'intermediate', 'advanced', 'expert'].includes(userLevel)) {
@@ -161,6 +187,14 @@ export default function DashboardPage() {
                       <span>{course.duration}</span>
                       <span className="text-purple-400">{course.difficulty}</span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedVideoCourse(course)}
+                      className="w-full mt-3 py-1.5 px-2.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
+                    >
+                      <Play className="w-3 h-3 fill-purple-300" />
+                      <span>Watch Animated Video & Lab</span>
+                    </button>
                   </Card>
                 ))}
               </div>
@@ -233,6 +267,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Course Animated Video & Realtime Lab Modal */}
+      <CourseAnimatedVideoModal
+        course={modalCourse}
+        isOpen={!!selectedVideoCourse}
+        onClose={() => setSelectedVideoCourse(null)}
+      />
     </NexusShell>
   );
 }
