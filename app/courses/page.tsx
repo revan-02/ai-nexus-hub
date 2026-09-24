@@ -48,6 +48,7 @@ import Link from 'next/link';
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/api/use-courses';
 import { CreateCourseModal } from '@/components/courses/create-course-modal';
 import { CourseDetailModal } from '@/components/courses/course-detail-modal';
+import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
 import { IndustryAIPlacementHighway } from '@/components/learning/industry-ai-placement-highway';
 import {
   mockCoursesMetrics,
@@ -147,6 +148,7 @@ function LearnerCourseCatalog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedDetailCourse, setSelectedDetailCourse] = useState<CourseItem | null>(null);
+  const [animatedVideoCourse, setAnimatedVideoCourse] = useState<CourseItem | null>(null);
   const filterTabs = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
   const filteredCourses = useMemo(() => {
@@ -409,8 +411,18 @@ function LearnerCourseCatalog() {
                         </div>
                       )}
 
+                      {/* Watch Animated Video & Launch Realtime Lab Trigger */}
+                      <Button
+                        variant="outline"
+                        onClick={() => setAnimatedVideoCourse(course)}
+                        className="w-full bg-purple-600/15 hover:bg-purple-600/25 border-purple-500/35 text-purple-300 hover:text-white text-[11px] font-bold h-8 rounded-xl gap-1.5 transition-all shadow-sm shadow-purple-900/20 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                        <span>Watch Animated Video & Launch Realtime Lab</span>
+                      </Button>
+
                       {/* Action Buttons: Udemy Syllabus Modal + Start Course */}
-                      <div className="pt-2 grid grid-cols-2 gap-2">
+                      <div className="pt-1 grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           onClick={() => setSelectedDetailCourse(course)}
@@ -476,6 +488,13 @@ function LearnerCourseCatalog() {
         course={selectedDetailCourse}
         isOpen={!!selectedDetailCourse}
         onClose={() => setSelectedDetailCourse(null)}
+      />
+
+      {/* Course Animated Video & Realtime Application Studio */}
+      <CourseAnimatedVideoModal
+        course={animatedVideoCourse}
+        isOpen={!!animatedVideoCourse}
+        onClose={() => setAnimatedVideoCourse(null)}
       />
     </div>
   );

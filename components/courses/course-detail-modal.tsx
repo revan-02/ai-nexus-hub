@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CourseItem, CourseSection } from '@/lib/mock-data/courses-data';
 import { validateCoupon, CouponValidationResult, formatNumberToINR } from '@/services/coupon-service';
+import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
 
 interface CourseDetailModalProps {
   course: CourseItem | null;
@@ -48,6 +49,8 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
   const [couponCode, setCouponCode] = useState<string>('');
   const [couponResult, setCouponResult] = useState<CouponValidationResult | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState<boolean>(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState<boolean>(false);
+  const [selectedLectureTitle, setSelectedLectureTitle] = useState<string>('Course Welcome & Architecture');
 
   if (!isOpen || !course) return null;
 
@@ -325,7 +328,11 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
                             {sec.lectures.map((lec) => (
                               <div
                                 key={lec.id}
-                                className="flex items-center justify-between px-5 py-3 hover:bg-secondary/20 transition-all text-xs"
+                                onClick={() => {
+                                  setSelectedLectureTitle(lec.title);
+                                  setIsVideoModalOpen(true);
+                                }}
+                                className="flex items-center justify-between px-5 py-3 hover:bg-purple-950/20 hover:border-l-2 hover:border-purple-500 transition-all text-xs cursor-pointer group/lec"
                               >
                                 <div className="flex items-center gap-3 truncate">
                                   {lec.type === 'quiz' ? (
@@ -333,15 +340,21 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
                                   ) : lec.type === 'coding_lab' ? (
                                     <Code className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                                   ) : (
-                                    <Play className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                                    <Play className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 group-hover/lec:scale-110 transition-transform" />
                                   )}
-                                  <span className="text-foreground font-medium truncate">{lec.title}</span>
+                                  <span className="text-foreground font-medium truncate group-hover/lec:text-purple-300 transition-colors">
+                                    {lec.title}
+                                  </span>
                                 </div>
 
                                 <div className="flex items-center gap-3 flex-shrink-0 font-mono text-muted-foreground">
-                                  {lec.isPreview && (
-                                    <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-400 text-[10px] font-bold border border-purple-500/30">
-                                      Preview
+                                  {lec.isPreview ? (
+                                    <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-400 text-[10px] font-bold border border-purple-500/30 flex items-center gap-1 group-hover/lec:bg-purple-600 group-hover/lec:text-white transition-all">
+                                      <Play className="w-2.5 h-2.5 fill-current" /> Watch Animated Lab
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-zinc-500 group-hover/lec:text-purple-300 transition-colors">
+                                      Launch Demo
                                     </span>
                                   )}
                                   <span>{lec.duration}</span>
@@ -390,13 +403,22 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
               <Card className="p-6 bg-card border-purple-500/30 rounded-3xl shadow-xl shadow-purple-950/20 space-y-6 sticky top-6">
                 
                 {/* Video Preview Card Box */}
-                <div className="relative aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-border flex items-center justify-center group cursor-pointer">
+                <div
+                  onClick={() => {
+                    setSelectedLectureTitle('Course Welcome & Mathematical Architecture');
+                    setIsVideoModalOpen(true);
+                  }}
+                  className="relative aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-purple-500/30 flex items-center justify-center group cursor-pointer shadow-lg hover:border-purple-400 transition-all"
+                >
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="relative z-10 flex flex-col items-center gap-2">
                     <div className="w-12 h-12 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                       <Play className="w-5 h-5 ml-0.5 fill-white" />
                     </div>
-                    <span className="text-xs font-bold text-white tracking-wider">Preview this course</span>
+                    <span className="text-xs font-bold text-white tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                      Watch Animated Video & Launch Realtime Lab
+                    </span>
                   </div>
                 </div>
 
@@ -580,6 +602,14 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
         </div>
 
       </div>
+
+      {/* Course Animated Video & Realtime Application Studio */}
+      <CourseAnimatedVideoModal
+        course={course}
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        initialLectureTitle={selectedLectureTitle}
+      />
     </div>
   );
 }
