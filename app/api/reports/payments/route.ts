@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/auth';
+import { createAuditLog } from '@/services/audit-service';
 import {
   MOCK_PAYMENT_METRICS,
   MOCK_REVENUE_CHART_DATA,
@@ -12,6 +14,21 @@ let transactionsStore = [...MOCK_TRANSACTIONS_LIST];
 
 export async function GET(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userRole = (session?.user as any)?.role;
+    if (userRole !== 'Admin' && userRole !== 'Manager') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: Administrative privilege required' },
+        { status: 403 }
+      );
+    }
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const gateway = searchParams.get('gateway');
@@ -59,6 +76,22 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userRole = (session?.user as any)?.role;
+    if (userRole !== 'Admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: Admin privilege required' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { action, transactionId, refundReason } = body;
 
@@ -78,14 +111,32 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Idempotency: Prevent refunding an already refunded transaction
+      if (transactionsStore[txIndex].status === 'Refunded') {
+        return NextResponse.json(
+          { success: false, error: 'Transaction has already been refunded' },
+          { status: 400 }
+        );
+      }
+
       transactionsStore[txIndex] = {
         ...transactionsStore[txIndex],
         status: 'Refunded',
       };
 
+      const refundAmountFormatted = `₹${transactionsStore[txIndex].amount.toLocaleString('en-IN')}`;
+
+      // Register action in system audit trail
+      await createAuditLog({
+        userId: session.user.id || 'admin-user',
+        action: `Processed refund of ${refundAmountFormatted} for transaction ${transactionsStore[txIndex].transactionId} (Reason: ${refundReason || 'Customer Request'})`,
+        target: `transaction_${transactionsStore[txIndex].transactionId}`,
+        type: 'security',
+      });
+
       return NextResponse.json({
         success: true,
-        message: `Refund of ₹${transactionsStore[txIndex].amount.toLocaleString('en-IN')} processed successfully for ${transactionsStore[txIndex].transactionId}`,
+        message: `Refund of ${refundAmountFormatted} processed successfully for ${transactionsStore[txIndex].transactionId}`,
         data: transactionsStore[txIndex],
       });
     }

@@ -99,10 +99,11 @@ export let couponsDatabase: Coupon[] = [
   },
 ];
 
-// Helper: Parse numeric price from string like "₹3,999" or "Free"
-export function parsePriceToNumber(priceStr: string): number {
-  if (!priceStr || priceStr.toLowerCase() === 'free') return 0;
-  const cleaned = priceStr.replace(/[^0-9.]/g, '');
+// Helper: Parse numeric price from string like "₹3,999", "Free", or a number
+export function parsePriceToNumber(price: string | number): number {
+  if (typeof price === 'number') return isNaN(price) ? 0 : price;
+  if (!price || typeof price !== 'string' || price.toLowerCase() === 'free') return 0;
+  const cleaned = price.replace(/[^0-9.]/g, '');
   return parseFloat(cleaned) || 0;
 }
 
@@ -113,8 +114,18 @@ export function formatNumberToINR(amount: number): string {
 }
 
 // Validate & calculate discount for a coupon code
-export function validateCoupon(code: string, priceStr: string): CouponValidationResult {
-  const originalPrice = parsePriceToNumber(priceStr);
+export function validateCoupon(code: string, price: string | number): CouponValidationResult {
+  const originalPrice = parsePriceToNumber(price);
+  if (!code || typeof code !== 'string') {
+    return {
+      isValid: false,
+      error: 'Please enter a valid coupon code.',
+      originalPrice,
+      discountAmount: 0,
+      finalPrice: originalPrice,
+      formattedDiscount: '₹0',
+    };
+  }
   const normalizedCode = code.trim().toUpperCase();
 
   const coupon = couponsDatabase.find((c) => c.code.toUpperCase() === normalizedCode);
@@ -154,6 +165,8 @@ export function validateCoupon(code: string, priceStr: string): CouponValidation
 
   const now = new Date();
   const expiry = new Date(coupon.expiryDate);
+  // Set expiry to the end of the day so the coupon is valid throughout the expiration date
+  expiry.setHours(23, 59, 59, 999);
   if (now > expiry) {
     return {
       isValid: false,

@@ -11,11 +11,21 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const isAdminLogin = nextUrl.pathname === '/admin/login';
+
+      if (isAdminLogin) {
+        if (isLoggedIn) {
+          return Response.redirect(new URL('/admin', nextUrl));
+        }
+        return true;
+      }
+
       const isOnAdmin = nextUrl.pathname.startsWith('/users') ||
                         nextUrl.pathname.startsWith('/roles') ||
                         nextUrl.pathname.startsWith('/permissions') ||
                         nextUrl.pathname.startsWith('/content') ||
                         nextUrl.pathname.startsWith('/admin') ||
+                        nextUrl.pathname.startsWith('/payment-reports') ||
                         nextUrl.pathname.startsWith('/settings');
 
       if (isOnAdmin) {
