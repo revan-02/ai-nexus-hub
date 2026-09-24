@@ -71,10 +71,10 @@ export function NexusHeader() {
           type="button"
           onClick={() => setIsSearchOpen(true)}
           className="flex items-center gap-2 sm:gap-3 w-full max-w-md px-3 py-2 bg-secondary border border-border rounded-xl text-xs text-muted-foreground hover:text-foreground hover:border-purple-500/30 transition-all cursor-pointer group min-h-[40px] truncate"
-          aria-label="Search topics, algorithms, datasets, tools"
+          aria-label="What do you want to learn?"
         >
           <Search className="w-4 h-4 text-muted-foreground group-hover:text-purple-400 transition-colors flex-shrink-0" />
-          <span className="truncate flex-1 text-left">Search topics, algorithms, tools...</span>
+          <span className="truncate flex-1 text-left">What do you want to learn?</span>
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 bg-background border border-border rounded text-[10px] font-mono text-muted-foreground flex-shrink-0">⌘K</kbd>
         </button>
       </div>

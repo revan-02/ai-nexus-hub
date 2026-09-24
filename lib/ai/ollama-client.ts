@@ -100,7 +100,7 @@ export const FREE_OLLAMA_MODELS: FreeOllamaModel[] = [
   },
 ];
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 
 export async function checkOllamaHealth(): Promise<{
   online: boolean;
@@ -114,7 +114,7 @@ export async function checkOllamaHealth(): Promise<{
     const res = await fetch(`${OLLAMA_HOST}/api/tags`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(1500),
+      signal: AbortSignal.timeout(3000),
     });
 
     if (res.ok) {
@@ -159,7 +159,7 @@ export async function sendOllamaChat(params: {
         temperature: params.temperature ?? 0.7,
       },
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(120000),
   });
 
   if (!res.ok) {
@@ -175,16 +175,26 @@ export async function sendOllamaChat(params: {
 }
 
 export function getFallbackOllamaResponse(model: string, prompt: string): string {
-  const cleanPrompt = prompt.toLowerCase();
-  
-  if (cleanPrompt.includes('agent') || cleanPrompt.includes('langgraph')) {
-    return `[Ollama Edge Simulated Engine - Model: ${model}]\n\nHere is how to structure an Autonomous Multi-Agent workflow using LangGraph with Ollama locally:\n\n` +
-      "```python\nfrom langchain_ollama import ChatOllama\nfrom langgraph.graph import StateGraph, END\n\n# Initialize local 100% free Ollama LLM\nllm = ChatOllama(model='" + model + "', temperature=0.2)\n\ndef supervisor_agent(state):\n    response = llm.invoke(f'Plan next action: {state[\"task\"]}')\n    return {'plan': response.content}\n\nbuilder = StateGraph(dict)\nbuilder.add_node('supervisor', supervisor_agent)\nbuilder.set_entry_point('supervisor')\nbuilder.add_edge('supervisor', END)\nworkflow = builder.compile()\n```\n\n*Running locally on your hardware with 0 cloud API fees and complete data privacy.*";
-  }
+  return `⚠️ **Ollama is offline or timed out.**
 
-  if (cleanPrompt.includes('math') || cleanPrompt.includes('attention') || cleanPrompt.includes('formula')) {
-    return `[Ollama Reasoning Engine - Model: ${model}]\n\n### Step-by-Step Mathematical Derivation\n\nThe Scaled Dot-Product Attention mechanism computes token alignments as:\n\n$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left( \\frac{Q K^T}{\\sqrt{d_k}} \\right) V$$\n\n1. **Query-Key Dot Product**: $S = Q K^T \\in \\mathbb{R}^{n \\times n}$ measures raw token correlation.\n2. **Scaling Factor**: $\\frac{1}{\\sqrt{d_k}}$ stabilizes gradients by preventing large inner products.\n3. **Softmax Normalization**: Normalizes rows into a valid probability distribution $\\sum_j A_{ij} = 1$.\n4. **Weighted Value Aggregation**: Multiplies normalized weights with the Value representation matrix $V$.\n\n*Executed locally via Ollama with full FP16/Q4 tensor precision.*`;
-  }
+The local Ollama model (\`${model}\`) did not respond in time. This usually happens because:
 
-  return `[Ollama Local LLM Response - Model: ${model}]\n\nI am running locally via Ollama. You have complete zero-cost data privacy with no requests leaving your system.\n\nRegarding your inquiry:\n> "${prompt}"\n\nHere is the concise answer with key takeaways, best practices, and implementation steps tailored for production AI engineering.`;
+- **Ollama is not running** → Open a terminal and run: \`ollama serve\`
+- **The model is slow on your hardware** → A long reasoning question like yours can take 1–2 minutes on CPU. Wait a bit longer.
+- **The model isn't downloaded** → Run: \`ollama run ${model}\`
+
+**To fix right now:**
+\`\`\`bash
+# Step 1: Start Ollama
+ollama serve
+
+# Step 2: In another terminal, pull the model if missing
+ollama pull ${model}
+
+# Step 3: Test it works
+ollama run ${model} "Hello"
+\`\`\`
+
+Once Ollama is running, **send your question again** — it will work correctly.`;
 }
+

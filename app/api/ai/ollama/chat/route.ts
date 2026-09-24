@@ -19,12 +19,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const conversation = messages.length > 0
-      ? messages
-      : [
-          { role: 'system', content: system },
-          { role: 'user', content: prompt },
-        ];
+    // Always ensure system prompt is first in the conversation
+    const userMessages = messages.length > 0
+      ? messages.filter((m: { role: string }) => m.role !== 'system')
+      : [{ role: 'user', content: prompt }];
+
+    const conversation = [
+      { role: 'system', content: system },
+      ...userMessages,
+    ];
 
     const health = await checkOllamaHealth();
 

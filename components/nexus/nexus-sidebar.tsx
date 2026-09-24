@@ -33,7 +33,10 @@ import {
   Activity,
   Flame,
   Bot,
-  X
+  X,
+  Settings,
+  BookOpen,
+  FileText
 } from 'lucide-react';
 
 interface NavSubItem {
@@ -56,91 +59,79 @@ export function NexusSidebar() {
 
   const navGroups: NavGroup[] = [
     {
-      id: 'core',
-      title: 'Overview & Hub',
+      id: 'home',
+      title: 'Home',
       icon: LayoutDashboard,
       items: [
         { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { label: 'Daily AI Challenge', href: '/daily-challenge', icon: Flame, badge: '🔥Today' },
-        { label: 'AI Overview', href: '/ai-overview', icon: Brain },
-        { label: 'Roadmap & Milestones', href: '/roadmap', icon: Compass },
+        { label: 'Daily Challenge', href: '/daily-challenge', icon: Flame, badge: '🔥' },
       ]
     },
     {
-      id: 'architecture',
-      title: 'AI Architecture & Labs',
-      icon: Cpu,
+      id: 'learn',
+      title: 'Learn',
+      icon: BookOpen,
       items: [
-        { label: 'Prompt Engineering (0-100%)', href: '/prompt-engineering', icon: Sparkles, badge: '100% 🚀' },
-        { label: 'Ollama Chat & Train AI', href: '/ollama', icon: Bot, badge: 'Local 🦙' },
-        { label: 'Math for AI & ML', href: '/math-for-ai', icon: Activity, badge: 'Math' },
-        { label: 'Model Comparison', href: '/model-comparison', icon: Scale, badge: 'Compare' },
-        { label: 'Architecture & LLMs', href: '/ai-architecture', icon: Cpu, badge: 'Studio' },
-        { label: 'Algorithms & Derivations', href: '/algorithms', icon: Code2 },
-        { label: 'Create Your Own AI', href: '/create-ai', icon: Wand2 },
-        { label: 'AI Tools & Stack', href: '/ai-tools', icon: Wrench },
-        { label: 'Security & Crypto Lab', href: '/security-center', icon: Shield, badge: 'Audit' },
+        { label: 'My Learning', href: '/roadmap', icon: BookOpen },
       ]
     },
     {
-      id: 'careers',
-      title: 'Careers',
+      id: 'practice',
+      title: 'Practice',
+      icon: Trophy,
+      items: [
+        { label: 'Challenges', href: '/challenges', icon: Trophy },
+        { label: 'Quizzes', href: '/quizzes', icon: Activity },
+      ]
+    },
+    {
+      id: 'build',
+      title: 'Build',
+      icon: FolderKanban,
+      items: [
+        { label: 'Projects', href: '/projects', icon: FolderKanban },
+        { label: 'Ollama AI Chat', href: '/ollama', icon: Bot, badge: 'Local 🦙' },
+        { label: 'Create Your Own AI', href: '/create-ai', icon: Wand2 },
+      ]
+    },
+    {
+      id: 'explore',
+      title: 'Explore',
+      icon: Compass,
+      items: [
+        { label: 'AI Tools', href: '/ai-tools', icon: Wrench },
+        { label: 'Models', href: '/model-comparison', icon: Bot },
+        { label: 'Algorithms', href: '/algorithms', icon: Code2 },
+        { label: 'Architecture', href: '/ai-architecture', icon: Cpu },
+        { label: 'Research', href: '/content-learning', icon: FileText },
+      ]
+    },
+    {
+      id: 'career',
+      title: 'Career',
       icon: Target,
       items: [
-        { label: 'Interview Prep', href: '/interview-prep', icon: UserCheck, badge: '0-4y' },
-        { label: 'Careers & Job Portal', href: '/careers', icon: Briefcase, badge: 'Jobs' },
-        { label: 'VTU Exam Papers', href: '/vtu-question-papers', icon: GraduationCap, badge: 'VTU' },
+        { label: 'Career Hub', href: '/career', icon: Target },
       ]
     },
     {
-      id: 'applied',
-      title: 'Applied AI & Datasets',
-      icon: FlaskConical,
+      id: 'settings',
+      title: 'Settings',
+      icon: Settings,
       items: [
-        { label: 'Industrial Use Cases', href: '/use-cases', icon: Briefcase },
-        { label: 'Real-World Problems', href: '/real-world-problems', icon: AlertCircle },
-        { label: 'Datasets & Benchmarks', href: '/datasets', icon: Database },
-      ]
-    },
-    {
-      id: 'community',
-      title: 'Community & Projects',
-      icon: Users,
-      items: [
-        { label: 'Project Workspaces', href: '/projects', icon: FolderKanban },
-        { label: 'Community & Peer Forum', href: '/community', icon: Users },
-      ]
-    },
-    {
-      id: 'credentials',
-      title: 'Credentials & Verification',
-      icon: Award,
-      items: [
-        { label: 'Assessments & Quizzes', href: '/quizzes', icon: Trophy },
-        { label: 'Certifications & Badges', href: '/certificates/cert-1', icon: Award, badge: 'ISO' },
-      ]
-    },
-    {
-      id: 'system',
-      title: 'Management & System',
-      icon: Layers,
-      items: [
-        { label: '10,000 Users Stress Test', href: '/performance-test', icon: Activity, badge: '10k VUs 🔥' },
-        { label: 'Categories Management', href: '/categories', icon: Layers },
-        { label: 'Payment Reports', href: '/payment-reports', icon: Building2, badge: 'Tax' },
+        { label: 'Settings', href: '/settings', icon: Settings },
       ]
     },
   ];
 
-  // Accordion state for nav groups
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    core: true,
-    architecture: true,
-    careers: true,
-    applied: false,
-    community: false,
-    credentials: false,
-    system: false,
+    home: true,
+    learn: true,
+    practice: false,
+    build: true,
+    explore: false,
+    career: false,
+    settings: false,
   });
 
   // Auto-expand the group containing the active path

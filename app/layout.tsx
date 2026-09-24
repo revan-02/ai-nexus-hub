@@ -1,23 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import { NexusProvider } from "@/context/nexus-context";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { JsonLd } from "@/components/seo/json-ld";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   themeColor: '#7c3aed',
@@ -114,14 +101,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full dark`}
+      className="h-full dark"
       style={{ colorScheme: 'dark' }}
       suppressHydrationWarning
     >
       <head>
         <JsonLd />
       </head>
-      <body className={`${inter.className} min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-purple-500/30 selection:text-purple-200`}>
+      <body className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-purple-500/30 selection:text-purple-200">
         <SessionProvider>
           <QueryProvider>
             <NexusProvider>

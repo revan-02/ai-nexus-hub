@@ -40,6 +40,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import Link from 'next/link';
 import { useSafeNexus } from '@/context/nexus-context';
 import { FREE_OLLAMA_MODELS, FreeOllamaModel } from '@/lib/ai/ollama-client';
+import { MarkdownRenderer } from '@/components/ai/markdown-renderer';
 
 interface ChatMessage {
   id: string;
@@ -505,7 +506,11 @@ export function OllamaStudio() {
                             : 'bg-secondary/70 border border-border text-foreground rounded-tl-sm'
                         }`}
                       >
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {isUser ? (
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        ) : (
+                          <MarkdownRenderer content={msg.content} />
+                        )}
                       </div>
 
                       {/* Message Metadata & Metrics */}
