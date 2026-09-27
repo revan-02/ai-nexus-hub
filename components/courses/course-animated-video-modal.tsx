@@ -883,32 +883,50 @@ function renderCourseAnimation(
         </div>
       );
 
-    case 'SECURITY_GUARDRAILS':
+    case 'SECURITY_GUARDRAILS': {
+      const dynamicScore = Math.max(0.01, Math.min(0.99, Number((0.02 + (1.0 - param1) * 0.08 + (step % 2 === 1 ? 0.03 : 0)).toFixed(3))));
+      const isClean = dynamicScore < 0.15;
+      const threatPercent = Math.max(4, Math.round(dynamicScore * 100));
       return (
         <div className="w-full h-full flex flex-col items-center justify-center space-y-3">
           <div className="text-xs font-bold text-rose-300 tracking-wider flex items-center gap-2">
             <Lock className="w-4 h-4 text-rose-400" />
-            NeMo Guardrails & Prompt Injection Red-Teaming Shield
+            NeMo Guardrails &amp; Prompt Injection Red-Teaming Shield
           </div>
-          <div className="w-full max-w-sm p-3.5 rounded-2xl bg-[#140e12] border border-rose-500/40 space-y-2">
+          <div className="w-full max-w-sm p-3.5 rounded-2xl bg-[#140e12] border border-rose-500/40 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-mono text-zinc-300">Prompt Threat Score:</span>
-              <span className="text-rose-400 font-bold font-mono">0.02 (CLEAN)</span>
+              <span className={`font-bold font-mono ${isClean ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {dynamicScore} ({isClean ? 'CLEAN' : 'FLAGGED'})
+              </span>
             </div>
             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 w-[12%]" />
+              <div
+                className={`h-full transition-all duration-300 ${isClean ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                style={{ width: `${threatPercent}%` }}
+              />
             </div>
-            <div className="p-2 rounded bg-black/60 font-mono text-[10px] text-zinc-300 space-y-1">
-              <div className="text-emerald-400">✓ Jailbreak Pattern: BLOCKED</div>
-              <div className="text-emerald-400">✓ System Prompt Extraction: SHIELDED</div>
-              <div className="text-emerald-400">✓ PII Masking: 100% APPLIED</div>
+            <div className="p-2.5 rounded-xl bg-black/60 font-mono text-[10px] space-y-1.5 border border-zinc-800/80">
+              <div className="text-emerald-400 flex items-center justify-between">
+                <span>✓ Jailbreak Pattern:</span>
+                <span className="font-bold">BLOCKED</span>
+              </div>
+              <div className="text-emerald-400 flex items-center justify-between">
+                <span>✓ System Prompt Extraction:</span>
+                <span className="font-bold">SHIELDED</span>
+              </div>
+              <div className="text-emerald-400 flex items-center justify-between">
+                <span>✓ PII Masking:</span>
+                <span className="font-bold">{param2 >= 10 ? '100% APPLIED' : `${Math.round((param2 / 12) * 100)}% ACTIVE`}</span>
+              </div>
             </div>
           </div>
-          <div className="text-[11px] font-mono text-zinc-400">
-            OWASP Top 10 for LLMs • NeMo Self-Check Input Rail Verified
+          <div className="text-[11px] font-mono text-zinc-400 text-center">
+            OWASP Top 10 for LLMs • NeMo Self-Check Input Rail Verified ({Math.round(param2)} Active Filters)
           </div>
         </div>
       );
+    }
 
     case 'EDGE_MOBILE_AI':
       return (
