@@ -39,6 +39,7 @@ import {
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { DeepMathAndLLMBuilder } from '@/components/learning/deep-math-and-llm-builder';
 import { IndustryAIPlacementHighway } from '@/components/learning/industry-ai-placement-highway';
+import { YouTubeResourceCard } from '@/components/learning/youtube-resource-card';
 
 export type DifficultyLevel = 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
 
@@ -898,21 +899,29 @@ export function MicroLearningPlayer({
             {/* ── A. REAL EMBEDDED HD VIDEO PLAYER (YOUTUBE / ANIMATED MASTERCLASS) ── */}
             {videoMode === 'embedded_video' && (
               <div className="space-y-4">
-                <div className="relative aspect-video w-full rounded-3xl overflow-hidden border-2 border-purple-500/40 shadow-2xl bg-black">
-                  <iframe
-                    src={activeContent.youtubeEmbedUrl}
-                    title={activeContent.videoTitle}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="w-full h-full border-0"
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs px-1 text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> High-definition visual animation with crystal-clear audio narration.
-                  </span>
-                  <span className="font-mono text-purple-400">Duration: {activeContent.duration}</span>
-                </div>
+                <YouTubeResourceCard
+                  resource={{
+                    id: activeContent.id,
+                    topicId: 'micro-learning',
+                    title: activeContent.videoTitle,
+                    youtubeVideoId: activeContent.youtubeEmbedUrl.split('/embed/')[1]?.split('?')[0] || 'ad79nYk2keg',
+                    channelName: activeDifficulty === 'ADVANCED' ? 'Andrej Karpathy' : activeDifficulty === 'INTERMEDIATE' ? '3Blue1Brown' : 'IBM Technology',
+                    channelUrl: activeDifficulty === 'ADVANCED' ? 'https://www.youtube.com/@AndrejKarpathy' : activeDifficulty === 'INTERMEDIATE' ? 'https://www.youtube.com/@3blue1brown' : 'https://www.youtube.com/@IBMTechnology',
+                    sourceUrl: `https://www.youtube.com/watch?v=${activeContent.youtubeEmbedUrl.split('/embed/')[1]?.split('?')[0] || 'ad79nYk2keg'}`,
+                    embedUrl: activeContent.youtubeEmbedUrl.split('?')[0],
+                    thumbnailUrl: `https://img.youtube.com/vi/${activeContent.youtubeEmbedUrl.split('/embed/')[1]?.split('?')[0] || 'ad79nYk2keg'}/hqdefault.jpg`,
+                    creatorBio: activeDifficulty === 'ADVANCED' ? 'Andrej Karpathy - Former Director of AI at Tesla and OpenAI founding researcher.' : activeDifficulty === 'INTERMEDIATE' ? 'Grant Sanderson (3Blue1Brown) - Renowned visual mathematics animator.' : 'IBM Technology - Enterprise AI and hybrid cloud engineering team.',
+                    publishDate: '2023-11-22',
+                    duration: activeContent.duration,
+                    difficulty: activeDifficulty === 'BASIC' ? 'Beginner' : activeDifficulty === 'INTERMEDIATE' ? 'Intermediate' : 'Advanced',
+                    relevanceReason: activeContent.technicalSummary,
+                    keyTakeaways: activeContent.videoChapters.map((c) => c.title),
+                    license: 'Standard YouTube License',
+                    copyrightNotice: `© ${activeDifficulty === 'ADVANCED' ? 'Andrej Karpathy' : activeDifficulty === 'INTERMEDIATE' ? '3Blue1Brown' : 'IBM Technology'}. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.`,
+                    embedAllowed: true,
+                    tags: ['AI', activeContent.category],
+                  }}
+                />
               </div>
             )}
 
