@@ -119,6 +119,7 @@ export function CourseAnimatedVideoModal({
 
   // Animation pulse step
   const [animStep, setAnimStep] = useState(0);
+  const lastSpokenChapterTitleRef = useRef<string | null>(null);
 
   // Get course-specific interactive configuration
   const config = getCoursePayload(course);
@@ -127,6 +128,7 @@ export function CourseAnimatedVideoModal({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isPlaying && isOpen && !isGeneratingVideo) {
+      const speed = Math.max(0.5, Math.min(3, playbackSpeed || 1));
       interval = setInterval(() => {
         setCurrentTimeSec((prev) => {
           if (prev >= durationSec) {
@@ -136,32 +138,59 @@ export function CourseAnimatedVideoModal({
           return prev + 1;
         });
         setAnimStep((prev) => (prev + 1) % 4);
-      }, 1000 / playbackSpeed);
+      }, 1000 / speed);
     }
     return () => clearInterval(interval);
   }, [isPlaying, isOpen, durationSec, playbackSpeed, isGeneratingVideo]);
 
-  // Voice narration speech synthesis
+  // Voice narration speech synthesis (speaks ONLY when transitioning to a new chapter)
   useEffect(() => {
     if (!isOpen) {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          // ignore
+        }
       }
+      lastSpokenChapterTitleRef.current = null;
       return;
     }
 
     if (isVoiceActive && isPlaying && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      const currentChapter =
+      const activeChapter =
         config.chapters.slice().reverse().find((ch) => currentTimeSec >= ch.timestampSec) ||
         config.chapters[0];
 
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(currentChapter.subtitle);
-      utterance.rate = playbackSpeed;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } else if (!isPlaying && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      // Only trigger utterance when entering a new chapter to prevent freezing the event loop
+      if (lastSpokenChapterTitleRef.current !== activeChapter.title) {
+        lastSpokenChapterTitleRef.current = activeChapter.title;
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(`${activeChapter.title}. ${activeChapter.subtitle}`);
+          utterance.rate = Math.min(1.5, Math.max(0.8, playbackSpeed || 1));
+          utterance.pitch = 1.0;
+          utterance.onerror = (e) => {
+            if (e.error !== 'canceled' && e.error !== 'interrupted') {
+              console.warn('Speech synthesis notice:', e.error);
+            }
+          };
+          window.speechSynthesis.speak(utterance);
+        } catch {
+          // handle gracefully
+        }
+      }
+    } else {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          // ignore
+        }
+      }
+      if (!isVoiceActive) {
+        lastSpokenChapterTitleRef.current = null;
+      }
     }
   }, [currentTimeSec, isVoiceActive, isPlaying, playbackSpeed, isOpen, config]);
 
@@ -194,7 +223,19 @@ export function CourseAnimatedVideoModal({
     config.chapters[0];
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentTimeSec(Number(e.target.value));
+    const newSec = Number(e.target.value);
+    setCurrentTimeSec(newSec);
+    lastSpokenChapterTitleRef.current = null;
+  };
+
+  const handleTogglePlay = () => {
+    if (currentTimeSec >= durationSec) {
+      setCurrentTimeSec(0);
+      lastSpokenChapterTitleRef.current = null;
+      setIsPlaying(true);
+    } else {
+      setIsPlaying((prev) => !prev);
+    }
   };
 
   const handleCopyCode = () => {
@@ -332,6 +373,19 @@ export function CourseAnimatedVideoModal({
                 {renderCourseAnimation(config.animationType, animStep, param1, param2)}
               </div>
 
+              {/* Play / Pause Toggle Center Click Target when paused */}
+              {!isPlaying && (
+                <div
+                  onClick={handleTogglePlay}
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
+                  title="Click to Resume Video"
+                >
+                  <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 fill-white ml-1" />
+                  </div>
+                </div>
+              )}
+
               {/* Top Video Overlay Bar */}
               <div className="relative z-10 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/30 to-transparent">
                 <div className="flex items-center gap-2">
@@ -345,7 +399,13 @@ export function CourseAnimatedVideoModal({
                     {formatTime(currentTimeSec)} / {formatTime(durationSec)}
                   </div>
                   <button
-                    onClick={() => setIsVoiceActive(!isVoiceActive)}
+                    onClick={() => {
+                      const next = !isVoiceActive;
+                      setIsVoiceActive(next);
+                      if (next) {
+                        lastSpokenChapterTitleRef.current = null;
+                      }
+                    }}
                     title={isVoiceActive ? 'Disable Audio Narration' : 'Enable Neural Voice Narration'}
                     className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
                       isVoiceActive
@@ -391,8 +451,8 @@ export function CourseAnimatedVideoModal({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="w-8 h-8 p-0 rounded-lg text-white hover:bg-purple-600/30 hover:text-purple-300"
+                      onClick={handleTogglePlay}
+                      className="w-8 h-8 p-0 rounded-lg text-white hover:bg-purple-600/30 hover:text-purple-300 cursor-pointer"
                     >
                       {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
                     </Button>
@@ -447,6 +507,7 @@ export function CourseAnimatedVideoModal({
                       key={idx}
                       onClick={() => {
                         setCurrentTimeSec(chap.timestampSec);
+                        lastSpokenChapterTitleRef.current = null;
                         setIsPlaying(true);
                       }}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
