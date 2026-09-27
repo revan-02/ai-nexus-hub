@@ -369,7 +369,7 @@ export function CourseAnimatedVideoModal({
             {/* Cinematic Video Container */}
             <div className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group">
               {/* Dynamic Animated Canvas / Visualizer Synced with Video */}
-              <div className="absolute inset-0 z-0 overflow-hidden flex items-center justify-center p-4">
+              <div className="absolute top-11 bottom-[64px] inset-x-0 z-0 overflow-hidden flex items-center justify-center p-2">
                 {renderCourseAnimation(config.animationType, animStep, param1, param2)}
               </div>
 
@@ -387,10 +387,10 @@ export function CourseAnimatedVideoModal({
               )}
 
               {/* Top Video Overlay Bar */}
-              <div className="relative z-10 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/30 to-transparent">
+              <div className="relative z-10 px-4 py-2.5 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                  <span className="text-xs font-bold text-white tracking-wider uppercase drop-shadow">
+                  <span className="text-xs font-bold text-white tracking-wider uppercase drop-shadow truncate max-w-[200px] sm:max-w-xs">
                     {initialLectureTitle || currentChapter.title}
                   </span>
                 </div>
@@ -419,18 +419,8 @@ export function CourseAnimatedVideoModal({
                 </div>
               </div>
 
-              {/* Subtitles / Narration Teleprompter */}
-              <div className="relative z-10 px-6 py-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent text-center space-y-1">
-                <p className="text-xs sm:text-sm font-medium text-purple-200 tracking-wide drop-shadow-md">
-                  "{currentChapter.subtitle}"
-                </p>
-                <div className="text-[10px] text-zinc-400 font-mono">
-                  Narrated by {course.instructor.name} • Nexus AI Masterclass Series
-                </div>
-              </div>
-
               {/* Video Player Bottom Controls Overlay */}
-              <div className="relative z-10 px-4 py-3 bg-[#0a0a0f]/95 border-t border-[#1e1e2c] space-y-2">
+              <div className="relative z-10 px-4 py-2.5 bg-[#0a0a0f]/95 border-t border-[#1e1e2c] space-y-1.5">
                 {/* Timeline Scrubber */}
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-mono text-zinc-400 w-10">{formatTime(currentTimeSec)}</span>
@@ -490,6 +480,23 @@ export function CourseAnimatedVideoModal({
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Narration Teleprompter & Closed Captions Card */}
+            <div className="rounded-xl border border-purple-500/30 bg-[#101018] p-3 px-4 shadow-lg flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 shrink-0">
+                <Volume2 className="w-4 h-4 animate-pulse" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-purple-100 tracking-wide leading-snug">
+                  "{currentChapter.subtitle}"
+                </p>
+                <div className="text-[10px] text-zinc-400 font-mono mt-0.5 flex items-center gap-2">
+                  <span className="text-purple-300 font-semibold">{currentChapter.title}</span>
+                  <span>•</span>
+                  <span>Narrated by {course.instructor?.name || 'Nexus AI Instructor'} • Nexus Masterclass Series</span>
                 </div>
               </div>
             </div>
@@ -949,25 +956,25 @@ function renderCourseAnimation(
       const isClean = dynamicScore < 0.15;
       const threatPercent = Math.max(4, Math.round(dynamicScore * 100));
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center space-y-3">
+        <div className="w-full h-full flex flex-col items-center justify-center space-y-2">
           <div className="text-xs font-bold text-rose-300 tracking-wider flex items-center gap-2">
-            <Lock className="w-4 h-4 text-rose-400" />
+            <Lock className="w-3.5 h-3.5 text-rose-400" />
             NeMo Guardrails &amp; Prompt Injection Red-Teaming Shield
           </div>
-          <div className="w-full max-w-sm p-3.5 rounded-2xl bg-[#140e12] border border-rose-500/40 space-y-2.5">
+          <div className="w-full max-w-sm p-3 rounded-2xl bg-[#140e12] border border-rose-500/40 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-mono text-zinc-300">Prompt Threat Score:</span>
               <span className={`font-bold font-mono ${isClean ? 'text-emerald-400' : 'text-rose-400'}`}>
                 {dynamicScore} ({isClean ? 'CLEAN' : 'FLAGGED'})
               </span>
             </div>
-            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
               <div
                 className={`h-full transition-all duration-300 ${isClean ? 'bg-emerald-500' : 'bg-rose-500'}`}
                 style={{ width: `${threatPercent}%` }}
               />
             </div>
-            <div className="p-2.5 rounded-xl bg-black/60 font-mono text-[10px] space-y-1.5 border border-zinc-800/80">
+            <div className="p-2 rounded-xl bg-black/60 font-mono text-[10px] space-y-1 border border-zinc-800/80">
               <div className="text-emerald-400 flex items-center justify-between">
                 <span>✓ Jailbreak Pattern:</span>
                 <span className="font-bold">BLOCKED</span>
@@ -982,7 +989,7 @@ function renderCourseAnimation(
               </div>
             </div>
           </div>
-          <div className="text-[11px] font-mono text-zinc-400 text-center">
+          <div className="text-[10px] font-mono text-zinc-400 text-center">
             OWASP Top 10 for LLMs • NeMo Self-Check Input Rail Verified ({Math.round(param2)} Active Filters)
           </div>
         </div>
