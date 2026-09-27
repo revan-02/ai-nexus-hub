@@ -165,158 +165,158 @@ export function YouTubeResourceCard({
         </div>
       </div>
 
-      {/* ── VIDEO PLAYER / FALLBACK CONTAINER ── */}
-      <div className="p-4 sm:p-6 space-y-4">
-        {!forceFallback && !embedError ? (
-          /* Official YouTube Embed Player (Safe youtube-nocookie domain, no controls removed) */
-          <div className="space-y-2">
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-black">
-              <iframe
-                src={`${resource.embedUrl}?enablejsapi=1&rel=0&modestbranding=0`}
-                title={`${resource.title} - Video by ${resource.channelName}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                onError={() => setEmbedError(true)}
-                className="w-full h-full border-0"
-              />
-            </div>
+      {/* ── MAIN CONTENT CONTAINER: SIDEWAYS (SIDE-BY-SIDE ON DESKTOP) ── */}
+      <div className="p-4 sm:p-6 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* ── LEFT COLUMN: OFFICIAL VIDEO EMBED PLAYER OR FALLBACK (7 COLS) ── */}
+          <div className="lg:col-span-7 space-y-3">
+            {!forceFallback && !embedError ? (
+              /* Official YouTube Embed Player (Safe youtube-nocookie domain, full controls) */
+              <div className="space-y-2">
+                <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-black">
+                  <iframe
+                    src={`${resource.embedUrl}?enablejsapi=1&rel=0&modestbranding=0`}
+                    title={`${resource.title} - Video by ${resource.channelName}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    onError={() => setEmbedError(true)}
+                    className="w-full h-full border-0"
+                  />
+                </div>
 
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 flex-wrap gap-2">
-              <span className="flex items-center gap-1.5 text-emerald-400">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Embedded via official YouTube player with full creator branding &amp; attribution</span>
-              </span>
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1 flex-wrap gap-2">
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Official YouTube embed with creator branding &amp; ads</span>
+                  </span>
 
-              <button
-                onClick={() => setForceFallback(true)}
-                className="text-purple-400 hover:underline flex items-center gap-1 text-[11px] cursor-pointer"
-              >
-                <span>Having playback issues? Switch to direct fallback</span>
-              </button>
-            </div>
+                  <button
+                    onClick={() => setForceFallback(true)}
+                    className="text-purple-400 hover:underline flex items-center gap-1 text-[11px] cursor-pointer"
+                  >
+                    <span>Having issues? Switch to direct link</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ── GRACEFUL FALLBACK CARD (When embedding is restricted or disabled) ── */
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-secondary/80 via-card to-purple-950/20 border-2 border-dashed border-purple-500/40 space-y-4">
+                <div className="space-y-3">
+                  {/* YouTube Thumbnail Preview */}
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border bg-black group">
+                    <img
+                      src={resource.thumbnailUrl}
+                      alt={resource.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${resource.youtubeVideoId}/0.jpg`;
+                      }}
+                    />
+                    <a
+                      href={resource.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Play className="w-6 h-6 fill-current ml-0.5" />
+                      </div>
+                    </a>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+                      <AlertCircle className="w-4 h-4 text-amber-400" />
+                      <span>Playback Restricted / Direct YouTube Access</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Due to creator rights or sandbox permissions, this video is available directly on YouTube. Click below to support the original creator.
+                    </p>
+
+                    <div className="pt-1 flex items-center gap-3 flex-wrap">
+                      <a
+                        href={resource.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-9 px-4 rounded-xl gap-2 shadow-lg shadow-red-950/40">
+                          <Play className="w-3.5 h-3.5 fill-current" /> Watch on YouTube Directly ↗
+                        </Button>
+                      </a>
+
+                      {resource.embedAllowed && (
+                        <Button
+                          onClick={() => {
+                            setForceFallback(false);
+                            setEmbedError(false);
+                          }}
+                          variant="outline"
+                          className="bg-secondary text-foreground text-xs h-9 px-3 rounded-xl border-border hover:bg-secondary/80"
+                        >
+                          Try Embedding Again
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          /* ── GRACEFUL FALLBACK CARD (When embedding is disabled, restricted, or offline) ── */
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-secondary/80 via-card to-purple-950/20 border-2 border-dashed border-purple-500/40 space-y-4 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-              {/* YouTube Thumbnail Preview */}
-              <div className="relative w-full sm:w-56 aspect-video rounded-xl overflow-hidden border border-border bg-black flex-shrink-0 group">
-                <img
-                  src={resource.thumbnailUrl}
-                  alt={resource.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    // Fallback to high-res if hqdefault fails
-                    (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${resource.youtubeVideoId}/0.jpg`;
-                  }}
-                />
+
+          {/* ── RIGHT COLUMN: SIDEWAYS DESCRIPTION, RELEVANCE & TAKEAWAYS (5 COLS) ── */}
+          <div className="lg:col-span-5 space-y-4">
+            {/* Why Relevant Callout Box */}
+            <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-2">
+              <div className="flex items-center gap-1.5 text-purple-300 font-bold text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <span>Why This Video is Relevant to the Lesson</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {resource.relevanceReason}
+              </p>
+            </div>
+
+            {/* Key Concepts & What You Should Learn */}
+            {resource.keyTakeaways && resource.keyTakeaways.length > 0 && (
+              <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2.5">
+                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>What You Should Learn from This Video</span>
+                </h4>
+                <div className="space-y-1.5 text-xs">
+                  {resource.keyTakeaways.map((takeaway, tIdx) => (
+                    <div key={tIdx} className="flex items-start gap-2 text-muted-foreground">
+                      <span className="text-purple-400 font-bold text-xs mt-0.5">•</span>
+                      <span className="leading-snug text-foreground/90">{takeaway}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Creator Information & Profile Box */}
+            <div className="p-4 rounded-xl bg-secondary/40 border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-foreground font-bold text-xs">
+                  <Info className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Creator: {resource.channelName}</span>
+                </span>
                 <a
-                  href={resource.sourceUrl}
+                  href={resource.channelUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors"
+                  className="text-[11px] text-purple-400 hover:underline flex items-center gap-1 font-bold"
                 >
-                  <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <Play className="w-5 h-5 fill-current ml-0.5" />
-                  </div>
+                  <span>Channel Link</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
                 </a>
               </div>
-
-              {/* Notice & Direct Legal Watch Link */}
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2 justify-center sm:justify-start text-amber-400 text-xs font-bold">
-                  <AlertCircle className="w-4 h-4 text-amber-400" />
-                  <span>Playback Restricted / Direct YouTube Access</span>
-                </div>
-                <h4 className="text-sm sm:text-base font-bold text-foreground">
-                  {resource.title}
-                </h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Due to creator rights, licensing, or network sandbox restrictions, this video is best experienced directly on YouTube. Please click below to watch on the official platform with complete creator support.
-                </p>
-
-                <div className="pt-2 flex items-center gap-3 justify-center sm:justify-start flex-wrap">
-                  <a
-                    href={resource.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs h-9 px-4 rounded-xl gap-2 shadow-lg shadow-red-950/40">
-                      <Play className="w-3.5 h-3.5 fill-current" /> Watch on YouTube Directly ↗
-                    </Button>
-                  </a>
-
-                  {resource.embedAllowed && (
-                    <Button
-                      onClick={() => {
-                        setForceFallback(false);
-                        setEmbedError(false);
-                      }}
-                      variant="outline"
-                      className="bg-secondary text-foreground text-xs h-9 px-3 rounded-xl border-border hover:bg-secondary/80"
-                    >
-                      Try Embedding Again
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {resource.creatorBio || 'Official verified YouTube educational creator.'}
+              </p>
             </div>
-          </div>
-        )}
-
-        {/* ── RELEVANCE REASON & WHAT YOU SHOULD LEARN ── */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-2">
-          {/* Why Relevant Callout */}
-          <div className="md:col-span-6 p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-2">
-            <div className="flex items-center gap-1.5 text-purple-300 font-bold text-xs">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span>Why This Video is Relevant to the Lesson</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {resource.relevanceReason}
-            </p>
-          </div>
-
-          {/* Creator Information & Bio */}
-          <div className="md:col-span-6 p-4 rounded-xl bg-secondary/40 border border-border space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-foreground font-bold text-xs">
-                <Info className="w-3.5 h-3.5 text-amber-400" />
-                <span>Original Creator Profile: {resource.channelName}</span>
-              </span>
-              <a
-                href={resource.channelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-purple-400 hover:underline flex items-center gap-1"
-              >
-                <span>Channel</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-              {resource.creatorBio || 'Official YouTube creator and verified educational educator.'}
-            </p>
           </div>
         </div>
-
-        {/* ── KEY CONCEPTS & WHAT YOU SHOULD LEARN ── */}
-        {resource.keyTakeaways && resource.keyTakeaways.length > 0 && (
-          <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2.5">
-            <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>What You Should Learn from This Video</span>
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {resource.keyTakeaways.map((takeaway, tIdx) => (
-                <div key={tIdx} className="flex items-start gap-2 text-muted-foreground">
-                  <span className="text-purple-400 font-bold text-xs mt-0.5">•</span>
-                  <span className="leading-snug">{takeaway}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ── LEGAL, COPYRIGHT & ATTRIBUTION FOOTER ── */}
         <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-muted-foreground bg-secondary/10 p-3 rounded-xl">
