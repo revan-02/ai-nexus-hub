@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/ensure-nft.js",
-    "build": "npx prisma generate --config prisma.config.ts && next build",
+    "build": "node ./node_modules/prisma/build/index.js generate --config prisma.config.ts && next build",
     "postbuild": "node scripts/ensure-nft.js",
     "start": "next start",
     "lint": "eslint",

@@ -1,4 +1,11 @@
 #!/bin/sh
-# Prisma proxy script to prevent "bash: prisma: Is a directory" (exit code 126) on Vercel
-echo "==> [Prisma Wrapper] Invoking npx prisma with args: $@"
-exec npx prisma "$@" --config prisma.config.ts
+set -e
+
+# Run local Prisma CLI directly (v7.9.1) to prevent npx from fetching experimental/incompatible versions like prisma@8.0.0-rc
+if [ -f "./node_modules/prisma/build/index.js" ]; then
+  exec node ./node_modules/prisma/build/index.js "$@" --config prisma.config.ts
+elif [ -f "./node_modules/.bin/prisma" ]; then
+  exec ./node_modules/.bin/prisma "$@" --config prisma.config.ts
+else
+  exec npx --no-install prisma "$@" --config prisma.config.ts
+fi
