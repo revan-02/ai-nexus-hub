@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const currentLimit = rateLimitStore.get(rateLimitKey);
 
     if (currentLimit && currentLimit.resetAt > now) {
-      if (currentLimit.count >= 3) {
+      if (currentLimit.count >= 10) {
         const secondsLeft = Math.ceil((currentLimit.resetAt - now) / 1000);
         return NextResponse.json(
           {
