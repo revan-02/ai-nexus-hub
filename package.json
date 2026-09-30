@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/ensure-nft.js",
     "build": "npx prisma generate && next build",
-    "postbuild": "node -e \"const fs=require('fs');const p='.next/next-server.js.nft.json';if(!fs.existsSync(p)){try{fs.writeFileSync(p,JSON.stringify({version:1,files:[]}))}catch(e){}}\"",
+    "postbuild": "node scripts/ensure-nft.js",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
