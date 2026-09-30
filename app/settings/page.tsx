@@ -1781,7 +1781,15 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
 
               <div className="pt-2 border-t border-border">
                 <button
-                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  onClick={async () => {
+                    try {
+                      await signOut({ redirect: false });
+                    } catch {
+                      // ignore
+                    } finally {
+                      window.location.href = '/login';
+                    }
+                  }}
                   className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />

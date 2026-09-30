@@ -27,6 +27,15 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch {
+      // ignore
+    } finally {
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-[#09090c] border-b border-[#23232b] sticky top-0 z-20">
@@ -213,7 +222,7 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
             <DropdownMenuSeparator className="bg-[#272730]" />
 
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={handleLogout}
               className="text-xs text-rose-400 focus:bg-rose-500/10 focus:text-rose-300 cursor-pointer gap-2 px-2.5 py-1.5 rounded-lg font-medium"
             >
               <LogOut className="w-3.5 h-3.5" /> Logout

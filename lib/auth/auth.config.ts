@@ -49,9 +49,14 @@ export const authConfig: NextAuthConfig = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Prevent open redirect phishing attacks by validating origin
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
+      // Allow relative callback URLs directly so navigation remains on current host
+      if (url.startsWith("/")) return url;
+      try {
+        // Allow callback URLs if they match the baseUrl origin
+        if (new URL(url).origin === new URL(baseUrl).origin) return url;
+      } catch {
+        // Fallback for invalid URLs
+      }
       return baseUrl;
     },
   },

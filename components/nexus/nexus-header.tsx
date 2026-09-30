@@ -53,6 +53,16 @@ export function NexusHeader() {
     else setTheme('dark');
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch {
+      // ignore
+    } finally {
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between px-3 sm:px-6 select-none print:hidden safe-top">
       {/* Left: Collapse Button + Search Bar */}
@@ -221,7 +231,7 @@ export function NexusHeader() {
             <DropdownMenuSeparator className="bg-border" />
 
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={handleLogout}
               className="px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl cursor-pointer flex items-center gap-2.5"
             >
               <LogOut className="w-4 h-4" />
