@@ -23,6 +23,34 @@ const nextConfig: NextConfig = {
       '@tanstack/react-query',
     ],
   },
+  output: undefined,
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.plugins.push({
+        apply(compiler: any) {
+          compiler.hooks.afterEmit.tap('EnsureNftJson', () => {
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const distDir = path.resolve(process.cwd(), '.next');
+              if (!fs.existsSync(distDir)) {
+                fs.mkdirSync(distDir, { recursive: true });
+              }
+              const nftFile = path.join(distDir, 'next-server.js.nft.json');
+              if (!fs.existsSync(nftFile)) {
+                fs.writeFileSync(nftFile, JSON.stringify({ version: 1, files: [] }));
+              }
+              const minimalNftFile = path.join(distDir, 'next-minimal-server.js.nft.json');
+              if (!fs.existsSync(minimalNftFile)) {
+                fs.writeFileSync(minimalNftFile, JSON.stringify({ version: 1, files: [] }));
+              }
+            } catch {}
+          });
+        },
+      });
+    }
+    return config;
+  },
   turbopack: {
     root: path.resolve(__dirname),
   },
