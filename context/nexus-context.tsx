@@ -127,21 +127,21 @@ interface LevelMetadata {
 
 const LEVEL_DATA: Record<UserLevel, LevelMetadata> = {
   beginner: {
-    title: 'Welcome, Beginner! 👋',
-    levelBadge: 'Level 1',
-    tagline: 'Learn AI from scratch with easy lessons, hands-on examples and fun quizzes.',
+    title: 'Welcome to AI Nexus! 👋',
+    levelBadge: 'Level 1: AI Foundations',
+    tagline: 'Learn AI from scratch with foundational algorithms, hands-on labs and intelligent agents.',
     bannerTitle: 'Start Your AI Journey',
-    bannerText: "You're in the right place! Learn step-by-step and become AI confident.",
+    bannerText: "Begin step-by-step with core math, search algorithms, and machine learning essentials.",
     bannerCta: 'View Roadmap',
-    lessonsCompleted: 1,
-    totalLessons: 5,
-    quizzesTaken: 2,
+    lessonsCompleted: 0,
+    totalLessons: 12,
+    quizzesTaken: 0,
     projectsCompleted: 0,
-    totalProjects: 3,
-    timeSpent: '45 min',
-    streakDays: 3,
-    completionPercent: 25,
-    statsBadges: 3,
+    totalProjects: 5,
+    timeSpent: '0m',
+    streakDays: 1,
+    completionPercent: 0,
+    statsBadges: 0,
   },
   intermediate: {
     title: 'Intermediate Learning Path',
@@ -233,7 +233,7 @@ const NexusContext = createContext<NexusContextType | undefined>(undefined);
 export function NexusProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('dark');
   const [accentColor, setAccentColor] = useState<AccentColor>('purple');
-  const [userLevel, setUserLevelState] = useState<UserLevel>('expert');
+  const [userLevel, setUserLevelState] = useState<UserLevel>('beginner');
   const [academicTier, setAcademicTierState] = useState<AcademicTier>('undergraduate');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -255,13 +255,21 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
       if (savedTheme && ['dark', 'light', 'system'].includes(savedTheme)) {
         setTheme(savedTheme);
       }
+      const savedLevel = localStorage.getItem('nexus_user_level') as UserLevel;
+      if (savedLevel && ['beginner', 'intermediate', 'advanced', 'expert'].includes(savedLevel)) {
+        setUserLevelState(savedLevel);
+      }
       const savedAiBot = localStorage.getItem('nexus_ai_bot_enabled');
       if (savedAiBot !== null) {
         setIsAiBotEnabledState(savedAiBot === 'true');
       }
       const savedProfile = localStorage.getItem('nexus_user_profile');
       if (savedProfile) {
-        setUserProfileState(JSON.parse(savedProfile));
+        const parsed = JSON.parse(savedProfile);
+        if (parsed.name && /^[0-9\s\-+]+$/.test(parsed.name)) {
+          parsed.name = '';
+        }
+        setUserProfileState(parsed);
       }
     } catch {
       // Ignore localStorage errors in restricted environments
@@ -339,6 +347,9 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
 
   const setUserLevel = (level: UserLevel) => {
     setUserLevelState(level);
+    try {
+      localStorage.setItem('nexus_user_level', level);
+    } catch {}
   };
 
   const setAcademicTier = (tier: AcademicTier) => {

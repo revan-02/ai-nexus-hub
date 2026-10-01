@@ -15,11 +15,15 @@ interface ContinueLearningCardProps {
 }
 
 export function ContinueLearningCard({ session }: ContinueLearningCardProps) {
-  // Use real data if provided, otherwise show a sensible placeholder
-  const title = session?.title ?? 'Deep Learning & PyTorch Neural Networks';
-  const category = session?.category ?? 'Deep Learning';
-  const estimatedTime = session?.estimatedTime ?? '1.5 hours';
-  const href = session?.href ?? '/learn/room-4';
+  const hasActiveSession = Boolean(session && session.title);
+
+  // Use real session data if provided, otherwise show fresh welcome curriculum
+  const title = session?.title ?? 'AI Foundations & Intelligent Agents';
+  const category = session?.category ?? 'Stage 1: Core Fundamentals';
+  const estimatedTime = session?.estimatedTime ?? '15 mins intro';
+  const href = session?.href ?? '/courses';
+  const badgeLabel = hasActiveSession ? 'In Progress' : 'Get Started';
+  const buttonLabel = hasActiveSession ? 'Resume Learning' : 'Start Learning';
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900/40 via-background to-background border border-purple-500/20 shadow-lg shadow-purple-900/10">
@@ -30,7 +34,7 @@ export function ContinueLearningCard({ session }: ContinueLearningCardProps) {
         <div className="flex-1 space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold uppercase tracking-wider">
             <PlayCircle className="w-3.5 h-3.5" />
-            <span>Up Next</span>
+            <span>{badgeLabel}</span>
           </div>
 
           <div>
@@ -46,11 +50,11 @@ export function ContinueLearningCard({ session }: ContinueLearningCardProps) {
           <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground pt-2">
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-purple-400" />
-              <span>{estimatedTime} estimated</span>
+              <span>{estimatedTime}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <BookOpen className="w-4 h-4 text-purple-400" />
-              <span>Interactive lessons</span>
+              <span>Interactive curriculum</span>
             </div>
           </div>
         </div>
@@ -60,7 +64,7 @@ export function ContinueLearningCard({ session }: ContinueLearningCardProps) {
             href={href}
             className="inline-flex items-center justify-center w-full md:w-auto px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-purple-600/25 hover:shadow-purple-500/40 hover:-translate-y-0.5 active:translate-y-0 text-sm"
           >
-            Resume Learning
+            {buttonLabel}
             <PlayCircle className="ml-2 w-5 h-5" />
           </Link>
         </div>

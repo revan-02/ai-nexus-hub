@@ -110,10 +110,30 @@ export default function RegisterPage() {
 
       setSuccessMessage('Verified successfully! Logging in...');
 
-      // Auto sign in using NextAuth
+      const finalName = data?.user?.name || fullName?.trim() || 'Learner';
+
+      // Save user profile locally for instant client-side reactivity across components
+      try {
+        localStorage.setItem(
+          'nexus_user_profile',
+          JSON.stringify({
+            name: finalName,
+            email: data.user.email,
+            phone: authMethod === 'phone' ? identifier : '',
+            username: data.user.email?.split('@')[0] || '',
+            bio: 'AI Practitioner & Systems Builder',
+          })
+        );
+        window.dispatchEvent(new Event('nexus_profile_updated'));
+      } catch {
+        // ignore
+      }
+
+      // Auto sign in using NextAuth with name included
       const signInRes = await signIn('credentials', {
         email: data.user.email,
         password: 'password123',
+        name: finalName,
         redirect: false,
       });
 

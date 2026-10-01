@@ -13,7 +13,12 @@ export async function POST(request: NextRequest) {
 
     const cleanIdentifier = identifier.trim().toLowerCase();
     const isEmail = cleanIdentifier.includes('@');
-    const generatedName = name || (isEmail ? cleanIdentifier.split('@')[0] : `User_${cleanIdentifier.slice(-4)}`);
+    const providedName = typeof name === 'string' && name.trim() ? name.trim() : null;
+    let fallbackName = isEmail ? cleanIdentifier.split('@')[0] : 'Learner';
+    if (/^[0-9\s\-+]+$/.test(fallbackName)) {
+      fallbackName = 'Learner';
+    }
+    const generatedName = providedName || fallbackName;
     const defaultEmail = isEmail ? cleanIdentifier : `${cleanIdentifier.replace(/[^0-9]/g, '')}@nexus-mobile.ai`;
 
     let user: any = null;
@@ -24,8 +29,20 @@ export async function POST(request: NextRequest) {
         where: isEmail ? { email: cleanIdentifier } : { phone: cleanIdentifier },
       });
 
-      // If user does not exist, auto-create a simple account
-      if (!user) {
+      if (user) {
+        // If user already exists and provided a new name, update it
+        if (providedName && user.name !== providedName) {
+          try {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { name: providedName },
+            });
+          } catch {
+            user.name = providedName;
+          }
+        }
+      } else {
+        // If user does not exist, auto-create a simple account
         const baseUsername = `@${generatedName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
         const hashedPassword = await bcrypt.hash('password123', 10);
 

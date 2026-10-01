@@ -2,13 +2,20 @@ import React from 'react';
 import { Compass, CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export function CompactRoadmap() {
-  const steps = [
-    { id: 1, title: 'AI Foundations', status: 'completed' },
-    { id: 2, title: 'Machine Learning Core', status: 'current' },
-    { id: 3, title: 'Deep Learning', status: 'upcoming' },
-    { id: 4, title: 'Generative AI', status: 'upcoming' },
+interface CompactRoadmapProps {
+  steps?: Array<{ id: number; title: string; status: 'completed' | 'current' | 'upcoming' }>;
+  currentStage?: number;
+}
+
+export function CompactRoadmap({ steps: propSteps, currentStage = 1 }: CompactRoadmapProps) {
+  const defaultSteps = [
+    { id: 1, title: 'AI Foundations', status: currentStage > 1 ? 'completed' : currentStage === 1 ? 'current' : 'upcoming' },
+    { id: 2, title: 'Machine Learning Core', status: currentStage > 2 ? 'completed' : currentStage === 2 ? 'current' : 'upcoming' },
+    { id: 3, title: 'Deep Learning', status: currentStage > 3 ? 'completed' : currentStage === 3 ? 'current' : 'upcoming' },
+    { id: 4, title: 'Generative AI', status: currentStage >= 4 ? 'current' : 'upcoming' },
   ];
+
+  const steps = propSteps || defaultSteps;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4.5 relative">

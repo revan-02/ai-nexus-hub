@@ -164,10 +164,7 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
             where: { id: userId },
             select: { id: true, name: true, email: true, role: true, avatar: true, certificates: { select: { id: true } } },
           })
-        : prisma.user.findFirst({
-            where: { status: 'Active' },
-            select: { id: true, name: true, email: true, role: true, avatar: true, certificates: { select: { id: true } } },
-          }),
+        : null,
       prisma.learningPhase.findMany({
         orderBy: { order: 'asc' },
         select: {
@@ -475,7 +472,8 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
     href: `/assessments`,
   }));
 
-  const tabLiveSessions = dbRooms.map((r) => ({
+  // For new users without completed lessons, do not fake an in-progress live session
+  const tabLiveSessions = (completedLessonIds.size > 0 ? dbRooms : []).map((r) => ({
     id: r.id,
     title: r.title,
     category: r.category,
@@ -485,8 +483,8 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
 
   const result: LearnerDashboardDTO = {
     user: {
-      id: user?.id || '',
-      name: user?.name || 'Guest Learner',
+      id: user?.id || userId || '',
+      name: user?.name || 'Learner',
       email: user?.email || '',
       avatar: user?.avatar,
       role: userRole,
@@ -511,44 +509,44 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
   dashboardCache.set(cacheKey, { timestamp: Date.now(), data: result });
   return result;
   } catch (error) {
-    console.warn('Database query failed in getLearnerDashboardData, returning structured fallback:', error);
+    console.warn('Database query failed in getLearnerDashboardData, returning fresh learner baseline:', error);
     return {
       user: {
-        id: userId || 'usr-7',
-        name: 'David Kim',
-        email: 'david@nexus.ai',
-        avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-        role: 'User',
+        id: userId || 'usr-learner',
+        name: 'Learner',
+        email: '',
+        avatar: null,
+        role: 'Learner',
       },
       levelMeta: {
-        title: 'Stage 3: Deep Learning & Neural Networks',
-        levelBadge: 'Intermediate Learner',
-        tagline: 'Building neural network models, backpropagation, and multi-head self-attention',
-        bannerTitle: 'Master Deep Learning & Transformer Architectures',
-        bannerText: 'Learn activation functions, optimization algorithms, CNNs, LSTMs, and self-attention math.',
-        bannerCta: 'Continue Deep Learning',
-        lessonsCompleted: 9,
+        title: 'Stage 1: AI Foundations & Intelligent Agents',
+        levelBadge: 'Beginner Track',
+        tagline: 'Master search algorithms, logic, and intelligent problem solving.',
+        bannerTitle: 'Welcome to AI Nexus',
+        bannerText: 'Begin your journey with AI Foundations, Python algorithms, and agent architectures.',
+        bannerCta: 'Start AI Foundations',
+        lessonsCompleted: 0,
         totalLessons: 12,
-        quizzesTaken: 3,
-        projectsCompleted: 2,
+        quizzesTaken: 0,
+        projectsCompleted: 0,
         totalProjects: 5,
-        timeSpent: '26h 30m',
-        streakDays: 7,
-        completionPercent: 75,
-        statsBadges: 4,
+        timeSpent: '0m',
+        streakDays: 1,
+        completionPercent: 0,
+        statsBadges: 0,
       },
       steps: [
-        { id: 'phase-1', num: 1, title: 'Stage 1: AI Foundations & Intelligent Agents', order: 1, description: 'Master search algorithms, logic, and expert systems.', status: 'completed', progress: 100, availableContentCount: 4, completedContentCount: 4 },
-        { id: 'phase-2', num: 2, title: 'Stage 2: Machine Learning & Statistical Modeling', order: 2, description: 'Supervised, unsupervised, regularization, and model evaluation.', status: 'completed', progress: 100, availableContentCount: 4, completedContentCount: 4 },
-        { id: 'phase-3', num: 3, title: 'Stage 3: Deep Learning & PyTorch Networks', order: 3, description: 'Perceptrons, MLPs, backpropagation, CNNs, and sequence models.', status: 'in_progress', progress: 50, availableContentCount: 2, completedContentCount: 1 },
-        { id: 'phase-4', num: 4, title: 'Stage 4: Generative AI, LLMs & Autonomous Agents', order: 4, description: 'Transformers, prompt engineering, RAG pipelines, and tool calling.', status: 'available', progress: 0, availableContentCount: 2, completedContentCount: 0 },
+        { id: 'phase-1', num: 1, title: 'Stage 1: AI Foundations & Intelligent Agents', order: 1, description: 'Master search algorithms, logic, and expert systems.', status: 'in_progress', progress: 0, availableContentCount: 4, completedContentCount: 0 },
+        { id: 'phase-2', num: 2, title: 'Stage 2: Machine Learning & Statistical Modeling', order: 2, description: 'Supervised, unsupervised, regularization, and model evaluation.', status: 'available', progress: 0, availableContentCount: 4, completedContentCount: 0 },
+        { id: 'phase-3', num: 3, title: 'Stage 3: Deep Learning & PyTorch Networks', order: 3, description: 'Perceptrons, MLPs, backpropagation, CNNs, and sequence models.', status: 'locked', progress: 0, availableContentCount: 2, completedContentCount: 0 },
+        { id: 'phase-4', num: 4, title: 'Stage 4: Generative AI, LLMs & Autonomous Agents', order: 4, description: 'Transformers, prompt engineering, RAG pipelines, and tool calling.', status: 'locked', progress: 0, availableContentCount: 2, completedContentCount: 0 },
         { id: 'phase-5', num: 5, title: 'AI Systems Design & High-Performance Inference', order: 5, description: 'Quantization, vLLM serving, and distributed GPU clusters.', status: 'locked', progress: 0, availableContentCount: 2, completedContentCount: 0 },
         { id: 'phase-6', num: 6, title: 'Expert Research & AI Frontiers', order: 6, description: 'State-space models, research papers, and custom CUDA optimization.', status: 'locked', progress: 0, availableContentCount: 2, completedContentCount: 0 },
       ],
       activeCourses: [
-        { id: 'crs-0', num: '01', title: 'AI Foundations & Intelligent Agents', desc: 'Search strategies, logic, and expert systems', level: 'Beginner', category: 'AI Foundations', duration: '180 mins', difficulty: 'Easy', progress: 100, status: 'completed', action: 'Review', thumbnailIcon: 'Sparkles' },
-        { id: 'crs-2', num: '02', title: 'Classical Machine Learning & Scikit-Learn', desc: 'Supervised and unsupervised ML models', level: 'Intermediate', category: 'Machine Learning', duration: '330 mins', difficulty: 'Medium', progress: 100, status: 'completed', action: 'Review', thumbnailIcon: 'Brain' },
-        { id: 'crs-3', num: '03', title: 'Deep Learning & PyTorch Neural Networks', desc: 'Multi-layer perceptrons, CNNs, and backpropagation', level: 'Intermediate', category: 'Deep Learning', duration: '540 mins', difficulty: 'Medium', progress: 50, status: 'in_progress', action: 'Continue', thumbnailIcon: 'Network' },
+        { id: 'crs-0', num: '01', title: 'AI Foundations & Intelligent Agents', desc: 'Search strategies, logic, and expert systems', level: 'Beginner', category: 'AI Foundations', duration: '180 mins', difficulty: 'Easy', progress: 0, status: 'in_progress', action: 'Start Lesson', thumbnailIcon: 'Sparkles' },
+        { id: 'crs-2', num: '02', title: 'Classical Machine Learning & Scikit-Learn', desc: 'Supervised and unsupervised ML models', level: 'Intermediate', category: 'Machine Learning', duration: '330 mins', difficulty: 'Medium', progress: 0, status: 'available', action: 'Locked', thumbnailIcon: 'Brain' },
+        { id: 'crs-3', num: '03', title: 'Deep Learning & PyTorch Neural Networks', desc: 'Multi-layer perceptrons, CNNs, and backpropagation', level: 'Intermediate', category: 'Deep Learning', duration: '540 mins', difficulty: 'Medium', progress: 0, status: 'locked', action: 'Locked', thumbnailIcon: 'Network' },
       ],
       recommended: {
         papers: [],

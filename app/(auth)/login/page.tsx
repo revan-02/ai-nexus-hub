@@ -62,17 +62,40 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      const cleanIdentifier = email.trim();
+      const isEmail = cleanIdentifier.includes('@');
+      const cleanPhone = cleanIdentifier.replace(/[^0-9]/g, '');
+      const isPhone = !isEmail && cleanPhone.length >= 7;
+      const authEmail = isPhone ? `${cleanPhone}@nexus-mobile.ai` : cleanIdentifier;
+
+      let storedName = '';
+      try {
+        const savedProfile = localStorage.getItem('nexus_user_profile');
+        if (savedProfile) {
+          const p = JSON.parse(savedProfile);
+          if (p.name && !/^[0-9\s\-+]+$/.test(p.name)) {
+            storedName = p.name;
+          }
+        }
+      } catch {}
+
       const res = await signIn('credentials', {
-        email,
+        email: authEmail,
         password,
+        name: storedName || undefined,
         redirect: false,
       });
 
       setIsLoading(false);
 
       if (res?.error) {
-        setErrorMessage('Invalid email or password. Please try again.');
+        setErrorMessage('Invalid credentials. Please verify your email or phone number and password.');
       } else {
+        if (storedName) {
+          try {
+            window.dispatchEvent(new Event('nexus_profile_updated'));
+          } catch {}
+        }
         setSuccessMessage(
           loginRole === 'admin'
             ? 'Admin authentication successful! Redirecting to Control Center...'
@@ -213,15 +236,15 @@ export default function LoginPage() {
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="block font-semibold text-zinc-300">
-                  {loginRole === 'admin' ? 'Admin Email / Username' : 'Email Address'}
+                  {loginRole === 'admin' ? 'Admin Email / Username' : 'Email Address or Mobile Number'}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <Input
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai'}
+                    placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai or +91 98765 43210'}
                     className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
                   />
                 </div>

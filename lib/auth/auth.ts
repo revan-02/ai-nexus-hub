@@ -14,27 +14,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Email or Phone', type: 'text' },
         password: { label: 'Password', type: 'password' },
+        name: { label: 'Name', type: 'text' },
       },
       async authorize(credentials) {
         const validatedFields = loginSchema.safeParse(credentials);
 
         if (validatedFields.success) {
-          const { email, password } = validatedFields.data;
-          const cleanEmail = email.toLowerCase().trim();
+          const { email, password, name } = validatedFields.data;
+          const cleanInput = email.toLowerCase().trim();
+          const isEmail = cleanInput.includes('@');
+          const cleanPhone = cleanInput.replace(/[^0-9]/g, '');
+          const isPhone = !isEmail && cleanPhone.length >= 7;
+          const cleanEmail = isEmail ? cleanInput : `${cleanPhone || cleanInput}@nexus-mobile.ai`;
 
           try {
-            const user = await prisma.user.findUnique({
-              where: { email: cleanEmail },
+            const user = await prisma.user.findFirst({
+              where: {
+                OR: [
+                  { email: cleanEmail },
+                  { email: cleanInput },
+                  ...(cleanPhone ? [{ phone: cleanPhone }, { phone: cleanInput }] : []),
+                  { username: cleanInput },
+                ],
+              },
             });
 
             if (user && user.password) {
               const passwordsMatch = await bcrypt.compare(password, user.password);
               if (passwordsMatch) {
+                // If caller provided a real name and DB name looks like phone number, prefer provided name
+                let resolvedName = name?.trim();
+                if (!resolvedName || /^\+?[0-9\s\-]+$/.test(resolvedName)) {
+                  resolvedName = user.name && !/^\+?[0-9\s\-]+$/.test(user.name) ? user.name : 'Learner';
+                }
                 return {
                   id: user.id,
-                  name: user.name,
+                  name: resolvedName,
                   email: user.email,
                   image: user.avatar,
                   role: user.role,
@@ -55,7 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
 
           if (password === 'password123') {
-            const demo = demoAccounts[cleanEmail];
+            const demo = demoAccounts[cleanEmail] || demoAccounts[cleanInput];
             if (demo) {
               return {
                 id: demo.id,
@@ -64,10 +81,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 role: demo.role,
               };
             }
+
+            // Priority: explicit name provided -> sanitized username -> fallback 'Learner'
+            let finalName = name?.trim();
+            if (!finalName || /^\+?[0-9\s\-]+$/.test(finalName)) {
+              const prefix = cleanInput.split('@')[0];
+              if (!/^[0-9\s\-]+$/.test(prefix)) {
+                finalName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+              } else {
+                finalName = 'Learner';
+              }
+            }
+
             // Auto-registered OTP user or any valid email
             return {
-              id: `usr-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '')}`,
-              name: cleanEmail.split('@')[0],
+              id: `usr-${cleanInput.replace(/[^a-zA-Z0-9]/g, '')}`,
+              name: finalName,
               email: cleanEmail,
               role: 'User',
             };

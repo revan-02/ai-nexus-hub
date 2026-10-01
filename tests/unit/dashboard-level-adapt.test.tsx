@@ -125,8 +125,8 @@ describe('Dashboard Dynamic Level Adaptation', () => {
   it('filters courses when clicking a level filter chip', () => {
     renderWithProviders(<DashboardPage />);
 
-    // Initially with default expert level, advanced/expert course is shown
-    expect(screen.getByText('Advanced Neural Networks & Transformers')).toBeInTheDocument();
+    // Initially with default beginner level, beginner course is shown
+    expect(screen.getByText('Intro to AI for Beginners')).toBeInTheDocument();
 
     // Click "All Levels" filter chip
     const allLevelsBtn = screen.getByRole('button', { name: 'All Levels' });

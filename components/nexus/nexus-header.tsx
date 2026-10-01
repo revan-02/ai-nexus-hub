@@ -46,15 +46,19 @@ export function NexusHeader() {
     userProfile,
   } = useNexus();
 
-  const displayName = userProfile?.name || session?.user?.name || 'Learner Account';
+  const rawName = userProfile?.name || session?.user?.name || '';
+  const isPhoneNumber = !rawName || /^[0-9\s\-+]+$/.test(rawName);
+  const displayName = isPhoneNumber ? 'Learner' : rawName;
   const displayEmail = userProfile?.email || session?.user?.email || 'learner@nexus.ai';
-  const initials = displayName
-    .split(' ')
-    .map((n: string) => n[0])
-    .filter(Boolean)
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'L';
+  const initials = isPhoneNumber
+    ? 'LN'
+    : displayName
+        .split(' ')
+        .map((n: string) => n[0])
+        .filter(Boolean)
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'LN';
 
 
   const [language, setLanguage] = useState('EN');
@@ -146,7 +150,11 @@ export function NexusHeader() {
             </div>
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-foreground leading-tight">{displayName}</span>
-              <span className="text-[10px] font-semibold text-purple-400 capitalize">{(session?.user as { role?: string })?.role || userLevel} Level</span>
+              <span className="text-[10px] font-semibold text-purple-400 capitalize">
+                {(session?.user as { role?: string })?.role === 'Admin'
+                  ? 'System Admin'
+                  : `${userLevel} Track`}
+              </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
@@ -155,7 +163,7 @@ export function NexusHeader() {
               <p className="text-xs font-bold text-foreground">{displayName}</p>
               <p className="text-[11px] text-muted-foreground font-mono">{displayEmail}</p>
               <span className="mt-1 inline-block px-2 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] font-bold rounded-md capitalize">
-                {(session?.user as { role?: string })?.role || userLevel}
+                {(session?.user as { role?: string })?.role === 'Admin' ? 'Admin' : `${userLevel} Track`}
               </span>
             </div>
 

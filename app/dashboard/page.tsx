@@ -36,11 +36,13 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const displayName = userProfile?.name || session?.user?.name || '';
+  const rawName = userProfile?.name || session?.user?.name || '';
+  const isPhone = !rawName || /^[0-9\s\-+]+$/.test(rawName) || rawName.includes('@nexus-mobile.ai');
+  const displayName = isPhone ? '' : rawName;
   const firstName = displayName ? displayName.split(' ')[0] : '';
 
   const dashboardData = apiResponse?.data;
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'expert');
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'beginner');
   const [selectedVideoCourse, setSelectedVideoCourse] = useState<any | null>(null);
 
   const modalCourse: CourseItem | null = selectedVideoCourse
@@ -73,8 +75,8 @@ export default function DashboardPage() {
   }, [userLevel]);
 
   const levelMeta = {
-    title: contextLevelMeta?.title || dashboardData?.levelMeta?.title || 'Welcome back, Aarav',
-    completionPercent: dashboardData?.levelMeta?.completionPercent ?? 12,
+    title: contextLevelMeta?.title || dashboardData?.levelMeta?.title || 'Welcome to AI Nexus',
+    completionPercent: dashboardData?.levelMeta?.completionPercent ?? 0,
   };
 
   const rawCourses = dashboardData?.activeCourses || [
@@ -213,23 +215,44 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              <Card className="p-5 bg-card border-border rounded-2xl flex items-center justify-between gap-4 hover:border-blue-500/40 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0">
-                    <Code className="w-6 h-6" />
-                  </div>
-                  <div className="space-y-1 min-w-0">
-                    <h3 className="text-sm font-bold text-foreground truncate group-hover:text-blue-400 transition-colors">Semantic Search Engine</h3>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> In Progress</span>
-                      <span>Updated 2 hours ago</span>
+              {dashboardData?.levelMeta?.projectsCompleted && dashboardData.levelMeta.projectsCompleted > 0 ? (
+                <Card className="p-5 bg-card border-border rounded-2xl flex items-center justify-between gap-4 hover:border-blue-500/40 transition-all cursor-pointer group">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <Code className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <h3 className="text-sm font-bold text-foreground truncate group-hover:text-blue-400 transition-colors">Semantic Search Engine</h3>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> In Progress</span>
+                        <span>Updated recently</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <Button className="hidden sm:flex bg-secondary hover:bg-blue-500/10 text-foreground hover:text-blue-400 border border-border text-xs font-semibold rounded-xl h-9">
-                  Open Editor
-                </Button>
-              </Card>
+                  <Link href="/projects">
+                    <Button className="hidden sm:flex bg-secondary hover:bg-blue-500/10 text-foreground hover:text-blue-400 border border-border text-xs font-semibold rounded-xl h-9">
+                      Open Editor
+                    </Button>
+                  </Link>
+                </Card>
+              ) : (
+                <Card className="p-5 bg-card border-border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-500/40 transition-all group">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <Code className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <h3 className="text-sm font-bold text-foreground truncate group-hover:text-blue-400 transition-colors">Start Your First AI Project</h3>
+                      <p className="text-xs text-muted-foreground">Build neural networks, RAG pipelines, and agent systems with real code.</p>
+                    </div>
+                  </div>
+                  <Link href="/projects">
+                    <Button className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl h-9 shadow-md shadow-blue-900/20 w-full sm:w-auto">
+                      Explore Projects
+                    </Button>
+                  </Link>
+                </Card>
+              )}
             </section>
           </div>
 
@@ -263,7 +286,7 @@ export default function DashboardPage() {
             <DailyChallengeCard />
 
             {/* Compact Roadmap */}
-            <CompactRoadmap />
+            <CompactRoadmap currentStage={dashboardData?.steps?.find((s: any) => s.status === 'in_progress')?.num || 1} />
 
           </div>
         </div>
