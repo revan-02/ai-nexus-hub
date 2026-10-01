@@ -303,28 +303,29 @@ const CERTIFICATES: CertificateItem[] = [
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 function ProfileContent() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') || 'learning';
   const [activeTab, setActiveTab] = useState<string>(initialTab);
-  const { userLevel, levelMeta } = useNexus();
+  const { userLevel, levelMeta, userProfile, updateUserProfile } = useNexus();
 
-  const userName = session?.user?.name || 'Expert Learner';
-  const userEmail = session?.user?.email || 'expert.learner@nexus.ai';
+  const userName = userProfile?.name || session?.user?.name || 'Expert Learner';
+  const userEmail = userProfile?.email || session?.user?.email || 'expert.learner@nexus.ai';
   const userRole = (session?.user as { role?: string })?.role || `${userLevel} Track`;
   const userInitials = userName
     .split(' ')
     .map((n) => n[0])
+    .filter(Boolean)
     .join('')
     .slice(0, 2)
     .toUpperCase() || 'EL';
 
   // Profile Form State
-  const [fullName, setFullName] = useState(userName);
-  const [username, setUsername] = useState('expert.learner');
-  const [email, setEmail] = useState(userEmail);
-  const [phoneNumber, setPhoneNumber] = useState('+91 98765 43210');
-  const [bio, setBio] = useState('Passionate about AI research, LLM architectures, and building intelligent agentic systems.');
+  const [fullName, setFullName] = useState(userProfile?.name || userName);
+  const [username, setUsername] = useState(userProfile?.username || 'revan');
+  const [email, setEmail] = useState(userProfile?.email || userEmail);
+  const [phoneNumber, setPhoneNumber] = useState(userProfile?.phone || '+91 8050958495');
+  const [bio, setBio] = useState(userProfile?.bio || 'Mastering full-stack AI engineering, neural architectures, distributed GPU systems, and real-world applied challenges.');
   const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
 
   // Security / Password Reset State
@@ -335,11 +336,45 @@ function ProfileContent() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
 
-  // Sync with session when session loads
+  // Sync with session & userProfile when loaded
   useEffect(() => {
-    if (session?.user?.name) setFullName(session.user.name);
-    if (session?.user?.email) setEmail(session.user.email);
-  }, [session]);
+    if (userProfile?.name) {
+      setFullName(userProfile.name);
+    } else if (session?.user?.name) {
+      setFullName(session.user.name);
+    }
+
+    if (userProfile?.email) {
+      setEmail(userProfile.email);
+    } else if (session?.user?.email) {
+      setEmail(session.user.email);
+    }
+
+    if (userProfile?.username) setUsername(userProfile.username);
+    if (userProfile?.phone) setPhoneNumber(userProfile.phone);
+    if (userProfile?.bio) setBio(userProfile.bio);
+  }, [session, userProfile]);
+
+  const handleSaveProfile = async () => {
+    updateUserProfile({
+      name: fullName,
+      username,
+      email,
+      phone: phoneNumber,
+      bio,
+    });
+
+    try {
+      if (typeof update === 'function') {
+        await update({ name: fullName, email });
+      }
+    } catch {
+      // ignore
+    }
+
+    setProfileSaveSuccess(true);
+    setTimeout(() => setProfileSaveSuccess(false), 3000);
+  };
 
   // Cart & Wishlist state
   const [cart, setCart] = useState<CartItem[]>(INITIAL_CART);
@@ -429,7 +464,7 @@ function ProfileContent() {
               </div>
               <p className="text-xs text-muted-foreground font-mono">{userEmail} • Active Account</p>
               <p className="text-xs text-muted-foreground max-w-xl">
-                Mastering full-stack AI engineering, neural architectures, distributed GPU systems, and real-world applied challenges.
+                {bio || 'Mastering full-stack AI engineering, neural architectures, distributed GPU systems, and real-world applied challenges.'}
               </p>
             </div>
           </div>
@@ -978,10 +1013,7 @@ function ProfileContent() {
 
                 <div className="flex items-center justify-between pt-2">
                   <Button
-                    onClick={() => {
-                      setProfileSaveSuccess(true);
-                      setTimeout(() => setProfileSaveSuccess(false), 3000);
-                    }}
+                    onClick={handleSaveProfile}
                     className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-10 px-6 rounded-xl gap-2 cursor-pointer shadow-md"
                   >
                     <Check className="w-4 h-4" />

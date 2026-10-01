@@ -17,6 +17,7 @@ import { mockAlerts } from '@/lib/mock-data/admin-data';
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import { useNexus } from '@/context/nexus-context';
 
 interface AdminHeaderProps {
   onToggleMobileSidebar?: () => void;
@@ -24,8 +25,13 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
   const { data: session } = useSession();
+  const { userProfile } = useNexus();
   const [commandOpen, setCommandOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+
+  const displayName = userProfile?.name || session?.user?.name || 'John Doe';
+  const displayEmail = userProfile?.email || session?.user?.email || 'admin@nexus.ai';
+  const initials = displayName.split(' ').map((n: string) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || 'U';
 
   const handleLogout = async () => {
     try {
@@ -120,15 +126,15 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger render={<button className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-[#14141c] transition-colors text-left group" />}>
             <Avatar className="w-8 h-8 border border-purple-500/30">
-              <AvatarImage src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"} alt={session?.user?.name || "User"} />
+              <AvatarImage src={session?.user?.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"} alt={displayName} />
               <AvatarFallback className="bg-purple-950 text-purple-300 font-bold text-xs">
-                {session?.user?.name ? session.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="hidden sm:flex flex-col">
               <div className="flex items-center gap-1">
                 <span className="text-xs font-semibold text-zinc-200 group-hover:text-white leading-none">
-                  {session?.user?.name || 'Learner'}
+                  {displayName}
                 </span>
                 <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
               </div>
@@ -142,19 +148,19 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
             {/* User Profile Card Header */}
             <div className="p-3 bg-[#181820] border border-[#272730] rounded-xl flex items-start gap-3">
               <Avatar className="w-10 h-10 border border-purple-500/40">
-                <AvatarImage src={session?.user?.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"} alt={session?.user?.name || "User"} />
+                <AvatarImage src={session?.user?.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"} alt={displayName} />
                 <AvatarFallback className="bg-purple-950 text-purple-300 font-bold">
-                  {session?.user?.name ? session.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : 'U'}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-white text-xs truncate">{session?.user?.name || 'John Doe'}</span>
+                  <span className="font-bold text-white text-xs truncate">{displayName}</span>
                   <span className="px-1.5 py-0.2 text-[9px] font-bold bg-purple-500/20 text-purple-300 rounded border border-purple-500/30">
                     {(session?.user as { role?: string })?.role || 'Admin'}
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 truncate mt-0.5">{session?.user?.email || 'admin@nexus.ai'}</p>
+                <p className="text-[11px] text-zinc-400 truncate mt-0.5">{displayEmail}</p>
                 <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-400 font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Online

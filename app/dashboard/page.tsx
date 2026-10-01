@@ -18,7 +18,7 @@ import type { CourseItem } from '@/lib/mock-data/courses-data';
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const { userLevel, levelMeta: contextLevelMeta } = useNexus();
+  const { userLevel, levelMeta: contextLevelMeta, userProfile } = useNexus();
   const { data: apiResponse, isLoading, isError } = useLearnerDashboard();
 
   const [greeting, setGreeting] = useState('Welcome back');
@@ -36,7 +36,8 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const firstName = session?.user?.name ? session.user.name.split(' ')[0] : '';
+  const displayName = userProfile?.name || session?.user?.name || '';
+  const firstName = displayName ? displayName.split(' ')[0] : '';
 
   const dashboardData = apiResponse?.data;
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'expert');

@@ -196,6 +196,14 @@ const LEVEL_DATA: Record<UserLevel, LevelMetadata> = {
   },
 };
 
+export interface UserCustomProfile {
+  name: string;
+  email: string;
+  username: string;
+  phone: string;
+  bio: string;
+}
+
 interface NexusContextType {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
@@ -216,6 +224,8 @@ interface NexusContextType {
   notificationCount: number;
   isAiBotEnabled: boolean;
   setIsAiBotEnabled: (enabled: boolean) => void;
+  userProfile: UserCustomProfile;
+  updateUserProfile: (updates: Partial<UserCustomProfile>) => void;
 }
 
 const NexusContext = createContext<NexusContextType | undefined>(undefined);
@@ -230,8 +240,15 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [notificationCount] = useState(3);
   const [isAiBotEnabled, setIsAiBotEnabledState] = useState(true);
+  const [userProfile, setUserProfileState] = useState<UserCustomProfile>({
+    name: '',
+    email: '',
+    username: '',
+    phone: '',
+    bio: '',
+  });
 
-  // Load saved settings from localStorage on mount
+  // Load saved settings & profile from localStorage on mount
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('nexus_theme') as ThemeMode;
@@ -242,9 +259,43 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
       if (savedAiBot !== null) {
         setIsAiBotEnabledState(savedAiBot === 'true');
       }
+      const savedProfile = localStorage.getItem('nexus_user_profile');
+      if (savedProfile) {
+        setUserProfileState(JSON.parse(savedProfile));
+      }
     } catch {
       // Ignore localStorage errors in restricted environments
     }
+  }, []);
+
+  const updateUserProfile = (updates: Partial<UserCustomProfile>) => {
+    setUserProfileState((prev) => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('nexus_user_profile', JSON.stringify(updated));
+        window.dispatchEvent(new Event('nexus_profile_updated'));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem('nexus_user_profile');
+        if (saved) {
+          setUserProfileState(JSON.parse(saved));
+        }
+      } catch {}
+    };
+    window.addEventListener('nexus_profile_updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('nexus_profile_updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
   }, []);
 
   const setIsAiBotEnabled = (enabled: boolean) => {
@@ -335,6 +386,8 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
         notificationCount,
         isAiBotEnabled,
         setIsAiBotEnabled,
+        userProfile,
+        updateUserProfile,
       }}
     >
       {children}

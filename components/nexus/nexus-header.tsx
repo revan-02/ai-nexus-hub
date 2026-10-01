@@ -42,8 +42,19 @@ export function NexusHeader() {
     levelMeta,
     setIsSearchOpen,
     setSidebarCollapsed,
-    notificationCount
+    notificationCount,
+    userProfile,
   } = useNexus();
+
+  const displayName = userProfile?.name || session?.user?.name || 'Learner Account';
+  const displayEmail = userProfile?.email || session?.user?.email || 'learner@nexus.ai';
+  const initials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .filter(Boolean)
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'L';
 
 
   const [language, setLanguage] = useState('EN');
@@ -131,18 +142,18 @@ export function NexusHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger render={<button className="flex items-center gap-2.5 pl-2 pr-1 py-1 rounded-xl hover:bg-secondary transition-colors" />}>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-md shadow-purple-900/30">
-              {session?.user?.name ? session.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'L'}
+              {initials}
             </div>
             <div className="hidden md:flex flex-col text-left">
-              <span className="text-xs font-bold text-foreground leading-tight">{session?.user?.name || 'Learner Account'}</span>
+              <span className="text-xs font-bold text-foreground leading-tight">{displayName}</span>
               <span className="text-[10px] font-semibold text-purple-400 capitalize">{(session?.user as { role?: string })?.role || userLevel} Level</span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-popover border-border text-foreground rounded-2xl p-2 space-y-1 shadow-xl">
             <div className="px-3 py-2 bg-secondary rounded-xl">
-              <p className="text-xs font-bold text-foreground">{session?.user?.name || 'Learner Account'}</p>
-              <p className="text-[11px] text-muted-foreground font-mono">{session?.user?.email || 'learner@nexus.ai'}</p>
+              <p className="text-xs font-bold text-foreground">{displayName}</p>
+              <p className="text-[11px] text-muted-foreground font-mono">{displayEmail}</p>
               <span className="mt-1 inline-block px-2 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] font-bold rounded-md capitalize">
                 {(session?.user as { role?: string })?.role || userLevel}
               </span>
