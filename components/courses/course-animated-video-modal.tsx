@@ -44,7 +44,9 @@ import {
   BarChart3,
   Server,
   Lock,
-  Layers3
+  Layers3,
+  ExternalLink,
+  Tv
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -91,12 +93,57 @@ interface CourseInteractivePayload {
   };
 }
 
+function getCuratedMasterclassForCourse(c: CourseItem | null) {
+  if (!c) {
+    return {
+      videoId: 'aircAruvnKk',
+      channelName: '3Blue1Brown',
+      videoTitle: 'Neural Networks from First Principles',
+    };
+  }
+  const t = ((c.title || '') + ' ' + (c.category || '')).toLowerCase();
+  if (t.includes('transformer') || t.includes('llm') || t.includes('gpt') || t.includes('nlp')) {
+    return {
+      videoId: 'zjkBMFhNj_g',
+      channelName: '3Blue1Brown',
+      videoTitle: 'Visualizing Attention and Transformer Networks',
+    };
+  }
+  if (t.includes('vision') || t.includes('cnn') || t.includes('image')) {
+    return {
+      videoId: '2ePf9rue1Ao',
+      channelName: '3Blue1Brown',
+      videoTitle: 'Deep Learning & Neural Network Foundations',
+    };
+  }
+  if (t.includes('pytorch') || t.includes('code') || t.includes('architect')) {
+    return {
+      videoId: 'T-D1OfcDW1M',
+      channelName: 'freeCodeCamp (Daniel Bourke)',
+      videoTitle: 'PyTorch for Deep Learning Full Masterclass',
+    };
+  }
+  if (t.includes('backprop') || t.includes('calculus') || t.includes('gradient')) {
+    return {
+      videoId: 'ad79nYk2keg',
+      channelName: '3Blue1Brown',
+      videoTitle: 'What is Backpropagation Really Doing?',
+    };
+  }
+  return {
+    videoId: 'aircAruvnKk',
+    channelName: '3Blue1Brown',
+    videoTitle: 'Neural Networks from First Principles',
+  };
+}
+
 export function CourseAnimatedVideoModal({
   course,
   isOpen,
   onClose,
   initialLectureTitle,
 }: CourseAnimatedVideoModalProps) {
+  const curatedVideo = getCuratedMasterclassForCourse(course);
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTimeSec, setCurrentTimeSec] = useState(15);
   const [durationSec] = useState(240); // 4 minutes video
@@ -105,6 +152,10 @@ export function CourseAnimatedVideoModal({
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'simulator' | 'code' | 'telemetry' | 'blueprint'>('simulator');
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Video Mode: Interactive Animated Simulation Canvas vs Curated HD Masterclass Video
+  const [videoStageMode, setVideoStageMode] = useState<'animated_canvas' | 'hd_masterclass'>('animated_canvas');
+  const [embedFallback, setEmbedFallback] = useState(false);
 
   // Video AI Generation state
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
@@ -366,25 +417,110 @@ export function CourseAnimatedVideoModal({
         <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto">
           {/* LEFT 7 COLS: Animated Video Stage */}
           <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#23232f] bg-[#09090d] space-y-4">
-            {/* Cinematic Video Container */}
-            <div className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group">
-              {/* Dynamic Animated Canvas / Visualizer Synced with Video */}
-              <div className="absolute top-11 bottom-[64px] inset-x-0 z-0 overflow-hidden flex items-center justify-center p-2">
-                {renderCourseAnimation(config.animationType, animStep, param1, param2)}
-              </div>
-
-              {/* Play / Pause Toggle Center Click Target when paused */}
-              {!isPlaying && (
-                <div
-                  onClick={handleTogglePlay}
-                  className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
-                  title="Click to Resume Video"
+            {/* Video Mode Selector Bar */}
+            <div className="flex items-center justify-between gap-2 pb-1 flex-wrap">
+              <div className="flex items-center gap-1.5 p-1 bg-[#13131c] border border-[#232332] rounded-xl text-xs">
+                <button
+                  type="button"
+                  onClick={() => setVideoStageMode('animated_canvas')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    videoStageMode === 'animated_canvas'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
                 >
-                  <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
-                    <Play className="w-8 h-8 fill-white ml-1" />
-                  </div>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Interactive 60fps Canvas</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVideoStageMode('hd_masterclass')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    videoStageMode === 'hd_masterclass'
+                      ? 'bg-red-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Curated HD Video Lecture</span>
+                </button>
+              </div>
+              <span className="text-[11px] text-zinc-400 font-mono">
+                {videoStageMode === 'animated_canvas' ? 'Interactive AI Lab' : `${curatedVideo.channelName} Masterclass`}
+              </span>
+            </div>
+
+            {videoStageMode === 'hd_masterclass' ? (
+              /* Curated HD Video Player (YouTube Embed with Graceful Fallback) */
+              <div className="space-y-3">
+                <div className="relative aspect-video rounded-2xl bg-black border border-[#232332] overflow-hidden shadow-2xl flex flex-col justify-between">
+                  {!embedFallback ? (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${curatedVideo.videoId}?rel=0&modestbranding=1&enablejsapi=1`}
+                      title={`${course.title} - ${curatedVideo.videoTitle}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      onError={() => setEmbedFallback(true)}
+                      className="w-full h-full border-0"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center space-y-3 bg-zinc-950">
+                      <img
+                        src={`https://img.youtube.com/vi/${curatedVideo.videoId}/hqdefault.jpg`}
+                        alt={curatedVideo.videoTitle}
+                        className="w-48 rounded-xl border border-zinc-800 shadow-md"
+                      />
+                      <div className="text-xs text-zinc-300 font-bold">{curatedVideo.videoTitle}</div>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${curatedVideo.videoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer">
+                          <Play className="w-3.5 h-3.5 fill-current" /> Watch on YouTube Directly
+                        </Button>
+                      </a>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white">{curatedVideo.videoTitle}</span>
+                    <span>•</span>
+                    <span className="text-purple-400">{curatedVideo.channelName}</span>
+                  </div>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${curatedVideo.videoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-400 hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    <span>Open on YouTube</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            ) : (
+              /* Cinematic Video Container */
+              <div className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group">
+                {/* Dynamic Animated Canvas / Visualizer Synced with Video */}
+                <div className="absolute top-11 bottom-[64px] inset-x-0 z-0 overflow-hidden flex items-center justify-center p-2">
+                  {renderCourseAnimation(config.animationType, animStep, param1, param2)}
+                </div>
+
+                {/* Play / Pause Toggle Center Click Target when paused */}
+                {!isPlaying && (
+                  <div
+                    onClick={handleTogglePlay}
+                    className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
+                    title="Click to Resume Video"
+                  >
+                    <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+                      <Play className="w-8 h-8 fill-white ml-1" />
+                    </div>
+                  </div>
+                )}
 
               {/* Top Video Overlay Bar */}
               <div className="relative z-10 px-4 py-2.5 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
@@ -483,6 +619,7 @@ export function CourseAnimatedVideoModal({
                 </div>
               </div>
             </div>
+          )}
 
             {/* Live Narration Teleprompter & Closed Captions Card */}
             <div className="rounded-xl border border-purple-500/30 bg-[#101018] p-3 px-4 shadow-lg flex items-center gap-3">

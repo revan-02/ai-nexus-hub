@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -17,7 +18,15 @@ import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-v
 import type { CourseItem } from '@/lib/mock-data/courses-data';
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/login');
+    }
+  }, [status, router]);
+
   const { userLevel, levelMeta: contextLevelMeta, userProfile } = useNexus();
   const { data: apiResponse, isLoading, isError } = useLearnerDashboard();
 
