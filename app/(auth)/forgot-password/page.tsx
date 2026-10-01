@@ -159,8 +159,10 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      <footer className="p-4 text-center text-xs text-zinc-400 border-t border-[#1e293b]">
-        <span>© 2026 AI Nexus Platform • Enterprise Security</span>
+      <footer className="p-4 sm:p-6 text-center text-xs text-zinc-400 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+        <span>© 2026 AI Nexus Platform. All rights reserved.</span>
+        <span className="hidden sm:inline">•</span>
+        <span className="text-zinc-300 font-medium">Managed and Maintained by AalgoLabs (OPC) PVT.LTD.</span>
       </footer>
     </div>
   );
