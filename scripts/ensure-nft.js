@@ -19,3 +19,12 @@ for (const f of files) {
     } catch {}
   }
 }
+
+// Guarantee public icons exist
+const robotIcon = path.resolve(process.cwd(), 'public', 'robot-3d.png');
+const favicon = path.resolve(process.cwd(), 'public', 'favicon.ico');
+if (!fs.existsSync(robotIcon) || !fs.existsSync(favicon)) {
+  try {
+    require('./generate-robot-icon.js');
+  } catch {}
+}
