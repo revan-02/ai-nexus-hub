@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/auth';
 
 export interface TrainDatasetSample {
   instruction: string;
@@ -23,6 +24,15 @@ export interface TrainingRequest {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
+    }
+    const role = (session.user as any)?.role;
+    if (role !== 'Admin' && role !== 'Manager') {
+      return NextResponse.json({ success: false, error: 'Forbidden: Administrative privilege required' }, { status: 403 });
+    }
+
     const body: TrainingRequest = await req.json();
     const {
       baseModel = 'llama3.2',

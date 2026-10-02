@@ -10,9 +10,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ShieldCheck,
-  GraduationCap,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Globe,
@@ -26,7 +23,6 @@ import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [loginRole, setLoginRole] = useState<'learner' | 'admin'>('learner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,20 +30,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const handleQuickFillAdmin = () => {
-    setLoginRole('admin');
-    setEmail('john.doe@example.com');
-    setPassword('password123');
-    setErrorMessage(null);
-  };
-
-  const handleQuickFillLearner = () => {
-    setLoginRole('learner');
-    setEmail('emma.johnson@example.com');
-    setPassword('password123');
-    setErrorMessage(null);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,18 +78,9 @@ export default function LoginPage() {
             window.dispatchEvent(new Event('nexus_profile_updated'));
           } catch {}
         }
-        setSuccessMessage(
-          loginRole === 'admin'
-            ? 'Admin authentication successful! Redirecting to Control Center...'
-            : 'Welcome back! Redirecting to AI Nexus Dashboard...'
-        );
-
+        setSuccessMessage('Welcome back! Redirecting to AI Nexus Dashboard...');
         setTimeout(() => {
-          if (loginRole === 'admin') {
-            router.push('/users');
-          } else {
-            router.push('/dashboard');
-          }
+          router.push('/dashboard');
         }, 800);
       }
     } catch (err) {
@@ -133,7 +106,7 @@ export default function LoginPage() {
         </Link>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-zinc-400 hidden sm:inline">Don't have an account?</span>
+          <span className="text-zinc-400 hidden sm:inline">Don&apos;t have an account?</span>
           <Link
             href="/register"
             className="px-3.5 py-1.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-purple-300 font-semibold rounded-xl transition-colors"
@@ -149,75 +122,15 @@ export default function LoginPage() {
           {/* Title Block */}
           <div className="text-center space-y-2">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              {loginRole === 'admin' ? 'Admin Portal Access' : 'Sign in to AI Nexus'}
+              Sign in to AI Nexus
             </h2>
             <p className="text-xs text-zinc-400">
-              {loginRole === 'admin'
-                ? 'Enter administrative credentials to access system controls & permissions.'
-                : 'Access your AI learning paths, algorithms, datasets, and projects.'}
+              Access your AI learning paths, algorithms, datasets, and projects.
             </p>
-          </div>
-
-          {/* Role Switcher Tabs */}
-          <div className="p-1 bg-[#0f172a] border border-[#1e293b] rounded-2xl flex items-center gap-1 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => {
-                setLoginRole('learner');
-                setErrorMessage(null);
-              }}
-              className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                loginRole === 'learner'
-                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-900/30'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Learner / User</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setLoginRole('admin');
-                setErrorMessage(null);
-              }}
-              className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                loginRole === 'admin'
-                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-900/30'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Administrator</span>
-            </button>
           </div>
 
           {/* Card Form */}
           <Card className="bg-[#0f172a] border border-[#1e293b] p-6 rounded-2xl shadow-xl space-y-5">
-            {/* Quick Demo Fill Buttons */}
-            <div className="p-3 bg-[#131c31] border border-[#1e293b] rounded-xl space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 block">Quick Demo One-Click Login</span>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={handleQuickFillLearner}
-                  className="px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
-                >
-                  <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Learner Demo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleQuickFillAdmin}
-                  className="px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Admin Demo</span>
-                </button>
-              </div>
-            </div>
-
             {errorMessage && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-400 font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -236,7 +149,7 @@ export default function LoginPage() {
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="block font-semibold text-zinc-300">
-                  {loginRole === 'admin' ? 'Admin Email / Username' : 'Email Address or Mobile Number'}
+                  Email Address or Mobile Number
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -244,7 +157,7 @@ export default function LoginPage() {
                     type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai or +91 98765 43210'}
+                    placeholder="your@email.com or +91 98765 43210"
                     className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
                   />
                 </div>
@@ -304,7 +217,7 @@ export default function LoginPage() {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    {loginRole === 'admin' ? 'Sign In to Admin Portal' : 'Sign In as Learner'}
+                    Sign In to AI Nexus
                     <ArrowRight className="w-4 h-4" />
                   </span>
                 )}

@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/auth';
 import { UserService } from '@/services';
 import { createUserSchema } from '@/schemas/user';
 
-// GET /api/users — List users with pagination, search, filter
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user) return { error: 'Unauthorized: Authentication required', status: 401 };
+  const role = (session.user as any)?.role;
+  if (role !== 'Admin' && role !== 'Manager') return { error: 'Forbidden: Administrative privilege required', status: 403 };
+  return null;
+}
+
+// GET /api/users — List users with pagination, search, filter (Admin only)
 export async function GET(request: NextRequest) {
+  const authError = await requireAdmin();
+  if (authError) return NextResponse.json({ error: authError.error }, { status: authError.status });
+
   try {
     const { searchParams } = new URL(request.url);
     const params = Object.fromEntries(searchParams.entries());
@@ -17,8 +29,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/users — Create user
+// POST /api/users — Create user (Admin only)
 export async function POST(request: NextRequest) {
+  const authError = await requireAdmin();
+  if (authError) return NextResponse.json({ error: authError.error }, { status: authError.status });
+
   try {
     const body = await request.json();
     const validation = createUserSchema.safeParse(body);
@@ -38,4 +53,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

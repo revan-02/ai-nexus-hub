@@ -59,47 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               }
             }
           } catch (dbErr) {
-            console.warn('[NextAuth] Database query error, using fallback authentication:', dbErr);
-          }
-
-          // Resilient demo and OTP accounts fallback
-          const demoAccounts: Record<string, { id: string; name: string; role: string }> = {
-            'john.doe@example.com': { id: 'usr-9', name: 'John Doe', role: 'Admin' },
-            'emma.johnson@example.com': { id: 'usr-10', name: 'Emma Johnson', role: 'User' },
-            'sarah@nexus.ai': { id: 'usr-1', name: 'Sarah Johnson', role: 'Admin' },
-            'alex@nexus.ai': { id: 'usr-2', name: 'Dr. Alex Morgan', role: 'Instructor' },
-            'admin@nexus.ai': { id: 'usr-1', name: 'System Admin', role: 'Admin' },
-          };
-
-          if (password === 'password123') {
-            const demo = demoAccounts[cleanEmail] || demoAccounts[cleanInput];
-            if (demo) {
-              return {
-                id: demo.id,
-                name: demo.name,
-                email: cleanEmail,
-                role: demo.role,
-              };
-            }
-
-            // Priority: explicit name provided -> sanitized username -> fallback 'Learner'
-            let finalName = name?.trim();
-            if (!finalName || /^\+?[0-9\s\-]+$/.test(finalName)) {
-              const prefix = cleanInput.split('@')[0];
-              if (!/^[0-9\s\-]+$/.test(prefix)) {
-                finalName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-              } else {
-                finalName = 'Learner';
-              }
-            }
-
-            // Auto-registered OTP user or any valid email
-            return {
-              id: `usr-${cleanInput.replace(/[^a-zA-Z0-9]/g, '')}`,
-              name: finalName,
-              email: cleanEmail,
-              role: 'User',
-            };
+            console.warn('[NextAuth] Database query error:', dbErr);
           }
         }
 
