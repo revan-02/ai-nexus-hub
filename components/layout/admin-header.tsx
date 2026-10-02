@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Bell, Moon, Sun, Menu, ChevronDown, CheckCircle2, ShieldCheck, User, LogOut, Settings } from 'lucide-react';
+import { Search, Bell, Moon, Sun, Menu, ChevronDown, CheckCircle2, ShieldCheck, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -172,6 +172,16 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
 
             {/* Quick Links */}
             <div className="space-y-0.5">
+              <DropdownMenuItem className="text-xs text-zinc-300 focus:bg-[#1f1f27] focus:text-white cursor-pointer p-0">
+                <Link href="/dashboard" className="flex items-center gap-2.5 px-2.5 py-1.5 w-full text-purple-300 hover:text-white">
+                  <LayoutDashboard className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">Learner Dashboard</span>
+                    <span className="text-[10px] text-zinc-500">Switch to student learning room</span>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+
               <DropdownMenuItem className="text-xs text-zinc-300 focus:bg-[#1f1f27] focus:text-white cursor-pointer p-0">
                 <Link href="/profile" className="flex items-center gap-2.5 px-2.5 py-1.5 w-full">
                   <User className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />

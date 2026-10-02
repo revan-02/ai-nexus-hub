@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   reactStrictMode: false,
   compress: true,
   poweredByHeader: false,
@@ -68,8 +67,8 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: '/admin/login',
-        destination: '/login',
+        source: '/admin/portal',
+        destination: '/admin',
         permanent: false,
       },
     ];

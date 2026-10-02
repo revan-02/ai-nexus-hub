@@ -147,7 +147,7 @@ export function AdminSidebar({
     >
       {/* Sidebar Header / Branding */}
       <div className="h-16 flex items-center px-4 border-b border-[#23232b] justify-between">
-        <Link href="/users" className="flex items-center gap-3 overflow-hidden">
+        <Link href="/admin" className="flex items-center gap-3 overflow-hidden">
           <div className="w-9 h-9 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 flex-shrink-0 shadow-sm shadow-purple-900/30">
             <Bot className="w-5 h-5" />
           </div>
@@ -169,10 +169,10 @@ export function AdminSidebar({
         {/* Top Active Dashboard Button */}
         <div>
           <Link
-            href="/"
+            href="/admin"
             className={cn(
               'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
-              pathname === '/'
+              (pathname === '/admin' || pathname === '/admin/dashboard')
                 ? 'bg-purple-600/15 text-purple-400 border border-purple-500/30 shadow-sm shadow-purple-950/50'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#14141c]'
             )}
@@ -180,12 +180,12 @@ export function AdminSidebar({
             <LayoutDashboard
               className={cn(
                 'w-4 h-4 flex-shrink-0 transition-colors',
-                pathname === '/'
+                (pathname === '/admin' || pathname === '/admin/dashboard')
                   ? 'text-purple-400'
                   : 'text-zinc-400 group-hover:text-zinc-200'
               )}
             />
-            {!collapsed && <span className="flex-1 truncate">Dashboard</span>}
+            {!collapsed && <span className="flex-1 truncate">Executive Center</span>}
           </Link>
         </div>
 

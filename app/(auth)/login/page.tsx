@@ -24,9 +24,20 @@ import { Input } from '@/components/ui/input';
 
 import { signIn } from 'next-auth/react';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  initialRole?: 'learner' | 'admin';
+}
+
+export default function LoginPage({ initialRole }: LoginPageProps = {}) {
   const router = useRouter();
-  const [loginRole, setLoginRole] = useState<'learner' | 'admin'>('learner');
+  const [loginRole, setLoginRole] = useState<'learner' | 'admin'>(() => {
+    if (initialRole) return initialRole;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('role') === 'admin') return 'admin';
+    }
+    return 'learner';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +45,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (initialRole === 'admin' && !email) {
+      setEmail('john.doe@example.com');
+      setPassword('password123');
+    }
+  }, [initialRole]);
 
   const handleQuickFillAdmin = () => {
     setLoginRole('admin');
@@ -104,7 +122,7 @@ export default function LoginPage() {
 
         setTimeout(() => {
           if (loginRole === 'admin') {
-            router.push('/users');
+            router.push('/admin');
           } else {
             router.push('/dashboard');
           }
