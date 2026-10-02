@@ -223,7 +223,7 @@ describe('Payment Gateway Integration & Checkout Flow Test Suite', () => {
           }),
         });
 
-      global.fetch = mockFetch as any;
+      global.fetch = mockFetch as unknown as typeof fetch;
 
       const handleSuccess = vi.fn();
 

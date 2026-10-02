@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/auth', () => ({
@@ -27,7 +27,7 @@ import { POST as emailRoutePOST } from '@/app/api/notifications/email/route';
 import { POST as smsRoutePOST } from '@/app/api/notifications/sms/route';
 import { POST as whatsappRoutePOST } from '@/app/api/notifications/whatsapp/route';
 import { POST as sendOmniRoutePOST } from '@/app/api/notifications/send/route';
-import { GET as settingsGET, POST as settingsPOST } from '@/app/api/settings/email-whatsapp/route';
+import { POST as settingsPOST } from '@/app/api/settings/email-whatsapp/route';
 
 describe('Multi-Provider Communication Service & Notification APIs', () => {
   describe('1. Email & SMS Template Generators', () => {

@@ -10,7 +10,7 @@ export interface EmailPayload {
   html?: string;
   text?: string;
   from?: string;
-  template?: 'invoice_receipt' | 'welcome_onboarding' | 'auth_otp' | 'course_enrolled' | 'password_reset';
+  template?: 'invoice_receipt' | 'welcome_onboarding' | 'auth_otp' | 'course_enrolled' | 'password_reset' | 'payment_reminder';
   templateData?: Record<string, any>;
   userId?: string;
 }
@@ -187,6 +187,26 @@ export function buildEmailTemplate(template: string, data: Record<string, any>):
 </html>`;
 
       const text = `Welcome to ${brandName}, ${name}!\nAccess your dashboard and courses at ${portalUrl}/dashboard`;
+      return { subject, html, text };
+    }
+
+    case 'payment_reminder': {
+      const subject = `Complete Your Enrollment: ${data.courseTitle || 'Your Course'}`;
+      const name = data.customerName || 'Learner';
+      const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #090d16; color: #f1f5f9; padding: 24px;">
+  <div style="max-width: 540px; margin: 0 auto; background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 32px;">
+    <h2 style="color: #c084fc; margin-top: 0;">Hi ${name}, your seat is waiting! ⏳</h2>
+    <p>We noticed you started enrolling in <strong>${data.courseTitle || 'Advanced AI Engineering'}</strong>. Your scholarship discount is currently reserved.</p>
+    <p>Complete your checkout now to secure your certification roadmap:</p>
+    <p><a href="${portalUrl}/courses" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;">Complete Checkout Now &rarr;</a></p>
+    <p style="font-size:12px;color:#94a3b8;margin-top:24px;">&copy; 2026 ${brandName}. Dedicated to cutting-edge AI learning.</p>
+  </div>
+</body>
+</html>`;
+      const text = `Hi ${name},\nYour enrollment in ${data.courseTitle} is waiting.\nComplete checkout now at ${portalUrl}/courses`;
       return { subject, html, text };
     }
 

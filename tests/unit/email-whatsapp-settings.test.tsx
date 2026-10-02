@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { GET, POST } from '@/app/api/settings/email-whatsapp/route';
 import { NextRequest } from 'next/server';
 
