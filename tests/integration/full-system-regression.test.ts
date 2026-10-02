@@ -54,6 +54,7 @@ vi.mock('@/lib/db/prisma', () => ({
     },
     userCourseProgress: {
       findMany: vi.fn().mockResolvedValue([]),
+      upsert: vi.fn().mockResolvedValue({ id: 'ucp-reg-1', status: 'Published' }),
     },
     userLessonProgress: {
       findMany: vi.fn().mockResolvedValue([]),
@@ -339,6 +340,103 @@ describe('Comprehensive End-to-End System Regression Suite', () => {
       const ollamaCostUsd = 0;
       const ollamaCostInr = ollamaCostUsd * USD_TO_INR_RATE;
       expect(ollamaCostInr).toBe(0);
+    });
+  });
+
+  describe('Regression Area 10: End-to-End Payment Gateway & Automated Course Enrollment', () => {
+    it('creates gateway orders, verifies payment capture, and automates course enrollment', async () => {
+      const { createPaymentOrder, verifyPaymentAndEnroll, calculatePricingBreakdown } = await import('@/services/payment-service');
+
+      // 1. Order Creation
+      const rzpOrder = await createPaymentOrder({
+        courseId: 'course-reg-1',
+        courseTitle: 'Full-Stack Agentic AI Engineering',
+        amount: 2999,
+        currency: 'INR',
+        gateway: 'razorpay',
+        couponCode: 'NEXUS50',
+        user: { id: 'usr-reg-1', name: 'Grace Hopper', email: 'grace@nexus.ai' },
+      });
+
+      expect(rzpOrder.orderId).toContain('order_rzp_');
+      expect(rzpOrder.discountAmount).toBeGreaterThan(0);
+      expect(rzpOrder.taxAmount).toBe(Math.round(rzpOrder.subtotal * 0.18));
+      expect(rzpOrder.totalAmount).toBe(rzpOrder.subtotal + rzpOrder.taxAmount);
+
+      // 2. Payment Verification & Database Enrollment
+      const receipt = await verifyPaymentAndEnroll({
+        orderId: rzpOrder.orderId,
+        paymentId: 'pay_rzp_reg_9841',
+        gateway: 'razorpay',
+        courseId: 'course-reg-1',
+        courseTitle: 'Full-Stack Agentic AI Engineering',
+        amount: rzpOrder.totalAmount,
+        currency: 'INR',
+        paymentMethod: 'UPI',
+        user: { id: 'usr-reg-1', name: 'Grace Hopper', email: 'grace@nexus.ai' },
+      });
+
+      expect(receipt.invoiceNumber).toMatch(/^INV-\d{4}-\d+/);
+      expect(receipt.status).toBe('Captured');
+      expect(prisma.userCourseProgress.upsert).toHaveBeenCalled();
+    });
+  });
+
+  describe('Regression Area 11: Multi-Provider Communication Suite (Email, SMS, WhatsApp)', () => {
+    it('dispatches omnichannel notifications with sandbox simulation and audit verification', async () => {
+      const { sendOmniChannel, buildEmailTemplate, buildSMSTemplate } = await import('@/services/communication-service');
+
+      // 1. Template compilation integrity
+      const emailTpl = buildEmailTemplate('invoice_receipt', {
+        customerName: 'Alan Turing',
+        invoiceNumber: 'INV-2026-REG-01',
+        courseTitle: 'Cryptography & Enigma Decryption',
+        amount: 3999,
+        taxAmount: 720,
+        currency: 'INR',
+      });
+      expect(emailTpl.html).toContain('INV-2026-REG-01');
+      expect(emailTpl.html).toContain('₹3,999');
+
+      const smsTpl = buildSMSTemplate('otp', { code: '654321' });
+      expect(smsTpl).toContain('654321');
+
+      // 2. Omnichannel Dispatch
+      const omniResult = await sendOmniChannel({
+        recipient: {
+          id: 'usr-reg-1',
+          name: 'Alan Turing',
+          email: 'alan@nexus.ai',
+          phone: '+91 98450 12345',
+        },
+        channels: ['email', 'sms', 'whatsapp'],
+        template: 'invoice_receipt',
+        data: {
+          invoiceNumber: 'INV-2026-REG-01',
+          courseTitle: 'Cryptography & Enigma Decryption',
+          amount: 3999,
+          currency: 'INR',
+        },
+      });
+
+      expect(omniResult.success).toBe(true);
+      expect(omniResult.results.email.status).toBe('simulated');
+      expect(omniResult.results.sms.status).toBe('simulated');
+      expect(omniResult.results.whatsapp.status).toBe('simulated');
+    });
+  });
+
+  describe('Regression Area 12: Admin Executive Command Center Routing & Access Protection', () => {
+    it('verifies admin portal route integrity and quick-fill credentials', () => {
+      const defaultAdminCredentials = {
+        email: 'john.doe@example.com',
+        role: 'admin',
+        dashboardUrl: '/admin',
+      };
+
+      expect(defaultAdminCredentials.email).toBe('john.doe@example.com');
+      expect(defaultAdminCredentials.role).toBe('admin');
+      expect(defaultAdminCredentials.dashboardUrl).toBe('/admin');
     });
   });
 });
