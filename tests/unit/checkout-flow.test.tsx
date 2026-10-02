@@ -108,6 +108,21 @@ describe('Payment Gateway Integration & Checkout Flow Test Suite', () => {
       expect(receipt.gateway).toBe('Razorpay');
       expect(receipt.amount).toBe(3540);
     });
+
+    it('calculates 100% discount with zero tax for VTU100 promo code', () => {
+      const pricing = calculatePricingBreakdown(2999, 'VTU100', 'INR');
+      expect(pricing.discountAmount).toBe(2999);
+      expect(pricing.subtotal).toBe(0);
+      expect(pricing.taxAmount).toBe(0);
+      expect(pricing.totalAmount).toBe(0);
+    });
+
+    it('handles invalid coupon gracefully by maintaining full price', () => {
+      const pricing = calculatePricingBreakdown(2000, 'INVALID_CODE', 'INR');
+      expect(pricing.discountAmount).toBe(0);
+      expect(pricing.subtotal).toBe(2000);
+      expect(pricing.totalAmount).toBe(2360); // 2000 + 18% GST (360)
+    });
   });
 
   describe('2. Payment Gateway API Routes', () => {
@@ -131,6 +146,22 @@ describe('Payment Gateway Integration & Checkout Flow Test Suite', () => {
       expect(json.data.orderId).toContain('order_rzp_');
     });
 
+    it('rejects order creation without courseId with 400 status', async () => {
+      const req = new NextRequest('http://localhost:3000/api/payments/create-order', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: 2500,
+        }),
+      });
+
+      const res = await createOrderRoute(req);
+      const json = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(json.success).toBe(false);
+      expect(json.error).toContain('courseId is required');
+    });
+
     it('verifies payment via /api/payments/verify', async () => {
       const req = new NextRequest('http://localhost:3000/api/payments/verify', {
         method: 'POST',
@@ -150,6 +181,22 @@ describe('Payment Gateway Integration & Checkout Flow Test Suite', () => {
       expect(res.status).toBe(200);
       expect(json.success).toBe(true);
       expect(json.data.invoiceNumber).toBeDefined();
+    });
+
+    it('rejects verification with missing paymentId with 400 status', async () => {
+      const req = new NextRequest('http://localhost:3000/api/payments/verify', {
+        method: 'POST',
+        body: JSON.stringify({
+          orderId: 'order_test_123',
+        }),
+      });
+
+      const res = await verifyPaymentRoute(req);
+      const json = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(json.success).toBe(false);
+      expect(json.error).toContain('required for payment verification');
     });
   });
 
