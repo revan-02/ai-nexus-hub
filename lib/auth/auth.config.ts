@@ -5,7 +5,6 @@ const ADMIN_ONLY_PATHS = [
   '/users',
   '/roles',
   '/permissions',
-  '/admin',
   '/payment-reports',
   '/settings/account',
   '/settings/notifications',
@@ -76,9 +75,13 @@ export const authConfig: NextAuthConfig = {
       const userRole = (auth?.user as any)?.role;
       const isAdmin = userRole === 'Admin' || userRole === 'Manager';
 
-      // Block access to /admin/login since it's been removed — redirect to /login
+      // /admin/login is a public page — allow unauthenticated access
+      // If already logged in as admin, skip the login page and go to admin panel
       if (pathname === '/admin/login') {
-        return Response.redirect(new URL('/login', nextUrl));
+        if (isLoggedIn && isAdmin) {
+          return Response.redirect(new URL('/users', nextUrl));
+        }
+        return true; // show admin login page to everyone else
       }
 
       // Admin-only routes: must be logged in AND be Admin/Manager
