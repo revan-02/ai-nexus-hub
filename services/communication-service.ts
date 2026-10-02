@@ -382,6 +382,9 @@ export async function sendSMS(payload: SMSPayload): Promise<DispatchResult> {
   if (payload.template) {
     bodyMessage = buildSMSTemplate(payload.template, payload.templateData || {});
   }
+  if (!bodyMessage) {
+    bodyMessage = 'Nexus AI automated notification';
+  }
 
   const twilioSid = process.env.TWILIO_ACCOUNT_SID;
   const twilioToken = process.env.TWILIO_AUTH_TOKEN;
@@ -464,6 +467,9 @@ export async function sendWhatsApp(payload: WhatsAppPayload): Promise<DispatchRe
       `Invoice: #${data.invoiceNumber || 'INV-2026'}\n` +
       `Amount: ${data.currency === 'INR' ? '₹' : '$'}${data.amount || '2,999'}\n\n` +
       `Access portal: https://nexusai.education/learn`;
+  }
+  if (!messageText) {
+    messageText = '*Nexus AI Alert* 🚀\n\nAutomated platform notification from AI Nexus Hub.';
   }
 
   const metaToken = process.env.WHATSAPP_ACCESS_TOKEN;

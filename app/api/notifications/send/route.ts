@@ -5,8 +5,16 @@ import { sendOmniChannel } from '@/services/communication-service';
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const body = await req.json();
-    const { recipient, channels, subject, template, data } = body;
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON request payload' },
+        { status: 400 }
+      );
+    }
+    const { recipient, channels, subject, template, data } = body || {};
 
     if (!recipient || (!recipient.email && !recipient.phone)) {
       return NextResponse.json(

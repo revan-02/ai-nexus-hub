@@ -5,8 +5,16 @@ import { sendSMS } from '@/services/communication-service';
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const body = await req.json();
-    const { to, message, template, templateData, provider } = body;
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON request payload' },
+        { status: 400 }
+      );
+    }
+    const { to, message, template, templateData, provider } = body || {};
 
     if (!to) {
       return NextResponse.json(

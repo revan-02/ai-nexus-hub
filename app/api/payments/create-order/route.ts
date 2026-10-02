@@ -11,8 +11,16 @@ export async function POST(req: NextRequest) {
       email: 'learner@nexus.ai',
     };
 
-    const body = await req.json();
-    const { courseId, courseTitle, amount, currency, gateway, couponCode } = body;
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON request payload' },
+        { status: 400 }
+      );
+    }
+    const { courseId, courseTitle, amount, currency, gateway, couponCode } = body || {};
 
     if (!courseId) {
       return NextResponse.json(
