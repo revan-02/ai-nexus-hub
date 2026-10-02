@@ -12,6 +12,14 @@ let communicationConfig = {
     enableInvoiceDispatch: true,
     enablePaymentReminders: true,
   },
+  sms: {
+    provider: 'Twilio' as 'Twilio' | 'Msg91' | 'Fast2SMS',
+    accountSid: 'AC_LiveProductionSid_9841029481',
+    authToken: 'authToken_LiveProductionSecret_1029',
+    senderNumber: '+15005550006',
+    enableOtpDispatch: true,
+    enableOrderAlerts: true,
+  },
   whatsapp: {
     provider: 'Meta WhatsApp Cloud API' as 'Meta WhatsApp Cloud API' | 'Twilio WhatsApp' | 'Gupshup',
     phoneNumberId: '109824819204918',
@@ -34,13 +42,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, email, whatsapp, targetPhone, targetEmail, message } = body;
+    const { action, email, sms, whatsapp, targetPhone, targetEmail, message } = body;
 
     // Trigger test dispatch
     if (action === 'test_email') {
       return NextResponse.json({
         success: true,
         message: `Test invoice email successfully sent to ${targetEmail || communicationConfig.email.senderEmail} via ${communicationConfig.email.provider}`,
+      });
+    }
+
+    if (action === 'test_sms') {
+      return NextResponse.json({
+        success: true,
+        message: `Test SMS verification code successfully sent to ${targetPhone || '+91 98450 12345'} via ${communicationConfig.sms.provider}`,
       });
     }
 
@@ -55,13 +70,16 @@ export async function POST(req: NextRequest) {
     if (email) {
       communicationConfig.email = { ...communicationConfig.email, ...email };
     }
+    if (sms) {
+      communicationConfig.sms = { ...communicationConfig.sms, ...sms };
+    }
     if (whatsapp) {
       communicationConfig.whatsapp = { ...communicationConfig.whatsapp, ...whatsapp };
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Email & WhatsApp communication API settings updated successfully',
+      message: 'Email, SMS & WhatsApp communication API settings updated successfully',
       data: communicationConfig,
     });
   } catch (error: any) {

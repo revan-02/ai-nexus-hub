@@ -1588,6 +1588,56 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Section 3: SMS Gateway API Configuration */}
+                  <div className="p-5 rounded-2xl bg-secondary/50 border border-border space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-foreground font-bold">
+                        <Smartphone className="w-4 h-4 text-cyan-400" />
+                        <span>SMS Gateway (Twilio / Msg91 / Fast2SMS)</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+                        Active &amp; Ready
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-foreground">SMS Provider</label>
+                        <select className="w-full bg-secondary border border-border text-foreground text-xs font-semibold rounded-xl p-2.5 focus:outline-none focus:border-cyan-500 cursor-pointer">
+                          <option value="Twilio">Twilio Programmable SMS (Global E.164)</option>
+                          <option value="Msg91">Msg91 Enterprise India DLT</option>
+                          <option value="Fast2SMS">Fast2SMS Instant OTP Route</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-foreground">Account SID / Auth Key</label>
+                        <Input defaultValue="AC_LiveProductionSid_9841029481" className="text-xs bg-secondary border-border font-mono" />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-foreground">Sender Phone Number / DLT Header</label>
+                        <Input defaultValue="+1 (500) 555-0006" className="text-xs bg-secondary border-border font-mono" />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-foreground">Auth Token / Secret</label>
+                        <Input type="password" defaultValue="authToken_LiveProductionSecret_1029" className="text-xs bg-secondary border-border font-mono" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 border-t border-border">
+                      <Button
+                        onClick={() => alert('Test SMS verification code sent to +91 98450 12345!')}
+                        variant="outline"
+                        className="bg-secondary border-border hover:bg-secondary/80 text-cyan-400 text-xs font-semibold h-8 px-3.5 rounded-xl gap-1.5 cursor-pointer"
+                      >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        <span>Send Test SMS OTP</span>
+                      </Button>
+                    </div>
+                  </div>
                 </Card>
               </div>
             )}

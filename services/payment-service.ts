@@ -1,6 +1,7 @@
 import prisma from '@/lib/db/prisma';
 import { createAuditLog } from '@/services/audit-service';
 import { validateCoupon } from '@/services/coupon-service';
+import { sendEmail } from '@/services/communication-service';
 
 export interface PaymentOrder {
   orderId: string;
@@ -186,6 +187,32 @@ export async function verifyPaymentAndEnroll(params: {
     }
   } catch (err) {
     console.error('Course enrollment database upsert notice:', err);
+  }
+
+  // 3. Automated Email Invoice & Notification Dispatch
+  try {
+    const customerEmail = receipt.customerEmail;
+    if (customerEmail) {
+      await sendEmail({
+        to: customerEmail,
+        template: 'invoice_receipt',
+        templateData: {
+          customerName: receipt.customerName,
+          invoiceNumber: receipt.invoiceNumber,
+          transactionId: receipt.transactionId,
+          paymentId: receipt.paymentId,
+          courseTitle: receipt.courseTitle,
+          amount: receipt.amount,
+          taxAmount: receipt.taxAmount,
+          currency: receipt.currency,
+          gateway: receipt.gateway,
+          paymentMethod: receipt.paymentMethod,
+        },
+        userId: params.user?.id || undefined,
+      });
+    }
+  } catch (commErr) {
+    console.warn('Non-blocking payment receipt email dispatch notice:', commErr);
   }
 
   return receipt;
