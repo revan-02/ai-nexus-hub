@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CourseItem, CourseSection } from '@/lib/mock-data/courses-data';
 import { validateCoupon, CouponValidationResult, formatNumberToINR } from '@/services/coupon-service';
 import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
+import { CheckoutModal } from '@/components/payments/checkout-modal';
 
 interface CourseDetailModalProps {
   course: CourseItem | null;
@@ -45,6 +46,7 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
     'sec-1': true,
   });
   const [enrolled, setEnrolled] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [activePreviewLecture, setActivePreviewLecture] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState<string>('');
   const [couponResult, setCouponResult] = useState<CouponValidationResult | null>(null);
@@ -522,23 +524,42 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
 
                 {/* Action CTA Buttons */}
                 <div className="space-y-2.5">
-                  <Link href="/learn/room-1" className="block w-full">
+                  {enrolled ? (
+                    <Link href="/learn/room-1" className="block w-full">
+                      <Button
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6 text-sm rounded-2xl shadow-lg shadow-emerald-950/50 gap-2 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Enrolled · Continue Learning</span>
+                      </Button>
+                    </Link>
+                  ) : (couponResult?.isValid && couponResult.finalPrice === 0) || course.price === 'Free' ? (
+                    <Link href="/learn/room-1" className="block w-full">
+                      <Button
+                        onClick={() => setEnrolled(true)}
+                        className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-6 text-sm rounded-2xl shadow-lg shadow-purple-950/50 gap-2 cursor-pointer"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span>
+                          {couponResult?.isValid && couponResult.finalPrice === 0
+                            ? 'Claim 100% Free Scholarship & Start'
+                            : 'Enroll for Free & Start'}
+                        </span>
+                      </Button>
+                    </Link>
+                  ) : (
                     <Button
-                      onClick={() => setEnrolled(true)}
+                      onClick={() => setShowCheckout(true)}
                       className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-6 text-sm rounded-2xl shadow-lg shadow-purple-950/50 gap-2 cursor-pointer"
                     >
                       <Sparkles className="w-4 h-4" />
                       <span>
-                        {couponResult?.isValid && couponResult.finalPrice === 0
-                          ? 'Claim 100% Free Scholarship & Start'
-                          : couponResult?.isValid
+                        {couponResult?.isValid
                           ? `Pay ${formatNumberToINR(couponResult.finalPrice)} & Get Certified`
-                          : course.price === 'Free'
-                          ? 'Enroll for Free & Start'
                           : `Buy for ${course.price} & Get Certified`}
                       </span>
                     </Button>
-                  </Link>
+                  )}
 
                   <Link href="/learn/room-1" className="block w-full">
                     <Button
@@ -609,6 +630,23 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
         initialLectureTitle={selectedLectureTitle}
+      />
+
+      {/* Payment Gateway Checkout Modal (Razorpay / Stripe) */}
+      <CheckoutModal
+        isOpen={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        course={{
+          id: course.id,
+          title: course.title,
+          price: couponResult?.isValid ? couponResult.finalPrice : course.price,
+          level: course.level,
+          duration: totalHoursDisplay,
+        }}
+        couponCode={couponCode}
+        onSuccess={() => {
+          setEnrolled(true);
+        }}
       />
     </div>
   );

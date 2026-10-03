@@ -14,7 +14,6 @@ export * as DashboardService from './dashboard-service';
 export * as RoomService from './room-service';
 export * as CertificateService from './certificate-service';
 export * as InteractionService from './interaction-service';
-
-
-
+export * as PaymentService from './payment-service';
+export * as CommunicationService from './communication-service';
 

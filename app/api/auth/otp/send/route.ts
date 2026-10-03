@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendEmail, sendSMS } from '@/services/communication-service';
 
 // In-memory OTP & Rate Limit store (backed by Redis in production)
 const otpStore = new Map<string, { code: string; expiresAt: number }>();
@@ -46,6 +47,25 @@ export async function POST(request: NextRequest) {
     const expiresAt = now + 10 * 60 * 1000; // 10 minutes expiry
 
     otpStore.set(cleanIdentifier, { code, expiresAt });
+
+    // Multi-channel real/sandbox dispatch
+    try {
+      if (cleanIdentifier.includes('@')) {
+        await sendEmail({
+          to: cleanIdentifier,
+          template: 'auth_otp',
+          templateData: { code },
+        });
+      } else {
+        await sendSMS({
+          to: cleanIdentifier,
+          template: 'otp',
+          templateData: { code },
+        });
+      }
+    } catch (dispErr) {
+      console.warn('[OTP Route] Non-blocking OTP dispatch note:', dispErr);
+    }
 
     console.log(`[OTP Verification] Sent 6-digit code ${code} to ${type}: ${cleanIdentifier}`);
 

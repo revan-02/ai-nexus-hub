@@ -167,6 +167,20 @@ export function NexusHeader() {
               </span>
             </div>
 
+            {(session?.user as { role?: string })?.role === 'Admin' && (
+              <DropdownMenuItem className="p-0">
+                <Link href="/admin" className="flex items-center justify-between px-3 py-2 w-full text-xs font-semibold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-purple-400" />
+                    <span>Admin Control Center</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold font-mono bg-purple-500/30 text-purple-200 rounded">
+                    Admin
+                  </span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuSeparator className="bg-border" />
 
             <DropdownMenuItem className="p-0">
