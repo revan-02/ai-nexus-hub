@@ -61,7 +61,7 @@ const AUTH_REQUIRED_PATHS = [
 ];
 
 export const authConfig: NextAuthConfig = {
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'ai-nexus-platform-secret-key-32-chars-minimum-length-2026',
   trustHost: true,
   pages: {
     signIn: '/login',

@@ -54,8 +54,8 @@ export default function AdminLoginPage() {
       } else {
         setSuccessMessage('Authentication successful. Loading Admin Panel...');
         setTimeout(() => {
-          router.push('/admin');
-        }, 800);
+          window.location.href = '/admin';
+        }, 500);
       }
     } catch {
       setIsLoading(false);
