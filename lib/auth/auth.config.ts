@@ -75,13 +75,22 @@ export const authConfig: NextAuthConfig = {
       const userRole = (auth?.user as any)?.role;
       const isAdmin = userRole === 'Admin' || userRole === 'Manager';
 
-      // /admin/login is a public page — allow unauthenticated access
-      // If already logged in as admin, skip the login page and go to admin panel
+      // Handle /admin and /admin/login
       if (pathname === '/admin/login') {
         if (isLoggedIn && isAdmin) {
-          return Response.redirect(new URL('/users', nextUrl));
+          return Response.redirect(new URL('/admin', nextUrl));
         }
-        return true; // show admin login page to everyone else
+        return true; // show admin login page
+      }
+
+      if (pathname === '/admin') {
+        if (!isLoggedIn) {
+          return Response.redirect(new URL('/admin/login', nextUrl));
+        }
+        if (!isAdmin) {
+          return Response.redirect(new URL('/unauthorized', nextUrl));
+        }
+        return true;
       }
 
       // Admin-only routes: must be logged in AND be Admin/Manager
