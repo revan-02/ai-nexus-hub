@@ -30,28 +30,21 @@ describe('Admin Routing and Credentials Test Suite', () => {
     localStorage.clear();
   });
 
-  it('renders AdminLoginPage with initialRole="admin" and pre-filled admin credentials', () => {
+  it('renders AdminLoginPage with dedicated restricted access portal UI', () => {
     render(<AdminLoginPage />);
 
-    expect(screen.getByText(/Admin Portal Access/i)).toBeInTheDocument();
-    const emailInput = screen.getByPlaceholderText(/admin@nexus.ai/i) as HTMLInputElement;
-    expect(emailInput.value).toBe('john.doe@example.com');
+    expect(screen.getByText(/Admin Portal/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/admin@yourdomain.com/i)).toBeInTheDocument();
   });
 
-  it('allows clicking quick fill for admin credentials (john.doe@example.com / password123)', () => {
+  it('renders clean standard LoginPage without demo credentials or demo buttons', () => {
     render(<LoginPage />);
 
-    const adminQuickFillBtn = screen.getByText(/Admin Demo/i);
-    fireEvent.click(adminQuickFillBtn);
-
-    const emailInput = screen.getByPlaceholderText(/admin@nexus.ai/i) as HTMLInputElement;
-    const passwordInput = screen.getByPlaceholderText(/••••••••••••/i) as HTMLInputElement;
-
-    expect(emailInput.value).toBe('john.doe@example.com');
-    expect(passwordInput.value).toBe('password123');
+    expect(screen.getByText(/Sign in to AI Nexus/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Admin Demo/i)).not.toBeInTheDocument();
   });
 
-  it('redirects successfully authenticated admin to /admin executive command center', async () => {
+  it('submits admin credentials from AdminLoginPage and redirects to /admin', async () => {
     vi.mocked(signIn).mockResolvedValueOnce({
       error: undefined,
       status: 200,
@@ -59,17 +52,22 @@ describe('Admin Routing and Credentials Test Suite', () => {
       url: '/admin',
     } as any);
 
-    render(<LoginPage initialRole="admin" />);
+    render(<AdminLoginPage />);
 
-    const submitBtn = screen.getByRole('button', { name: /Sign In to Admin Portal/i });
+    const emailInput = screen.getByPlaceholderText(/admin@yourdomain.com/i);
+    const passwordInput = screen.getByPlaceholderText(/••••••••••••/i);
+    const submitBtn = screen.getByRole('button', { name: /Access Admin Panel/i });
+
+    fireEvent.change(emailInput, { target: { value: 'admin@ainexus.hub' } });
+    fireEvent.change(passwordInput, { target: { value: 'AiNexus@Admin2026' } });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(signIn).toHaveBeenCalledWith(
         'credentials',
         expect.objectContaining({
-          email: 'john.doe@example.com',
-          password: 'password123',
+          email: 'admin@ainexus.hub',
+          password: 'AiNexus@Admin2026',
           redirect: false,
         })
       );
