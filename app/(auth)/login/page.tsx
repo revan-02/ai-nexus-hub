@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Brain,
   Mail,
@@ -10,12 +9,8 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ShieldCheck,
-  GraduationCap,
   CheckCircle2,
   AlertCircle,
-  Globe,
-  KeyRound,
   Smartphone
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -24,32 +19,17 @@ import { Input } from '@/components/ui/input';
 
 import { signIn } from 'next-auth/react';
 import {
-  signInWithGoogle,
   initPhoneRecaptcha,
   sendPhoneOtp,
-  verifyPhoneOtp,
-  loginWithEmail
+  verifyPhoneOtp
 } from '@/lib/firebase/auth';
 import type { ConfirmationResult } from 'firebase/auth';
 import { validatePhoneNumber } from '@/schemas/auth';
 
-interface LoginPageProps {
-  initialRole?: 'learner' | 'admin';
-}
-
-export default function LoginPage({ initialRole }: LoginPageProps = {}) {
-  const router = useRouter();
-  const [loginRole, setLoginRole] = useState<'learner' | 'admin'>(() => {
-    if (initialRole) return initialRole;
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('role') === 'admin') return 'admin';
-    }
-    return 'learner';
-  });
+export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<'password' | 'phone'>('password');
-  const [email, setEmail] = useState(() => (initialRole === 'admin' ? 'john.doe@example.com' : ''));
-  const [password, setPassword] = useState(() => (initialRole === 'admin' ? 'password123' : ''));
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,20 +41,6 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
   const [phoneCode, setPhoneCode] = useState('');
   const [phoneStep, setPhoneStep] = useState<1 | 2>(1);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-
-  const handleQuickFillAdmin = () => {
-    setLoginRole('admin');
-    setEmail('john.doe@example.com');
-    setPassword('password123');
-    setErrorMessage(null);
-  };
-
-  const handleQuickFillLearner = () => {
-    setLoginRole('learner');
-    setEmail('emma.johnson@example.com');
-    setPassword('password123');
-    setErrorMessage(null);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,58 +85,16 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
             window.dispatchEvent(new Event('nexus_profile_updated'));
           } catch {}
         }
-        setSuccessMessage(
-          loginRole === 'admin'
-            ? 'Admin authentication successful! Redirecting to Control Center...'
-            : 'Welcome back! Redirecting to AI Nexus Dashboard...'
-        );
+        setSuccessMessage('Welcome back! Redirecting to AI Nexus Dashboard...');
 
+        // Full browser navigation guarantees cookies are committed and verified by middleware
         setTimeout(() => {
-          try {
-            router.refresh();
-          } catch {}
-          if (loginRole === 'admin') {
-            router.push('/admin');
-          } else {
-            router.push('/dashboard');
-          }
+          window.location.href = '/dashboard';
         }, 500);
       }
     } catch {
       setIsLoading(false);
       setErrorMessage('An unexpected error occurred during sign in.');
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    try {
-      const { user, profile } = await signInWithGoogle();
-      setSuccessMessage(`Welcome back, ${profile.name}! Redirecting...`);
-      await signIn('credentials', {
-        email: profile.email || `${user.uid}@nexus.ai`,
-        password: 'password123',
-        name: profile.name,
-        redirect: false,
-      });
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
-    } catch (err: unknown) {
-      setIsLoading(false);
-      const error = err as { code?: string; message?: string };
-      if (error.code === 'auth/popup-closed-by-user') {
-        return;
-      }
-      if (error.code === 'auth/unauthorized-domain') {
-        setErrorMessage(
-          "Google Sign-In domain unauthorized. Add 'localhost' to Authorized Domains in Firebase Console > Authentication > Settings."
-        );
-      } else {
-        setErrorMessage(error.message || 'Failed to sign in with Google.');
-      }
     }
   };
 
@@ -224,7 +148,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
         redirect: false,
       });
       setTimeout(() => {
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }, 500);
     } catch (err: unknown) {
       setIsLoading(false);
@@ -266,77 +190,15 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
           {/* Title Block */}
           <div className="text-center space-y-2">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              {loginRole === 'admin' ? 'Admin Portal Access' : 'Sign in to AI Nexus'}
+              Sign in to AI Nexus
             </h2>
             <p className="text-xs text-zinc-400">
-              {loginRole === 'admin'
-                ? 'Enter administrative credentials to access system controls & permissions.'
-                : 'Access your AI learning paths, algorithms, datasets, and projects.'}
+              Access your AI learning paths, algorithms, datasets, and projects.
             </p>
-          </div>
-
-          {/* Role Switcher Tabs */}
-          <div className="p-1 bg-[#0f172a] border border-[#1e293b] rounded-2xl flex items-center gap-1 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => {
-                setLoginRole('learner');
-                setErrorMessage(null);
-              }}
-              className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                loginRole === 'learner'
-                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-900/30'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Learner / User</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setLoginRole('admin');
-                setErrorMessage(null);
-              }}
-              className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                loginRole === 'admin'
-                  ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-900/30'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Administrator</span>
-            </button>
           </div>
 
           {/* Card Form */}
           <Card className="bg-[#0f172a] border border-[#1e293b] p-6 rounded-2xl shadow-xl space-y-5">
-            {/* Quick Demo Fill Buttons */}
-            <div className="p-3 bg-[#131c31] border border-[#1e293b] rounded-xl space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 block">Quick Demo One-Click Login</span>
-              <div className={`grid ${loginRole === 'admin' ? 'grid-cols-2' : 'grid-cols-1'} gap-2 text-xs`}>
-                <button
-                  type="button"
-                  onClick={handleQuickFillLearner}
-                  className="w-full px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
-                >
-                  <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Learner Demo</span>
-                </button>
-                {loginRole === 'admin' && (
-                  <button
-                    type="button"
-                    onClick={handleQuickFillAdmin}
-                    className="px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Admin Demo</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
             {errorMessage && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-400 font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -351,48 +213,46 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
               </div>
             )}
 
-            {/* Learner Auth Mode Switcher */}
-            {loginRole === 'learner' && (
-              <div className="flex items-center gap-1.5 p-1 bg-[#131c31] border border-[#1e293b] rounded-xl text-[11px] font-semibold">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMethod('password');
-                    setErrorMessage(null);
-                  }}
-                  className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                    authMethod === 'password'
-                      ? 'bg-purple-600 text-white font-bold shadow'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <Lock className="w-3 h-3" />
-                  <span>Password Login</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthMethod('phone');
-                    setErrorMessage(null);
-                  }}
-                  className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                    authMethod === 'phone'
-                      ? 'bg-purple-600 text-white font-bold shadow'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <Smartphone className="w-3 h-3" />
-                  <span>Phone SMS OTP</span>
-                </button>
-              </div>
-            )}
+            {/* Auth Mode Switcher (Password vs Phone SMS OTP) */}
+            <div className="flex items-center gap-1.5 p-1 bg-[#131c31] border border-[#1e293b] rounded-xl text-[11px] font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('password');
+                  setErrorMessage(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                  authMethod === 'password'
+                    ? 'bg-purple-600 text-white font-bold shadow'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Lock className="w-3 h-3" />
+                <span>Password Login</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('phone');
+                  setErrorMessage(null);
+                }}
+                className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                  authMethod === 'phone'
+                    ? 'bg-purple-600 text-white font-bold shadow'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-3 h-3" />
+                <span>Phone SMS OTP</span>
+              </button>
+            </div>
 
             {authMethod === 'password' ? (
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                 {/* Email Input */}
                 <div className="space-y-1.5">
                   <label className="block font-semibold text-zinc-300">
-                    {loginRole === 'admin' ? 'Admin Email, Username, or Phone' : 'Email Address, Username, or Mobile Number'}
+                    Email Address, Username, or Mobile Number
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -400,7 +260,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
                       type="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai, @username, or +91 98765 43210'}
+                      placeholder="your@email.com, @username, or +91 98765 43210"
                       className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
                     />
                   </div>
@@ -460,7 +320,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      {loginRole === 'admin' ? 'Sign In to Admin Portal' : 'Sign In as Learner'}
+                      Sign In to AI Nexus
                       <ArrowRight className="w-4 h-4" />
                     </span>
                   )}
@@ -535,34 +395,6 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
                 )}
               </form>
             )}
-
-            {/* Social / OAuth Divider */}
-            <div className="relative pt-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#1e293b]" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-mono text-zinc-400">
-                <span className="bg-[#0f172a] px-2">Or continue with</span>
-              </div>
-            </div>
-
-            {/* OAuth Buttons */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
-                className="p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 hover:text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Globe className="w-4 h-4 text-purple-400" />
-                <span>Google OAuth</span>
-              </button>
-              <button
-                type="button"
-                className="p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                <KeyRound className="w-4 h-4 text-blue-400" />
-                <span>Enterprise SSO</span>
-              </button>
-            </div>
           </Card>
         </div>
       </div>
