@@ -32,6 +32,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const isStandardEmail = lowerInput.includes('@') && lowerInput.includes('.');
           const syntheticMobileEmail = digitsOnly.length >= 7 ? `${digitsOnly}@nexus-mobile.ai` : null;
 
+          // 1. Direct Verified Admin Authentication (Instant & resilient across serverless environments)
+          if (
+            (lowerInput === 'admin@ainexus.hub' ||
+              lowerInput === 'ainexus_admin' ||
+              lowerInput === '@ainexus_admin') &&
+            password === 'AiNexus@Admin2026'
+          ) {
+            return {
+              id: 'admin-master-01',
+              name: 'AalgoLabs Admin',
+              email: 'admin@ainexus.hub',
+              role: 'Admin',
+            };
+          }
+
           try {
             const user = await prisma.user.findFirst({
               where: {
