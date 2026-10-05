@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ShieldCheck,
   GraduationCap,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Globe,
@@ -38,20 +37,13 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
     }
     return 'learner';
   });
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(() => (initialRole === 'admin' ? 'john.doe@example.com' : ''));
+  const [password, setPassword] = useState(() => (initialRole === 'admin' ? 'password123' : ''));
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (initialRole === 'admin' && !email) {
-      setEmail('john.doe@example.com');
-      setPassword('password123');
-    }
-  }, [initialRole]);
 
   const handleQuickFillAdmin = () => {
     setLoginRole('admin');
@@ -127,7 +119,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
           }
         }, 500);
       }
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setErrorMessage('An unexpected error occurred during sign in.');
     }
@@ -150,7 +142,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
         </Link>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-zinc-400 hidden sm:inline">Don't have an account?</span>
+          <span className="text-zinc-400 hidden sm:inline">Don&apos;t have an account?</span>
           <Link
             href="/register"
             className="px-3.5 py-1.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-purple-300 font-semibold rounded-xl transition-colors"

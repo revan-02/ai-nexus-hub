@@ -27,6 +27,15 @@ describe('Zod Validation Schemas', () => {
       const result = createUserSchema.safeParse(invalidUser);
       expect(result.success).toBe(false);
     });
+
+    it('validates partial user update input with updateUserSchema', () => {
+      const partialUpdate = {
+        name: 'Johnathan Doe',
+        status: 'Suspended',
+      };
+      const result = updateUserSchema.safeParse(partialUpdate);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Role Schemas', () => {

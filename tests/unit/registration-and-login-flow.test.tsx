@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterPage from '@/app/(auth)/register/page';
 import LoginPage from '@/app/(auth)/login/page';
-import { registerSchema, loginSchema } from '@/schemas/auth';
+import { registerSchema } from '@/schemas/auth';
 import { signIn } from 'next-auth/react';
 
 const mockPush = vi.fn();
@@ -108,7 +108,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
         status: 200,
         ok: true,
         url: '/dashboard',
-      } as any);
+      } as unknown as ReturnType<typeof signIn>);
 
       render(<RegisterPage />);
 
@@ -167,7 +167,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
         status: 200,
         ok: true,
         url: '/dashboard',
-      } as any);
+      } as unknown as ReturnType<typeof signIn>);
 
       render(<LoginPage />);
 
@@ -198,7 +198,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
         status: 401,
         ok: false,
         url: null,
-      } as any);
+      } as unknown as ReturnType<typeof signIn>);
 
       render(<LoginPage />);
 

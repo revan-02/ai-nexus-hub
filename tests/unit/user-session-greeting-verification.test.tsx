@@ -15,8 +15,15 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({}),
 }));
 
-// Mock next-auth/react
-let mockSessionData: any = {
+interface MockSession {
+  user: {
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+let mockSessionData: MockSession | null = {
   user: {
     name: '7338069255', // Simulating phone number originally passed as name
     email: '7338069255@nexus-mobile.ai',
@@ -180,9 +187,7 @@ describe('User Session & Dashboard Greeting Verification Suite', () => {
       const testUserId = 'usr-perf-test-123';
 
       // First call (initializes cache)
-      const t0 = performance.now();
       const firstResult = await DashboardService.getLearnerDashboardData(testUserId);
-      const t1 = performance.now();
       expect(firstResult).toBeDefined();
 
       // Second call (hits fast in-memory cache)

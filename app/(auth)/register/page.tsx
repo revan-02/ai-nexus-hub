@@ -129,7 +129,7 @@ export default function RegisterPage() {
       } catch {}
 
       // Auto sign-in using NextAuth credentials
-      const signInRes = await signIn('credentials', {
+      await signIn('credentials', {
         email: cleanEmail,
         password,
         name: fullName.trim(),
@@ -144,7 +144,7 @@ export default function RegisterPage() {
         } catch {}
         router.push('/dashboard');
       }, 700);
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setErrorMessage('An unexpected error occurred during account creation.');
     }
@@ -186,7 +186,7 @@ export default function RegisterPage() {
       setOtpCode(data.code);
       setStep(2);
       setSuccessMessage(`OTP sent! Use test code: ${data.code}`);
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setErrorMessage('Failed to connect to authentication server.');
     }
@@ -242,7 +242,7 @@ export default function RegisterPage() {
         window.dispatchEvent(new Event('nexus_profile_updated'));
       } catch {}
 
-      const signInRes = await signIn('credentials', {
+      await signIn('credentials', {
         email: data.user.email,
         password: 'password123',
         name: finalName,
@@ -257,7 +257,7 @@ export default function RegisterPage() {
         } catch {}
         router.push('/dashboard');
       }, 700);
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setErrorMessage('Verification failed.');
     }
