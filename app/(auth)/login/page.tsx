@@ -15,13 +15,22 @@ import {
   CheckCircle2,
   AlertCircle,
   Globe,
-  KeyRound
+  KeyRound,
+  Smartphone
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 import { signIn } from 'next-auth/react';
+import {
+  signInWithGoogle,
+  initPhoneRecaptcha,
+  sendPhoneOtp,
+  verifyPhoneOtp,
+  loginWithEmail
+} from '@/lib/firebase/auth';
+import type { ConfirmationResult } from 'firebase/auth';
 
 interface LoginPageProps {
   initialRole?: 'learner' | 'admin';
@@ -37,6 +46,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
     }
     return 'learner';
   });
+  const [authMethod, setAuthMethod] = useState<'password' | 'phone'>('password');
   const [email, setEmail] = useState(() => (initialRole === 'admin' ? 'john.doe@example.com' : ''));
   const [password, setPassword] = useState(() => (initialRole === 'admin' ? 'password123' : ''));
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +54,12 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Firebase Phone Auth State
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneCode, setPhoneCode] = useState('');
+  const [phoneStep, setPhoneStep] = useState<1 | 2>(1);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const handleQuickFillAdmin = () => {
     setLoginRole('admin');
@@ -122,6 +138,96 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
     } catch {
       setIsLoading(false);
       setErrorMessage('An unexpected error occurred during sign in.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const { user, profile } = await signInWithGoogle();
+      setSuccessMessage(`Welcome back, ${profile.name}! Redirecting...`);
+      await signIn('credentials', {
+        email: profile.email || `${user.uid}@nexus.ai`,
+        password: 'password123',
+        name: profile.name,
+        redirect: false,
+      });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    } catch (err: unknown) {
+      setIsLoading(false);
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'auth/popup-closed-by-user') {
+        return;
+      }
+      if (error.code === 'auth/unauthorized-domain') {
+        setErrorMessage(
+          "Google Sign-In domain unauthorized. Add 'localhost' to Authorized Domains in Firebase Console > Authentication > Settings."
+        );
+      } else {
+        setErrorMessage(error.message || 'Failed to sign in with Google.');
+      }
+    }
+  };
+
+  const handleSendPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const cleanPhone = phoneNumber.trim();
+    if (!cleanPhone || cleanPhone.replace(/[^0-9]/g, '').length < 10) {
+      setErrorMessage('Please enter a valid mobile number (minimum 10 digits).');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const verifier = initPhoneRecaptcha('firebase-recaptcha-container');
+      const confirmation = await sendPhoneOtp(cleanPhone, verifier);
+      setConfirmationResult(confirmation);
+      setPhoneStep(2);
+      setSuccessMessage(`SMS OTP sent to ${cleanPhone}. Please enter the 6-digit code.`);
+    } catch (err: unknown) {
+      const error = err as { code?: string; message?: string };
+      setErrorMessage(
+        error.message || 'Failed to send SMS code. Please verify phone number format (e.g. +91 98765 43210).'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!confirmationResult || !phoneCode.trim()) {
+      setErrorMessage('Please enter the verification code received on your phone.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { user, profile } = await verifyPhoneOtp(confirmationResult, phoneCode);
+      setSuccessMessage(`Phone verified! Welcome ${profile.name}. Redirecting...`);
+      await signIn('credentials', {
+        email: profile.phone || `${user.uid}@nexus.ai`,
+        password: 'password123',
+        name: profile.name,
+        redirect: false,
+      });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    } catch (err: unknown) {
+      setIsLoading(false);
+      const error = err as { code?: string; message?: string };
+      setErrorMessage(error.message || 'Invalid or expired SMS verification code.');
     }
   };
 
@@ -241,84 +347,190 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-              {/* Email Input */}
-              <div className="space-y-1.5">
-                <label className="block font-semibold text-zinc-300">
-                  {loginRole === 'admin' ? 'Admin Email, Username, or Phone' : 'Email Address, Username, or Mobile Number'}
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                  <Input
-                    type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai, @username, or +91 98765 43210'}
-                    className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
-                  />
-                </div>
+            {/* Learner Auth Mode Switcher */}
+            {loginRole === 'learner' && (
+              <div className="flex items-center gap-1.5 p-1 bg-[#131c31] border border-[#1e293b] rounded-xl text-[11px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMethod('password');
+                    setErrorMessage(null);
+                  }}
+                  className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                    authMethod === 'password'
+                      ? 'bg-purple-600 text-white font-bold shadow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Lock className="w-3 h-3" />
+                  <span>Password Login</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMethod('phone');
+                    setErrorMessage(null);
+                  }}
+                  className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                    authMethod === 'phone'
+                      ? 'bg-purple-600 text-white font-bold shadow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Smartphone className="w-3 h-3" />
+                  <span>Phone SMS OTP</span>
+                </button>
               </div>
+            )}
 
-              {/* Password Input */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="block font-semibold text-zinc-300">Password</label>
-                  <Link href="/forgot-password" className="text-[11px] text-purple-400 hover:underline">
-                    Forgot Password?
-                  </Link>
+            {authMethod === 'password' ? (
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                {/* Email Input */}
+                <div className="space-y-1.5">
+                  <label className="block font-semibold text-zinc-300">
+                    {loginRole === 'admin' ? 'Admin Email, Username, or Phone' : 'Email Address, Username, or Mobile Number'}
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input
+                      type="text"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai, @username, or +91 98765 43210'}
+                      className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="pl-9 pr-10 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
+
+                {/* Password Input */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-semibold text-zinc-300">Password</label>
+                    <Link href="/forgot-password" className="text-[11px] text-purple-400 hover:underline">
+                      Forgot Password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="pl-9 pr-10 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Remember Me Checkbox */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded border-[#1e293b] bg-[#131c31] text-purple-600 cursor-pointer"
                   />
+                  <label htmlFor="rememberMe" className="text-zinc-400 cursor-pointer select-none">
+                    Remember this device for 30 days
+                  </label>
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-purple-900/30 gap-2 transition-all mt-2 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                      Authenticating...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      {loginRole === 'admin' ? 'Sign In to Admin Portal' : 'Sign In as Learner'}
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                  )}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={phoneStep === 1 ? handleSendPhoneOtp : handleVerifyPhoneOtp} className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="block font-semibold text-zinc-300">Mobile Phone Number</label>
+                  <div className="relative">
+                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <Input
+                      type="tel"
+                      disabled={phoneStep === 2 || isLoading}
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-zinc-400">Include country code (e.g. +91 for India, +1 for US)</p>
+                </div>
+
+                {phoneStep === 2 && (
+                  <div className="space-y-1.5 animate-in fade-in duration-200">
+                    <label className="block font-semibold text-zinc-300">6-Digit SMS Verification Code</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                      <Input
+                        type="text"
+                        value={phoneCode}
+                        onChange={(e) => setPhoneCode(e.target.value)}
+                        placeholder="123456"
+                        maxLength={6}
+                        className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500 tracking-widest font-mono text-center text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div id="firebase-recaptcha-container"></div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-purple-900/30 gap-2 transition-all mt-2 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                      {phoneStep === 1 ? 'Sending SMS OTP...' : 'Verifying Code...'}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      {phoneStep === 1 ? 'Send SMS Verification Code' : 'Verify Code & Sign In'}
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                  )}
+                </Button>
+
+                {phoneStep === 2 && (
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                    onClick={() => {
+                      setPhoneStep(1);
+                      setConfirmationResult(null);
+                    }}
+                    className="w-full text-center text-[11px] text-zinc-400 hover:text-purple-400 cursor-pointer pt-1"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    Change Phone Number
                   </button>
-                </div>
-              </div>
-
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-[#1e293b] bg-[#131c31] text-purple-600 cursor-pointer"
-                />
-                <label htmlFor="rememberMe" className="text-zinc-400 cursor-pointer select-none">
-                  Remember this device for 30 days
-                </label>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-purple-900/30 gap-2 transition-all mt-2"
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                    Authenticating...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    {loginRole === 'admin' ? 'Sign In to Admin Portal' : 'Sign In as Learner'}
-                    <ArrowRight className="w-4 h-4" />
-                  </span>
                 )}
-              </Button>
-            </form>
+              </form>
+            )}
 
             {/* Social / OAuth Divider */}
             <div className="relative pt-2">
@@ -332,7 +544,9 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
-                className="p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 hover:text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Globe className="w-4 h-4 text-purple-400" />
                 <span>Google OAuth</span>

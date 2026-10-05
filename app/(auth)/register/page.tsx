@@ -19,12 +19,21 @@ import {
   AtSign,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Globe
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { signIn } from 'next-auth/react';
+import {
+  signInWithGoogle,
+  registerWithEmail,
+  initPhoneRecaptcha,
+  sendPhoneOtp,
+  verifyPhoneOtp
+} from '@/lib/firebase/auth';
+import type { ConfirmationResult } from 'firebase/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -136,6 +145,19 @@ export default function RegisterPage() {
         redirect: false,
       });
 
+      // Sync to Firebase Auth & Firestore in background
+      try {
+        await registerWithEmail({
+          name: fullName.trim(),
+          username: cleanUsername,
+          email: cleanEmail,
+          password,
+          phone: cleanPhone,
+        });
+      } catch (fbErr) {
+        console.warn('[Firebase Auth] Non-fatal background sync warning during registration:', fbErr);
+      }
+
       setIsLoading(false);
 
       setTimeout(() => {
@@ -147,6 +169,36 @@ export default function RegisterPage() {
     } catch {
       setIsLoading(false);
       setErrorMessage('An unexpected error occurred during account creation.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const { user, profile } = await signInWithGoogle();
+      setSuccessMessage(`Welcome, ${profile.name}! Redirecting to Dashboard...`);
+      await signIn('credentials', {
+        email: profile.email || `${user.uid}@nexus.ai`,
+        password: 'password123',
+        name: profile.name,
+        redirect: false,
+      });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    } catch (err: unknown) {
+      setIsLoading(false);
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'auth/popup-closed-by-user') return;
+      if (error.code === 'auth/unauthorized-domain') {
+        setErrorMessage(
+          "Google Sign-In domain unauthorized. Add 'localhost' to Authorized Domains in Firebase Console > Authentication > Settings."
+        );
+      } else {
+        setErrorMessage(error.message || 'Failed to sign in with Google.');
+      }
     }
   };
 
@@ -637,6 +689,24 @@ export default function RegisterPage() {
                 )}
               </div>
             )}
+
+            {/* Social / Google Quick Register */}
+            <div className="relative pt-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#1e293b]" /></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-mono text-zinc-400">
+                <span className="bg-[#0f172a] px-2">Or quick register with</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 hover:text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer text-xs"
+            >
+              <Globe className="w-4 h-4 text-purple-400" />
+              <span>Continue with Google</span>
+            </button>
           </Card>
         </div>
       </main>
