@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterPage from '@/app/(auth)/register/page';
 import LoginPage from '@/app/(auth)/login/page';
 import { registerSchema } from '@/schemas/auth';
-import { signIn } from 'next-auth/react';
+import { signIn, type SignInResponse } from 'next-auth/react';
 
 const mockPush = vi.fn();
 
@@ -108,7 +108,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
         status: 200,
         ok: true,
         url: '/dashboard',
-      } as unknown as ReturnType<typeof signIn>);
+      } as SignInResponse);
 
       render(<RegisterPage />);
 
@@ -167,7 +167,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
         status: 200,
         ok: true,
         url: '/dashboard',
-      } as unknown as ReturnType<typeof signIn>);
+      } as SignInResponse);
 
       render(<LoginPage />);
 
@@ -198,7 +198,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
         status: 401,
         ok: false,
         url: null,
-      } as unknown as ReturnType<typeof signIn>);
+      } as SignInResponse);
 
       render(<LoginPage />);
 

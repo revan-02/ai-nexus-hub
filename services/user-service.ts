@@ -2,10 +2,10 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/db/prisma';
 import { createAuditLog } from './audit-service';
 import type { QueryParams, PaginatedResponse } from '@/types/api';
-import type { CreateUserInput, UpdateUserInput, UserData } from '@/lib/api/endpoints/users';
-import type { UserRole, UserStatus } from '@prisma/client';
+import type { CreateUserInput, UpdateUserInput } from '@/lib/api/endpoints/users';
+import type { User as PrismaUser, UserRole, UserStatus } from '@prisma/client';
 
-export async function getUsers(params?: QueryParams): Promise<PaginatedResponse<UserData>> {
+export async function getUsers(params?: QueryParams): Promise<PaginatedResponse<PrismaUser>> {
   const page = Number(params?.page || 1);
   const limit = Number(params?.limit || 20);
   const search = String(params?.search || '');
