@@ -81,10 +81,6 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
 
     try {
       const cleanIdentifier = email.trim();
-      const isEmail = cleanIdentifier.includes('@');
-      const cleanPhone = cleanIdentifier.replace(/[^0-9]/g, '');
-      const isPhone = !isEmail && cleanPhone.length >= 7;
-      const authEmail = isPhone ? `${cleanPhone}@nexus-mobile.ai` : cleanIdentifier;
 
       let storedName = '';
       try {
@@ -98,7 +94,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
       } catch {}
 
       const res = await signIn('credentials', {
-        email: authEmail,
+        email: cleanIdentifier,
         password,
         name: storedName || undefined,
         redirect: false,
@@ -107,7 +103,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
       setIsLoading(false);
 
       if (res?.error) {
-        setErrorMessage('Invalid credentials. Please verify your email or phone number and password.');
+        setErrorMessage('Invalid credentials. Please verify your email, username, or phone number and password.');
       } else {
         if (storedName) {
           try {
@@ -121,12 +117,15 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
         );
 
         setTimeout(() => {
+          try {
+            router.refresh();
+          } catch {}
           if (loginRole === 'admin') {
             router.push('/admin');
           } else {
             router.push('/dashboard');
           }
-        }, 800);
+        }, 500);
       }
     } catch (err) {
       setIsLoading(false);
@@ -254,7 +253,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="block font-semibold text-zinc-300">
-                  {loginRole === 'admin' ? 'Admin Email / Username' : 'Email Address or Mobile Number'}
+                  {loginRole === 'admin' ? 'Admin Email, Username, or Phone' : 'Email Address, Username, or Mobile Number'}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -262,7 +261,7 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
                     type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai or +91 98765 43210'}
+                    placeholder={loginRole === 'admin' ? 'admin@nexus.ai' : 'learner@nexus.ai, @username, or +91 98765 43210'}
                     className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
                   />
                 </div>

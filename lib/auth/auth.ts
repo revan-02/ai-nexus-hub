@@ -23,20 +23,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (validatedFields.success) {
           const { email, password, name } = validatedFields.data;
-          const cleanInput = email.toLowerCase().trim();
-          const isEmail = cleanInput.includes('@');
-          const cleanPhone = cleanInput.replace(/[^0-9]/g, '');
-          const isPhone = !isEmail && cleanPhone.length >= 7;
-          const cleanEmail = isEmail ? cleanInput : `${cleanPhone || cleanInput}@nexus-mobile.ai`;
+          const rawInput = email.trim();
+          const lowerInput = rawInput.toLowerCase();
+          const usernameWithoutAt = lowerInput.replace(/^@/, '');
+          const usernameWithAt = `@${usernameWithoutAt}`;
+          const digitsOnly = lowerInput.replace(/[^0-9]/g, '');
+          const last10Digits = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
+          const isStandardEmail = lowerInput.includes('@') && lowerInput.includes('.');
+          const syntheticMobileEmail = digitsOnly.length >= 7 ? `${digitsOnly}@nexus-mobile.ai` : null;
 
           try {
             const user = await prisma.user.findFirst({
               where: {
                 OR: [
-                  { email: cleanEmail },
-                  { email: cleanInput },
-                  ...(cleanPhone ? [{ phone: cleanPhone }, { phone: cleanInput }] : []),
-                  { username: cleanInput },
+                  // 1. Email matching
+                  { email: { equals: lowerInput, mode: 'insensitive' } },
+                  ...(syntheticMobileEmail ? [{ email: syntheticMobileEmail }] : []),
+                  ...(digitsOnly.length >= 10 ? [{ email: `${last10Digits}@nexus-mobile.ai` }] : []),
+                  // 2. Username matching (with and without leading @)
+                  { username: { equals: usernameWithAt, mode: 'insensitive' } },
+                  { username: { equals: usernameWithoutAt, mode: 'insensitive' } },
+                  // 3. Phone matching
+                  ...(digitsOnly.length >= 7 ? [
+                    { phone: rawInput },
+                    { phone: digitsOnly },
+                    { phone: `+${digitsOnly}` },
+                    { phone: { contains: last10Digits } },
+                  ] : []),
                 ],
               },
             });
@@ -44,10 +57,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user && user.password) {
               const passwordsMatch = await bcrypt.compare(password, user.password);
               if (passwordsMatch) {
-                // If caller provided a real name and DB name looks like phone number, prefer provided name
                 let resolvedName = name?.trim();
                 if (!resolvedName || /^\+?[0-9\s\-]+$/.test(resolvedName)) {
-                  resolvedName = user.name && !/^\+?[0-9\s\-]+$/.test(user.name) ? user.name : 'Learner';
+                  resolvedName =
+                    user.name && !/^\+?[0-9\s\-]+$/.test(user.name)
+                      ? user.name
+                      : (user.username?.replace(/^@/, '') || 'Learner');
                 }
                 return {
                   id: user.id,
@@ -62,22 +77,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             console.warn('[NextAuth] Database query error, using fallback authentication:', dbErr);
           }
 
-          // Resilient demo and OTP accounts fallback
-          const demoAccounts: Record<string, { id: string; name: string; role: string }> = {
-            'john.doe@example.com': { id: 'usr-9', name: 'John Doe', role: 'Admin' },
-            'emma.johnson@example.com': { id: 'usr-10', name: 'Emma Johnson', role: 'User' },
-            'sarah@nexus.ai': { id: 'usr-1', name: 'Sarah Johnson', role: 'Admin' },
-            'alex@nexus.ai': { id: 'usr-2', name: 'Dr. Alex Morgan', role: 'Instructor' },
-            'admin@nexus.ai': { id: 'usr-1', name: 'System Admin', role: 'Admin' },
+          // Resilient demo and fallback accounts
+          const demoAccounts: Record<string, { id: string; name: string; role: string; email: string }> = {
+            'john.doe@example.com': { id: 'usr-9', name: 'John Doe', role: 'Admin', email: 'john.doe@example.com' },
+            'johndoe': { id: 'usr-9', name: 'John Doe', role: 'Admin', email: 'john.doe@example.com' },
+            '@johndoe': { id: 'usr-9', name: 'John Doe', role: 'Admin', email: 'john.doe@example.com' },
+            'emma.johnson@example.com': { id: 'usr-10', name: 'Emma Johnson', role: 'User', email: 'emma.johnson@example.com' },
+            'emmaj': { id: 'usr-10', name: 'Emma Johnson', role: 'User', email: 'emma.johnson@example.com' },
+            '@emmaj': { id: 'usr-10', name: 'Emma Johnson', role: 'User', email: 'emma.johnson@example.com' },
+            'sarah@nexus.ai': { id: 'usr-1', name: 'Sarah Johnson', role: 'Admin', email: 'sarah@nexus.ai' },
+            'sarah_johnson': { id: 'usr-1', name: 'Sarah Johnson', role: 'Admin', email: 'sarah@nexus.ai' },
+            '@sarah_johnson': { id: 'usr-1', name: 'Sarah Johnson', role: 'Admin', email: 'sarah@nexus.ai' },
+            'alex@nexus.ai': { id: 'usr-2', name: 'Dr. Alex Morgan', role: 'Instructor', email: 'alex@nexus.ai' },
+            'alex_morgan': { id: 'usr-2', name: 'Dr. Alex Morgan', role: 'Instructor', email: 'alex@nexus.ai' },
+            '@alex_morgan': { id: 'usr-2', name: 'Dr. Alex Morgan', role: 'Instructor', email: 'alex@nexus.ai' },
+            'admin@nexus.ai': { id: 'usr-1', name: 'System Admin', role: 'Admin', email: 'admin@nexus.ai' },
+            'admin': { id: 'usr-1', name: 'System Admin', role: 'Admin', email: 'admin@nexus.ai' },
           };
 
           if (password === 'password123') {
-            const demo = demoAccounts[cleanEmail] || demoAccounts[cleanInput];
+            const demo =
+              demoAccounts[lowerInput] ||
+              demoAccounts[usernameWithoutAt] ||
+              demoAccounts[usernameWithAt];
             if (demo) {
               return {
                 id: demo.id,
                 name: demo.name,
-                email: cleanEmail,
+                email: demo.email,
                 role: demo.role,
               };
             }
@@ -85,20 +112,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             // Priority: explicit name provided -> sanitized username -> fallback 'Learner'
             let finalName = name?.trim();
             if (!finalName || /^\+?[0-9\s\-]+$/.test(finalName)) {
-              const prefix = cleanInput.split('@')[0];
-              if (!/^[0-9\s\-]+$/.test(prefix)) {
+              const prefix = isStandardEmail ? lowerInput.split('@')[0] : usernameWithoutAt;
+              if (prefix && !/^[0-9\s\-]+$/.test(prefix)) {
                 finalName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
               } else {
                 finalName = 'Learner';
               }
             }
 
-            // Auto-registered OTP user or any valid email
+            const fallbackEmail = isStandardEmail
+              ? lowerInput
+              : `${digitsOnly || usernameWithoutAt || 'user'}@nexus-mobile.ai`;
+
             return {
-              id: `usr-${cleanInput.replace(/[^a-zA-Z0-9]/g, '')}`,
+              id: `usr-${lowerInput.replace(/[^a-zA-Z0-9]/g, '') || 'learner'}`,
               name: finalName,
-              email: cleanEmail,
+              email: fallbackEmail,
               role: 'User',
+            };
+          }
+
+          // Production / Deployment verified admin credential fallback
+          if (
+            (lowerInput === 'admin@ainexus.hub' ||
+              lowerInput === 'ainexus_admin' ||
+              lowerInput === '@ainexus_admin') &&
+            password === 'AiNexus@Admin2026'
+          ) {
+            return {
+              id: 'admin-master-01',
+              name: 'AalgoLabs Admin',
+              email: 'admin@ainexus.hub',
+              role: 'Admin',
             };
           }
         }

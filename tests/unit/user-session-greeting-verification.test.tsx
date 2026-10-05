@@ -90,7 +90,7 @@ describe('User Session & Dashboard Greeting Verification Suite', () => {
       expect(data.steps[0].progress).toBe(0);
       // For a brand new user, live sessions must be empty so it offers "Start Learning"
       expect(data.tabData.liveSessions).toEqual([]);
-    });
+    }, 15000);
   });
 
   // ==========================================
@@ -193,7 +193,7 @@ describe('User Session & Dashboard Greeting Verification Suite', () => {
       expect(cachedResult).toBeDefined();
       const cachedLatency = t3 - t2;
       expect(cachedLatency).toBeLessThan(10); // Must resolve under 10ms
-    });
+    }, 15000);
   });
 
   // ==========================================

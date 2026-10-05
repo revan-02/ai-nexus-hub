@@ -5,6 +5,7 @@ export interface UserData {
   name: string;
   username: string;
   email: string;
+  phone?: string | null;
   avatar: string | null;
   role: string;
   organization: string | null;
@@ -19,6 +20,7 @@ export type CreateUserInput = {
   name: string;
   username: string;
   email: string;
+  phone?: string | null;
   avatar?: string | null;
   role?: string;
   organization?: string | null;

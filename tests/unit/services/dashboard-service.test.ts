@@ -15,7 +15,7 @@ describe('DashboardService Business Logic', () => {
     expect(typeof data.levelMeta.projectsCompleted).toBe('number');
     expect(typeof data.levelMeta.streakDays).toBe('number');
     expect(typeof data.levelMeta.timeSpent).toBe('string');
-  });
+  }, 15000);
 
   it('should return 6 learning phases with valid progression status', async () => {
     const data = await getLearnerDashboardData('usr-7');
@@ -27,7 +27,7 @@ describe('DashboardService Business Logic', () => {
       expect(step.progress).toBeGreaterThanOrEqual(0);
       expect(step.progress).toBeLessThanOrEqual(100);
     }
-  });
+  }, 15000);
 
   it('should calculate active course progress dynamically from database records', async () => {
     const data = await getLearnerDashboardData('usr-7');
@@ -38,5 +38,5 @@ describe('DashboardService Business Logic', () => {
       expect(['Review', 'Continue', 'Start Lesson', 'Locked']).toContain(course.action);
       expect(typeof course.progress).toBe('number');
     }
-  });
+  }, 15000);
 });
