@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterPage from '@/app/(auth)/register/page';
 import LoginPage from '@/app/(auth)/login/page';
-import { registerSchema } from '@/schemas/auth';
+import { registerSchema, validatePhoneNumber } from '@/schemas/auth';
 import { signIn, type SignInResponse } from 'next-auth/react';
 
 const mockPush = vi.fn();
@@ -69,6 +69,41 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
           password: 'password123',
         }).success
       ).toBe(false);
+    });
+
+    it('strictly rejects invalid phone numbers like 655777667724 and validates correct phone formats', () => {
+      // 12-digit number without country code
+      const invalidRandomDigits = validatePhoneNumber('655777667724');
+      expect(invalidRandomDigits.valid).toBe(false);
+      expect(invalidRandomDigits.error).toContain('Invalid mobile number');
+
+      // Invalid short number
+      const shortNum = validatePhoneNumber('12345');
+      expect(shortNum.valid).toBe(false);
+
+      // Domestic number starting with invalid prefix
+      const invalidPrefix = validatePhoneNumber('1234567890');
+      expect(invalidPrefix.valid).toBe(false);
+
+      // Valid 10-digit Indian mobile number
+      const validDomestic = validatePhoneNumber('9876543210');
+      expect(validDomestic.valid).toBe(true);
+      expect(validDomestic.formatted).toBe('+919876543210');
+
+      // Valid formatted international number
+      const validInternational = validatePhoneNumber('+91 98765 43210');
+      expect(validInternational.valid).toBe(true);
+      expect(validInternational.formatted).toBe('+919876543210');
+
+      // Register schema rejects payload with 655777667724
+      const invalidPayload = {
+        name: 'Alan Turing',
+        username: 'alanturing',
+        email: 'turing@ai-nexus.tech',
+        phone: '655777667724',
+        password: 'password123',
+      };
+      expect(registerSchema.safeParse(invalidPayload).success).toBe(false);
     });
   });
 
@@ -156,6 +191,66 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
             redirect: false,
           })
         );
+      });
+    });
+
+    it('rejects registration when invalid phone number 655777667724 is entered', async () => {
+      render(<RegisterPage />);
+
+      fireEvent.change(screen.getByPlaceholderText(/e\.g\. John Doe/i), {
+        target: { value: 'Ada Lovelace' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/johndoe or ai_ninja/i), {
+        target: { value: 'adalovelace' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/john\.doe@example\.com/i), {
+        target: { value: 'ada@example.com' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/\+91 98765 43210/i), {
+        target: { value: '655777667724' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/••••••••••••/i), {
+        target: { value: 'secretPass123' },
+      });
+
+      const submitBtn = screen.getByRole('button', { name: /Complete Registration & Launch/i });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Invalid mobile number/i)).toBeInTheDocument();
+      });
+    });
+
+    it('enforces mandatory username, email, and strict phone in 1-Click OTP mode', async () => {
+      render(<RegisterPage />);
+
+      const otpTabBtn = screen.getByRole('button', { name: /1-Click OTP/i });
+      fireEvent.click(otpTabBtn);
+
+      // Verify mandatory badges and fields in OTP mode
+      expect(screen.getByPlaceholderText(/johndoe or ai_ninja/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/john\.doe@example\.com/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/\+91 98765 43210/i)).toBeInTheDocument();
+
+      // Enter invalid phone 655777667724 and attempt sending OTP
+      fireEvent.change(screen.getByPlaceholderText(/e\.g\. John Doe/i), {
+        target: { value: 'Ada Lovelace' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/johndoe or ai_ninja/i), {
+        target: { value: 'adalovelace' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/john\.doe@example\.com/i), {
+        target: { value: 'ada@example.com' },
+      });
+      fireEvent.change(screen.getByPlaceholderText(/\+91 98765 43210/i), {
+        target: { value: '655777667724' },
+      });
+
+      const sendOtpBtn = screen.getByRole('button', { name: /Send Verification Code/i });
+      fireEvent.click(sendOtpBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Invalid mobile number/i)).toBeInTheDocument();
       });
     });
   });

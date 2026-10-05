@@ -31,6 +31,7 @@ import {
   loginWithEmail
 } from '@/lib/firebase/auth';
 import type { ConfirmationResult } from 'firebase/auth';
+import { validatePhoneNumber } from '@/schemas/auth';
 
 interface LoginPageProps {
   initialRole?: 'learner' | 'admin';
@@ -179,18 +180,19 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
     setSuccessMessage(null);
 
     const cleanPhone = phoneNumber.trim();
-    if (!cleanPhone || cleanPhone.replace(/[^0-9]/g, '').length < 10) {
-      setErrorMessage('Please enter a valid mobile number (minimum 10 digits).');
+    const phoneCheck = validatePhoneNumber(cleanPhone);
+    if (!phoneCheck.valid) {
+      setErrorMessage(phoneCheck.error || 'Please enter a valid 10-digit mobile number.');
       return;
     }
 
     setIsLoading(true);
     try {
       const verifier = initPhoneRecaptcha('firebase-recaptcha-container');
-      const confirmation = await sendPhoneOtp(cleanPhone, verifier);
+      const confirmation = await sendPhoneOtp(phoneCheck.formatted, verifier);
       setConfirmationResult(confirmation);
       setPhoneStep(2);
-      setSuccessMessage(`SMS OTP sent to ${cleanPhone}. Please enter the 6-digit code.`);
+      setSuccessMessage(`SMS OTP sent to ${phoneCheck.formatted}. Please enter the 6-digit code.`);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
       setErrorMessage(

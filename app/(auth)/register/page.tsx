@@ -34,6 +34,7 @@ import {
   verifyPhoneOtp
 } from '@/lib/firebase/auth';
 import type { ConfirmationResult } from 'firebase/auth';
+import { validatePhoneNumber } from '@/schemas/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -86,9 +87,9 @@ export default function RegisterPage() {
     }
 
     const cleanPhone = phone.trim();
-    const phoneDigits = cleanPhone.replace(/[^0-9]/g, '');
-    if (!cleanPhone || phoneDigits.length < 10) {
-      setErrorMessage('A valid Mobile Phone Number is mandatory (minimum 10 digits).');
+    const phoneCheck = validatePhoneNumber(cleanPhone);
+    if (!phoneCheck.valid) {
+      setErrorMessage(phoneCheck.error || 'A valid 10-digit Mobile Phone Number is mandatory.');
       return;
     }
 
@@ -202,20 +203,44 @@ export default function RegisterPage() {
     }
   };
 
-  // Handle Step 1: Send OTP
+  // Handle Step 1: Send OTP (Username, Email & Phone mandatory)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (!identifier) {
-      setErrorMessage(
-        authMethod === 'phone'
-          ? 'Please enter a valid Mobile Phone Number.'
-          : 'Please enter a valid Email address.'
-      );
+    // 1. Full Name (Mandatory)
+    if (!fullName.trim()) {
+      setErrorMessage('Full Name is required.');
       return;
     }
+
+    // 2. Username (Mandatory)
+    const cleanUsername = username.trim().replace(/^@/, '');
+    if (!cleanUsername || cleanUsername.length < 2) {
+      setErrorMessage('Username is mandatory and must be at least 2 characters long.');
+      return;
+    }
+
+    // 3. Email (Mandatory)
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setErrorMessage('A valid Email address is mandatory (e.g. name@example.com).');
+      return;
+    }
+
+    // 4. Mobile Phone (Mandatory & strictly validated)
+    const cleanPhone = phone.trim();
+    const phoneCheck = validatePhoneNumber(cleanPhone);
+    if (!phoneCheck.valid) {
+      setErrorMessage(phoneCheck.error || 'A valid 10-digit Mobile Phone Number is mandatory.');
+      return;
+    }
+
+    // Target identifier to receive OTP depending on user's choice
+    const dispatchIdentifier = authMethod === 'phone' ? phoneCheck.formatted : cleanEmail;
+    setIdentifier(dispatchIdentifier);
 
     setIsLoading(true);
 
@@ -223,7 +248,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, type: authMethod }),
+        body: JSON.stringify({ identifier: dispatchIdentifier, type: authMethod }),
       });
 
       const data = await res.json();
@@ -237,7 +262,11 @@ export default function RegisterPage() {
       setGeneratedCode(data.code);
       setOtpCode(data.code);
       setStep(2);
-      setSuccessMessage(`OTP sent! Use test code: ${data.code}`);
+      setSuccessMessage(
+        authMethod === 'phone'
+          ? `SMS OTP sent to ${dispatchIdentifier}! Use test code: ${data.code}`
+          : `Email OTP sent to ${dispatchIdentifier}! Use test code: ${data.code}`
+      );
     } catch {
       setIsLoading(false);
       setErrorMessage('Failed to connect to authentication server.');
@@ -255,6 +284,11 @@ export default function RegisterPage() {
       return;
     }
 
+    const cleanUsername = username.trim().replace(/^@/, '');
+    const cleanEmail = email.trim().toLowerCase();
+    const phoneCheck = validatePhoneNumber(phone);
+    const cleanPhone = phoneCheck.valid ? phoneCheck.formatted : phone.trim();
+
     setIsLoading(true);
 
     try {
@@ -263,9 +297,12 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           identifier,
-          code: otpCode,
+          code: otpCode.trim(),
           type: authMethod,
-          name: fullName || undefined,
+          name: fullName.trim(),
+          username: cleanUsername,
+          email: cleanEmail,
+          phone: cleanPhone,
         }),
       });
 
@@ -279,15 +316,17 @@ export default function RegisterPage() {
 
       setSuccessMessage('Verified successfully! Logging in...');
       const finalName = data?.user?.name || fullName?.trim() || 'Learner';
+      const finalUsername = data?.user?.username || (cleanUsername.startsWith('@') ? cleanUsername : `@${cleanUsername}`);
+      const finalEmail = data?.user?.email || cleanEmail;
 
       try {
         localStorage.setItem(
           'nexus_user_profile',
           JSON.stringify({
             name: finalName,
-            email: data.user.email,
-            phone: authMethod === 'phone' ? identifier : '',
-            username: data.user.email?.split('@')[0] || '',
+            email: finalEmail,
+            phone: cleanPhone,
+            username: finalUsername,
             bio: 'AI Practitioner & Systems Builder',
           })
         );
@@ -295,11 +334,24 @@ export default function RegisterPage() {
       } catch {}
 
       await signIn('credentials', {
-        email: data.user.email,
+        email: finalEmail,
         password: 'password123',
         name: finalName,
         redirect: false,
       });
+
+      // Background Firebase sync
+      try {
+        await registerWithEmail({
+          name: finalName,
+          username: cleanUsername,
+          email: finalEmail,
+          password: 'password123',
+          phone: cleanPhone,
+        });
+      } catch (fbErr) {
+        console.warn('[Firebase Auth] Non-fatal background sync warning during OTP verification:', fbErr);
+      }
 
       setIsLoading(false);
 
@@ -550,84 +602,146 @@ export default function RegisterPage() {
             {registerMode === 'otp' && (
               <div className="space-y-4 text-xs">
                 {/* Method Switcher */}
-                <div className="grid grid-cols-2 gap-2 p-1 bg-[#131c31] rounded-xl border border-[#1e293b]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMethod('phone');
-                      setStep(1);
-                      setIdentifier('');
-                      setErrorMessage(null);
-                    }}
-                    className={`py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                      authMethod === 'phone'
-                        ? 'bg-purple-600 text-white'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>Mobile OTP</span>
-                  </button>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-semibold text-zinc-300">
+                      Receive Verification OTP Via <span className="text-purple-400">*</span>
+                    </label>
+                    <span className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider">Choose Channel</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-[#131c31] rounded-xl border border-[#1e293b]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMethod('phone');
+                        setErrorMessage(null);
+                      }}
+                      className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        authMethod === 'phone'
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>Mobile OTP</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMethod('email');
-                      setStep(1);
-                      setIdentifier('');
-                      setErrorMessage(null);
-                    }}
-                    className={`py-1.5 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
-                      authMethod === 'email'
-                        ? 'bg-purple-600 text-white'
-                        : 'text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>Email OTP</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMethod('email');
+                        setErrorMessage(null);
+                      }}
+                      className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        authMethod === 'email'
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Email OTP</span>
+                    </button>
+                  </div>
                 </div>
 
                 {step === 1 && (
                   <form onSubmit={handleSendOtp} className="space-y-3.5">
-                    <div className="space-y-1.5">
-                      <label className="block font-semibold text-zinc-300">Full Name (Optional)</label>
-                      <Input
-                        type="text"
-                        placeholder="e.g. John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="bg-[#131c31] border-[#1e293b] text-white rounded-xl text-xs h-10"
-                      />
-                    </div>
-
+                    {/* Full Name */}
                     <div className="space-y-1.5">
                       <label className="block font-semibold text-zinc-300">
-                        {authMethod === 'phone' ? 'Mobile Phone Number' : 'Email Address'}
+                        Full Name <span className="text-purple-400">*</span>
                       </label>
                       <div className="relative">
-                        {authMethod === 'phone' ? (
-                          <Smartphone className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        ) : (
-                          <Mail className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        )}
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                         <Input
-                          type={authMethod === 'phone' ? 'tel' : 'email'}
-                          placeholder={authMethod === 'phone' ? '+91 98765 43210' : 'you@example.com'}
-                          value={identifier}
-                          onChange={(e) => setIdentifier(e.target.value)}
-                          className="bg-[#131c31] border-[#1e293b] text-white pl-9 rounded-xl text-xs h-10 focus:border-purple-500"
+                          type="text"
+                          placeholder="e.g. John Doe"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="bg-[#131c31] border-[#1e293b] text-white pl-10 rounded-xl h-10 text-xs focus:border-purple-500"
                           required
                         />
                       </div>
                     </div>
 
+                    {/* Username (Mandatory) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block font-semibold text-zinc-300">
+                          Username <span className="text-purple-400">*</span>
+                        </label>
+                        <span className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider">Mandatory</span>
+                      </div>
+                      <div className="relative">
+                        <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                        <Input
+                          type="text"
+                          placeholder="johndoe or ai_ninja"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_.-]/g, ''))}
+                          className="bg-[#131c31] border-[#1e293b] text-white pl-10 rounded-xl h-10 text-xs focus:border-purple-500"
+                          required
+                        />
+                      </div>
+                      <p className="text-[10px] text-zinc-400">Unique handle for your public profile & leaderboard ranking.</p>
+                    </div>
+
+                    {/* Email Address (Mandatory) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block font-semibold text-zinc-300">
+                          Email Address <span className="text-purple-400">*</span>
+                        </label>
+                        <span className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider">Mandatory</span>
+                      </div>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                        <Input
+                          type="email"
+                          placeholder="john.doe@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="bg-[#131c31] border-[#1e293b] text-white pl-10 rounded-xl h-10 text-xs focus:border-purple-500"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mobile Phone Number (Mandatory) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block font-semibold text-zinc-300">
+                          Mobile Phone Number <span className="text-purple-400">*</span>
+                        </label>
+                        <span className="text-[10px] text-purple-400 font-semibold uppercase tracking-wider">Mandatory</span>
+                      </div>
+                      <div className="relative">
+                        <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                        <Input
+                          type="tel"
+                          placeholder="+91 98765 43210"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="bg-[#131c31] border-[#1e293b] text-white pl-10 rounded-xl h-10 text-xs focus:border-purple-500"
+                          required
+                        />
+                      </div>
+                      <p className="text-[10px] text-zinc-400">Strictly validated 10-digit mobile number for security alerts.</p>
+                    </div>
+
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-purple-950/50 gap-2 mt-2"
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-purple-950/50 gap-2 mt-2 cursor-pointer"
                     >
-                      {isLoading ? 'Sending OTP...' : 'Send Verification Code'}
+                      {isLoading ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                          Sending Verification OTP...
+                        </span>
+                      ) : (
+                        <span>Send Verification Code ({authMethod === 'phone' ? 'Mobile SMS' : 'Email'})</span>
+                      )}
                     </Button>
                   </form>
                 )}
@@ -635,7 +749,9 @@ export default function RegisterPage() {
                 {step === 2 && (
                   <form onSubmit={handleVerifyOtp} className="space-y-3.5">
                     <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl text-center space-y-1">
-                      <span className="text-[11px] text-purple-300 font-semibold">Verification Code Sent To</span>
+                      <span className="text-[11px] text-purple-300 font-semibold">
+                        Verification Code Sent via {authMethod === 'phone' ? 'SMS' : 'Email'} To
+                      </span>
                       <p className="text-xs font-mono font-bold text-white">{identifier}</p>
                       {generatedCode && (
                         <div className="pt-2 border-t border-purple-500/20 text-xs">
@@ -666,7 +782,7 @@ export default function RegisterPage() {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-emerald-950/50 gap-2"
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 rounded-xl shadow-lg shadow-emerald-950/50 gap-2 cursor-pointer"
                     >
                       {isLoading ? (
                         'Verifying...'
@@ -680,10 +796,13 @@ export default function RegisterPage() {
 
                     <button
                       type="button"
-                      onClick={() => setStep(1)}
-                      className="w-full text-center text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 pt-1"
+                      onClick={() => {
+                        setStep(1);
+                        setGeneratedCode(null);
+                      }}
+                      className="w-full text-center text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 pt-1 cursor-pointer"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" /> Change Phone / Email
+                      <RotateCcw className="w-3.5 h-3.5" /> Change Phone / Email / Username
                     </button>
                   </form>
                 )}

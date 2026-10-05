@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, sendSMS } from '@/services/communication-service';
-
-// In-memory OTP & Rate Limit store (backed by Redis in production)
-const otpStore = new Map<string, { code: string; expiresAt: number }>();
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+import { validatePhoneNumber } from '@/schemas/auth';
+import { otpStore, rateLimitStore } from '@/lib/auth/otp-store';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +17,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid Email address or Mobile Phone Number.' }, { status: 400 });
     }
 
-    const cleanIdentifier = identifier.trim().toLowerCase();
+    const rawIdentifier = identifier.trim();
+    const isEmail = rawIdentifier.includes('@') || type === 'email';
+    let cleanIdentifier = rawIdentifier;
+
+    // 🛡️ Strict Phone / Email Validation
+    if (isEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(rawIdentifier)) {
+        return NextResponse.json(
+          { error: 'Please enter a valid email address (e.g. learner@nexus.ai).' },
+          { status: 400 }
+        );
+      }
+      cleanIdentifier = rawIdentifier.toLowerCase();
+    } else {
+      const phoneCheck = validatePhoneNumber(rawIdentifier);
+      if (!phoneCheck.valid) {
+        return NextResponse.json(
+          { error: phoneCheck.error || 'Please enter a valid 10-digit mobile phone number.' },
+          { status: 400 }
+        );
+      }
+      cleanIdentifier = phoneCheck.formatted;
+    }
     const clientIp = request.headers.get('x-forwarded-for') || 'local-ip';
     const rateLimitKey = `${clientIp}:${cleanIdentifier}`;
 
@@ -47,6 +68,9 @@ export async function POST(request: NextRequest) {
     const expiresAt = now + 10 * 60 * 1000; // 10 minutes expiry
 
     otpStore.set(cleanIdentifier, { code, expiresAt });
+    if (rawIdentifier !== cleanIdentifier) {
+      otpStore.set(rawIdentifier, { code, expiresAt });
+    }
 
     // Multi-channel real/sandbox dispatch
     try {
@@ -72,6 +96,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `6-digit OTP code sent to ${cleanIdentifier}`,
+      formattedIdentifier: cleanIdentifier,
       code,
     });
   } catch (error) {
