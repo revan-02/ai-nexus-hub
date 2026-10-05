@@ -3,9 +3,9 @@ import prisma from '@/lib/db/prisma';
 import { createAuditLog } from './audit-service';
 import type { QueryParams, PaginatedResponse } from '@/types/api';
 import type { CreateUserInput, UpdateUserInput } from '@/lib/api/endpoints/users';
-import type { UserRole, UserStatus } from '@prisma/client';
+import type { User as PrismaUser, UserRole, UserStatus } from '@prisma/client';
 
-export async function getUsers(params?: QueryParams): Promise<PaginatedResponse<any>> {
+export async function getUsers(params?: QueryParams): Promise<PaginatedResponse<PrismaUser>> {
   const page = Number(params?.page || 1);
   const limit = Number(params?.limit || 20);
   const search = String(params?.search || '');
@@ -69,10 +69,18 @@ export async function createUser(data: CreateUserInput, actorUserId?: string) {
   // Format username with leading @ if missing
   const formattedUsername = data.username.startsWith('@') ? data.username : `@${data.username}`;
 
+  const rawUsername = data.username.replace(/^@/, '');
+  const cleanPhone = data.phone?.trim() || null;
+
   // Check unique constraints
   const existing = await prisma.user.findFirst({
     where: {
-      OR: [{ email: data.email }, { username: formattedUsername }],
+      OR: [
+        { email: data.email },
+        { username: formattedUsername },
+        { username: rawUsername },
+        ...(cleanPhone ? [{ phone: cleanPhone }] : []),
+      ],
     },
   });
 
@@ -87,6 +95,7 @@ export async function createUser(data: CreateUserInput, actorUserId?: string) {
       name: data.name,
       username: formattedUsername,
       email: data.email,
+      phone: cleanPhone,
       password: hashedPassword,
       avatar: data.avatar || null,
       role: (data.role as UserRole) || 'User',

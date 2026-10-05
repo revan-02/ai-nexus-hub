@@ -1,0 +1,17 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "authorizedRedirectUris": [
+          "http://localhost:3000",
+          "http://localhost"
+        ]
+      }
+    }
+  }
+}
