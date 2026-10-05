@@ -313,23 +313,25 @@ export default function LoginPage({ initialRole }: LoginPageProps = {}) {
             {/* Quick Demo Fill Buttons */}
             <div className="p-3 bg-[#131c31] border border-[#1e293b] rounded-xl space-y-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 block">Quick Demo One-Click Login</span>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className={`grid ${loginRole === 'admin' ? 'grid-cols-2' : 'grid-cols-1'} gap-2 text-xs`}>
                 <button
                   type="button"
                   onClick={handleQuickFillLearner}
-                  className="px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
+                  className="w-full px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
                 >
                   <GraduationCap className="w-3.5 h-3.5 text-purple-400" />
                   <span>Learner Demo</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={handleQuickFillAdmin}
-                  className="px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Admin Demo</span>
-                </button>
+                {loginRole === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={handleQuickFillAdmin}
+                    className="px-2.5 py-1.5 bg-[#1e293b] hover:bg-purple-950/40 border border-[#2d3a54] text-zinc-200 hover:text-purple-300 font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-[11px]"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Admin Demo</span>
+                  </button>
+                )}
               </div>
             </div>
 

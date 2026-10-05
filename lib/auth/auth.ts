@@ -123,13 +123,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               ? lowerInput
               : `${digitsOnly || usernameWithoutAt || 'user'}@nexus-mobile.ai`;
 
-              return {
-                id: `usr-${lowerInput.replace(/[^a-zA-Z0-9]/g, '') || 'learner'}`,
-                name: finalName,
-                email: fallbackEmail,
-                role: 'User',
-              };
-            }
+            return {
+              id: `usr-${lowerInput.replace(/[^a-zA-Z0-9]/g, '') || 'learner'}`,
+              name: finalName,
+              email: fallbackEmail,
+              role: 'User',
+            };
           }
 
           // Production / Deployment verified admin credential fallback
