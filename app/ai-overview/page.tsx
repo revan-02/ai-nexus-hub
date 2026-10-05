@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { NexusShell } from '@/components/nexus/nexus-shell';
+import { AdminShell } from '@/components/layout/admin-shell';
+import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +30,11 @@ import {
 import { MathRenderer } from '@/components/ui/math-renderer';
 
 export default function AIOverviewPage() {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string })?.role || 'User';
+  const isAdmin = ['Admin', 'Manager', 'Super Admin'].includes(userRole);
+  const Shell = isAdmin ? AdminShell : NexusShell;
+
   // Active hierarchy tab
   const [activeHierarchy, setActiveHierarchy] = useState<'ai' | 'ml' | 'dl' | 'genai' | 'llm'>('ai');
 
@@ -189,7 +196,7 @@ export default function AIOverviewPage() {
   ];
 
   return (
-    <NexusShell>
+    <Shell>
       <div className="space-y-8 max-w-7xl mx-auto pb-20">
         {/* ── BREADCRUMB ── */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
@@ -700,6 +707,6 @@ export default function AIOverviewPage() {
           </div>
         </Card>
       </div>
-    </NexusShell>
+    </Shell>
   );
 }

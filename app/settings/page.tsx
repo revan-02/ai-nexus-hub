@@ -3,8 +3,9 @@
 import React, { useState, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { NexusShell } from '@/components/nexus/nexus-shell';
+import { AdminShell } from '@/components/layout/admin-shell';
 import { useNexus, UserLevel, ThemeMode, AccentColor } from '@/context/nexus-context';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,6 +75,11 @@ interface SettingsPageProps {
 }
 
 function SettingsPageInner({ defaultTab }: SettingsPageProps) {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string })?.role || 'User';
+  const isAdmin = ['Admin', 'Manager', 'Super Admin'].includes(userRole);
+  const Shell = isAdmin ? AdminShell : NexusShell;
+
   const { theme, setTheme, accentColor, setAccentColor, userLevel, setUserLevel, isAiBotEnabled, setIsAiBotEnabled } = useNexus();
   const searchParams = useSearchParams();
 
@@ -382,7 +388,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
   };
 
   return (
-    <NexusShell>
+    <Shell>
       <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
@@ -2320,7 +2326,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
           </div>
         </div>
       )}
-    </NexusShell>
+    </Shell>
   );
 }
 

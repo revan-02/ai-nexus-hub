@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { NexusShell } from '@/components/nexus/nexus-shell';
+import { AdminShell } from '@/components/layout/admin-shell';
+import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +11,11 @@ import { Database, Download, Search, ChevronRight, FileSpreadsheet, Image as Ima
 import Link from 'next/link';
 
 export default function DatasetsPage() {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string })?.role || 'User';
+  const isAdmin = ['Admin', 'Manager', 'Super Admin'].includes(userRole);
+  const Shell = isAdmin ? AdminShell : NexusShell;
+
   const [selectedType, setSelectedType] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -63,7 +70,7 @@ export default function DatasetsPage() {
   });
 
   return (
-    <NexusShell>
+    <Shell>
       <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
@@ -166,6 +173,6 @@ export default function DatasetsPage() {
           ))}
         </div>
       </div>
-    </NexusShell>
+    </Shell>
   );
 }

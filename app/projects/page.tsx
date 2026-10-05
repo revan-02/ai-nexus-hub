@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { NexusShell } from '@/components/nexus/nexus-shell';
+import { AdminShell } from '@/components/layout/admin-shell';
+import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FolderKanban, Plus, ChevronRight, Star, Download, ArrowRight, FolderPlus, ShoppingBag, ShieldCheck, Users, Clock } from 'lucide-react';
@@ -10,6 +12,11 @@ import { useProjects } from '@/hooks/api/use-projects';
 import { CreateProjectModal } from '@/components/projects/create-project-modal';
 
 export default function ProjectsPage() {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string })?.role || 'User';
+  const isAdmin = ['Admin', 'Manager', 'Super Admin'].includes(userRole);
+  const Shell = isAdmin ? AdminShell : NexusShell;
+
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -95,7 +102,7 @@ export default function ProjectsPage() {
   }, [projectsList, selectedFilter]);
 
   return (
-    <NexusShell>
+    <Shell>
       <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
@@ -229,6 +236,6 @@ export default function ProjectsPage() {
           onSuccess={() => refetch()}
         />
       </div>
-    </NexusShell>
+    </Shell>
   );
 }
