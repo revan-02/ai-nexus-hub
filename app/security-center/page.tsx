@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { NexusShell } from '@/components/nexus/nexus-shell';
+import { AdminShell } from '@/components/layout/admin-shell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -133,7 +133,7 @@ export default function SecurityCenterPage() {
   );
 
   return (
-    <NexusShell>
+    <AdminShell>
       <div className="space-y-8 max-w-7xl mx-auto pb-20">
         {/* ── BREADCRUMB ── */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
@@ -791,6 +791,6 @@ export default function SecurityCenterPage() {
           </div>
         )}
       </div>
-    </NexusShell>
+    </AdminShell>
   );
 }

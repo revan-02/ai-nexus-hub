@@ -74,9 +74,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               }
             }
           } catch (dbErr) {
-            console.warn('[NextAuth] Database query error, using fallback authentication:', dbErr);
+            console.warn('[NextAuth] Database query error:', dbErr);
           }
-
           // Resilient demo and fallback accounts
           const demoAccounts: Record<string, { id: string; name: string; role: string; email: string }> = {
             'john.doe@example.com': { id: 'usr-9', name: 'John Doe', role: 'Admin', email: 'john.doe@example.com' },
@@ -124,12 +123,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               ? lowerInput
               : `${digitsOnly || usernameWithoutAt || 'user'}@nexus-mobile.ai`;
 
-            return {
-              id: `usr-${lowerInput.replace(/[^a-zA-Z0-9]/g, '') || 'learner'}`,
-              name: finalName,
-              email: fallbackEmail,
-              role: 'User',
-            };
+              return {
+                id: `usr-${lowerInput.replace(/[^a-zA-Z0-9]/g, '') || 'learner'}`,
+                name: finalName,
+                email: fallbackEmail,
+                role: 'User',
+              };
+            }
           }
 
           // Production / Deployment verified admin credential fallback

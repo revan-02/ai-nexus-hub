@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/auth';
 import { checkOllamaHealth, FREE_OLLAMA_MODELS } from '@/lib/ai/ollama-client';
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
+    }
+
     const health = await checkOllamaHealth();
 
     const enrichedModels = FREE_OLLAMA_MODELS.map((model) => {
