@@ -67,8 +67,10 @@ import {
   toggleCouponStatus,
   deleteCoupon,
   validateCoupon,
+  updateCouponCourses,
   CouponValidationResult
 } from '@/services/coupon-service';
+import { mockCoursesList } from '@/lib/mock-data/courses-data';
 
 function useSafeSession() {
   try {
@@ -141,6 +143,10 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
   const [newExpiryDate, setNewExpiryDate] = useState('2026-12-31');
   const [newMinOrder, setNewMinOrder] = useState(0);
   const [newApplicableTier, setNewApplicableTier] = useState('All');
+  const [newApplicableCoursesType, setNewApplicableCoursesType] = useState<'All' | 'specific'>('All');
+  const [newSelectedCourses, setNewSelectedCourses] = useState<string[]>([]);
+  const [editingCouponCourses, setEditingCouponCourses] = useState<Coupon | null>(null);
+  const [editSelectedCourses, setEditSelectedCourses] = useState<string[]>([]);
   const [couponActionMsg, setCouponActionMsg] = useState<string | null>(null);
 
   // Live Coupon Tester State
@@ -739,12 +745,15 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                           expiryDate: newExpiryDate,
                           minOrderAmount: Number(newMinOrder),
                           applicableTier: newApplicableTier,
+                          applicableCourses: newApplicableCoursesType === 'All' ? 'All' : newSelectedCourses,
                           isActive: true,
                         });
                         setCouponsList([created, ...couponsList]);
                         setShowCreateCouponModal(false);
                         setNewCouponCode('');
                         setNewCouponDesc('');
+                        setNewApplicableCoursesType('All');
+                        setNewSelectedCourses([]);
                         setCouponActionMsg(`Coupon code "${created.code}" created successfully!`);
                         setTimeout(() => setCouponActionMsg(null), 3500);
                       }}
@@ -824,6 +833,61 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                         </div>
                       </div>
 
+                      {/* Applicable Courses Selector */}
+                      <div className="space-y-2 p-3.5 bg-card/60 border border-border rounded-xl">
+                        <label className="block text-foreground font-semibold">Enable for Which Courses?</label>
+                        <div className="flex items-center gap-4 text-xs">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="scopeSelect"
+                              checked={newApplicableCoursesType === 'All'}
+                              onChange={() => setNewApplicableCoursesType('All')}
+                              className="accent-purple-600"
+                            />
+                            <span>All Courses (Storewide Universal)</span>
+                          </label>
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="scopeSelect"
+                              checked={newApplicableCoursesType === 'specific'}
+                              onChange={() => setNewApplicableCoursesType('specific')}
+                              className="accent-purple-600"
+                            />
+                            <span>Specific Selected Courses Only</span>
+                          </label>
+                        </div>
+
+                        {newApplicableCoursesType === 'specific' && (
+                          <div className="space-y-2 pt-2 border-t border-border">
+                            <span className="text-[11px] text-muted-foreground block">
+                              Select courses enabled for this coupon ({newSelectedCourses.length} selected):
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                              {mockCoursesList.map((course) => {
+                                const isChecked = newSelectedCourses.includes(course.id);
+                                return (
+                                  <label key={course.id} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-secondary/60 cursor-pointer text-xs border border-border/40">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        setNewSelectedCourses((prev) =>
+                                          isChecked ? prev.filter((id) => id !== course.id) : [...prev, course.id]
+                                        );
+                                      }}
+                                      className="accent-purple-600 rounded"
+                                    />
+                                    <span className="truncate">{course.title}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       <div>
                         <label className="block text-foreground font-semibold mb-1">Description / Campaign Purpose</label>
                         <Input
@@ -861,6 +925,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                         <tr>
                           <th className="p-3">Coupon Code</th>
                           <th className="p-3">Discount</th>
+                          <th className="p-3">Applicable Courses</th>
                           <th className="p-3">Redemption Quota</th>
                           <th className="p-3">Min Order</th>
                           <th className="p-3">Expiry</th>
@@ -893,6 +958,41 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                             </td>
                             <td className="p-3 font-bold text-emerald-400">
                               {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue.toLocaleString('en-IN')} FLAT`}
+                            </td>
+                            <td className="p-3">
+                              {c.applicableCourses === 'All' || !c.applicableCourses ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                    All Courses
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCouponCourses(c);
+                                      setEditSelectedCourses([]);
+                                    }}
+                                    className="text-[10px] text-purple-400 hover:text-purple-300 font-bold underline cursor-pointer"
+                                  >
+                                    Restrict
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                                    {Array.isArray(c.applicableCourses) ? c.applicableCourses.length : 1} Courses
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCouponCourses(c);
+                                      setEditSelectedCourses(Array.isArray(c.applicableCourses) ? [...c.applicableCourses] : []);
+                                    }}
+                                    className="text-[10px] text-purple-400 hover:text-purple-300 font-bold underline cursor-pointer"
+                                  >
+                                    Configure
+                                  </button>
+                                </div>
+                              )}
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
@@ -958,6 +1058,106 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Super Admin Course Permission Modal for a Coupon */}
+                  {editingCouponCourses && (
+                    <div className="p-5 bg-secondary/50 border border-purple-500/40 rounded-2xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-border pb-3">
+                        <div className="space-y-0.5">
+                          <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                            <span>Enable Courses for Coupon:</span>
+                            <span className="font-mono text-purple-400 font-extrabold">{editingCouponCourses.code}</span>
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground">Select which specific courses this coupon discount applies to, or enable for all courses.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditSelectedCourses([])}
+                            className="text-[11px] h-7"
+                          >
+                            Set to All Courses
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditSelectedCourses(mockCoursesList.map((c) => c.id))}
+                            className="text-[11px] h-7"
+                          >
+                            Select All ({mockCoursesList.length})
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-56 overflow-y-auto p-1">
+                        {mockCoursesList.map((course) => {
+                          const isChecked = editSelectedCourses.includes(course.id);
+                          return (
+                            <label
+                              key={course.id}
+                              className={`flex items-start gap-2 p-2 rounded-xl border text-xs cursor-pointer transition ${
+                                isChecked
+                                  ? 'bg-purple-600/15 border-purple-500/40 text-purple-200'
+                                  : 'bg-card border-border text-muted-foreground hover:bg-secondary/60'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  setEditSelectedCourses((prev) =>
+                                    isChecked ? prev.filter((id) => id !== course.id) : [...prev, course.id]
+                                  );
+                                }}
+                                className="accent-purple-600 rounded mt-0.5"
+                              />
+                              <div className="space-y-0.5 min-w-0">
+                                <span className="font-semibold block truncate text-foreground">{course.title}</span>
+                                <span className="text-[10px] text-muted-foreground block">{course.category} • {course.price}</span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-border">
+                        <span className="text-xs text-muted-foreground">
+                          {editSelectedCourses.length === 0
+                            ? 'Universal: Valid on all courses'
+                            : `Enabled for ${editSelectedCourses.length} selected courses`}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setEditingCouponCourses(null)}
+                            className="text-xs h-8"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={async () => {
+                              const targetScope = editSelectedCourses.length === 0 ? 'All' : editSelectedCourses;
+                              await updateCouponCourses(editingCouponCourses.id, targetScope);
+                              setCouponsList(
+                                couponsList.map((c) =>
+                                  c.id === editingCouponCourses.id ? { ...c, applicableCourses: targetScope } : c
+                                )
+                              );
+                              setCouponActionMsg(`Course rules updated for coupon "${editingCouponCourses.code}"!`);
+                              setEditingCouponCourses(null);
+                              setTimeout(() => setCouponActionMsg(null), 3000);
+                            }}
+                            className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs h-8"
+                          >
+                            Save Course Rules
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Interactive Coupon Validation Simulator */}
                   <div className="p-4 bg-secondary/30 border border-border rounded-2xl space-y-3">

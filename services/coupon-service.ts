@@ -11,6 +11,7 @@ export interface Coupon {
   expiryDate: string;
   minOrderAmount: number; // in INR
   applicableTier?: string; // 'All' or specific tier
+  applicableCourses?: 'All' | string[]; // 'All' or specific course IDs like ['crs-0', 'crs-1']
   isActive: boolean;
   createdAt: string;
 }
@@ -38,6 +39,7 @@ export let couponsDatabase: Coupon[] = [
     expiryDate: '2026-12-31',
     minOrderAmount: 0,
     applicableTier: 'All',
+    applicableCourses: 'All',
     isActive: true,
     createdAt: '2026-01-15',
   },
@@ -52,6 +54,7 @@ export let couponsDatabase: Coupon[] = [
     expiryDate: '2026-12-31',
     minOrderAmount: 2000,
     applicableTier: 'All',
+    applicableCourses: ['crs-3', 'crs-4', 'crs-5', 'crs-8', 'crs-9'],
     isActive: true,
     createdAt: '2026-02-01',
   },
@@ -66,6 +69,7 @@ export let couponsDatabase: Coupon[] = [
     expiryDate: '2026-12-31',
     minOrderAmount: 0,
     applicableTier: 'Undergraduate',
+    applicableCourses: ['crs-0', 'crs-1', 'crs-2', 'crs-3'],
     isActive: true,
     createdAt: '2026-01-01',
   },
@@ -80,6 +84,7 @@ export let couponsDatabase: Coupon[] = [
     expiryDate: '2026-11-30',
     minOrderAmount: 1999,
     applicableTier: 'All',
+    applicableCourses: 'All',
     isActive: true,
     createdAt: '2026-03-10',
   },
@@ -94,6 +99,7 @@ export let couponsDatabase: Coupon[] = [
     expiryDate: '2026-12-31',
     minOrderAmount: 0,
     applicableTier: 'Young Explorer',
+    applicableCourses: ['crs-13', 'crs-14', 'crs-15'],
     isActive: true,
     createdAt: '2026-01-01',
   },
@@ -114,7 +120,7 @@ export function formatNumberToINR(amount: number): string {
 }
 
 // Validate & calculate discount for a coupon code
-export function validateCoupon(code: string, price: string | number): CouponValidationResult {
+export function validateCoupon(code: string, price: string | number, courseId?: string): CouponValidationResult {
   const originalPrice = parsePriceToNumber(price);
   if (!code || typeof code !== 'string') {
     return {
@@ -139,6 +145,23 @@ export function validateCoupon(code: string, price: string | number): CouponVali
       finalPrice: originalPrice,
       formattedDiscount: '₹0',
     };
+  }
+
+  // Course-specific applicability check (Super Admin configured)
+  if (courseId && coupon.applicableCourses && coupon.applicableCourses !== 'All' && Array.isArray(coupon.applicableCourses)) {
+    const isApplicable = coupon.applicableCourses.some(
+      (id) => id.toLowerCase() === courseId.toLowerCase()
+    );
+    if (!isApplicable) {
+      return {
+        isValid: false,
+        error: `Coupon "${coupon.code}" is not applicable to this specific course. It is enabled only for selected courses.`,
+        originalPrice,
+        discountAmount: 0,
+        finalPrice: originalPrice,
+        formattedDiscount: '₹0',
+      };
+    }
   }
 
   if (!coupon.isActive) {
@@ -244,4 +267,12 @@ export async function deleteCoupon(id: string): Promise<boolean> {
   const initialLength = couponsDatabase.length;
   couponsDatabase = couponsDatabase.filter((c) => c.id !== id);
   return couponsDatabase.length < initialLength;
+}
+
+// Update applicable courses for a coupon (Super Admin feature)
+export async function updateCouponCourses(id: string, courses: 'All' | string[]): Promise<Coupon | null> {
+  const coupon = couponsDatabase.find((c) => c.id === id);
+  if (!coupon) return null;
+  coupon.applicableCourses = courses;
+  return coupon;
 }

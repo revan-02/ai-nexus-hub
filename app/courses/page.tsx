@@ -151,6 +151,19 @@ function LearnerCourseCatalog() {
   const [animatedVideoCourse, setAnimatedVideoCourse] = useState<CourseItem | null>(null);
   const filterTabs = ['All', 'With Videos & Labs', 'Beginner', 'Intermediate', 'Advanced'];
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && publishedCourses.length > 0 && !selectedDetailCourse) {
+      const params = new URLSearchParams(window.location.search);
+      const courseId = params.get('id');
+      if (courseId) {
+        const found = publishedCourses.find((c) => c.id === courseId) || courses.find((c) => c.id === courseId);
+        if (found) {
+          setSelectedDetailCourse(found);
+        }
+      }
+    }
+  }, [publishedCourses, courses, selectedDetailCourse]);
+
   const filteredCourses = useMemo(() => {
     return publishedCourses.filter((c) => {
       if (activeFilter === 'With Videos & Labs') return true; // All courses have generated animated videos

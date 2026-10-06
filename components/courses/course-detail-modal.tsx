@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   Zap,
   Users,
-  Check
+  Check,
+  Copy
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,9 +39,10 @@ interface CourseDetailModalProps {
   course: CourseItem | null;
   isOpen: boolean;
   onClose: () => void;
+  initialCouponCode?: string;
 }
 
-export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModalProps) {
+export function CourseDetailModal({ course, isOpen, onClose, initialCouponCode }: CourseDetailModalProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'sec-0': true,
     'sec-1': true,
@@ -53,8 +55,38 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
   const [isApplyingCoupon, setIsApplyingCoupon] = useState<boolean>(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState<boolean>(false);
   const [selectedLectureTitle, setSelectedLectureTitle] = useState<string>('Course Welcome & Architecture');
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [shareCouponCode, setShareCouponCode] = useState<string>('NEXUS50');
+  const [copiedShareLink, setCopiedShareLink] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (isOpen && course) {
+      let autoCode = initialCouponCode;
+      if (!autoCode && typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        autoCode = params.get('coupon') || undefined;
+      }
+      if (autoCode) {
+        setCouponCode(autoCode);
+        const res = validateCoupon(autoCode, course.price, course.id);
+        setCouponResult(res);
+      }
+    }
+  }, [isOpen, course, initialCouponCode]);
 
   if (!isOpen || !course) return null;
+
+  const shareUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/courses?id=${course.id}&coupon=${shareCouponCode}&ref=student`
+    : `https://ainexus.edu/courses?id=${course.id}&coupon=${shareCouponCode}&ref=student`;
+
+  const handleCopyShareLink = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl);
+    }
+    setCopiedShareLink(true);
+    setTimeout(() => setCopiedShareLink(false), 2500);
+  };
 
   const toggleSection = (secId: string) => {
     setExpandedSections((prev) => ({ ...prev, [secId]: !prev[secId] }));
@@ -241,6 +273,22 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
                   <Award className="w-3.5 h-3.5 text-emerald-400" />
                   <span className="text-emerald-400 font-semibold">ISO 17024 Accredited Certificate</span>
                 </div>
+              </div>
+
+              {/* Student Share & Gift Coupon Header Action */}
+              <div className="flex flex-wrap items-center gap-3 pt-3">
+                <Button
+                  type="button"
+                  onClick={() => setShowShareModal(true)}
+                  variant="outline"
+                  className="bg-purple-950/40 hover:bg-purple-900/60 border-purple-500/40 text-purple-200 text-xs py-2 px-3.5 rounded-xl gap-2 cursor-pointer shadow-sm"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Share Course & Gift Discount Coupon</span>
+                  <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] rounded-md font-bold border border-emerald-500/30">
+                    Gift 50% OFF
+                  </span>
+                </Button>
               </div>
 
             </div>
@@ -476,7 +524,7 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
                         onClick={() => {
                           if (!couponCode.trim()) return;
                           setIsApplyingCoupon(true);
-                          const result = validateCoupon(couponCode, course.price);
+                          const result = validateCoupon(couponCode, course.price, course.id);
                           setCouponResult(result);
                           setIsApplyingCoupon(false);
                         }}
@@ -509,7 +557,7 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
                             type="button"
                             onClick={() => {
                               setCouponCode(code);
-                              const res = validateCoupon(code, course.price);
+                              const res = validateCoupon(code, course.price, course.id);
                               setCouponResult(res);
                             }}
                             className="px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-[10px] font-mono font-bold rounded border border-purple-500/30 transition-all cursor-pointer"
@@ -570,6 +618,17 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
                       <span>Launch Interactive Studio</span>
                     </Button>
                   </Link>
+
+                  {/* Share & Gift Coupon Sidebar Button */}
+                  <Button
+                    type="button"
+                    onClick={() => setShowShareModal(true)}
+                    variant="outline"
+                    className="w-full border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs py-5 rounded-2xl gap-2 cursor-pointer"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Share Course & Gift Discount Code</span>
+                  </Button>
                 </div>
 
                 <p className="text-[11px] text-center text-muted-foreground">
@@ -648,6 +707,159 @@ export function CourseDetailModal({ course, isOpen, onClose }: CourseDetailModal
           setEnrolled(true);
         }}
       />
+
+      {/* ── STUDENT SHARE COURSE & GIFT COUPON MODAL ── */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-card border border-border rounded-3xl p-6 shadow-2xl shadow-purple-950/50 space-y-5 text-foreground">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Share Course & Gift Discount</h3>
+                  <p className="text-xs text-muted-foreground">Give friends discount coupons & earn reward points</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="p-1.5 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Course Summary Card */}
+            <div className="p-3.5 bg-secondary/40 border border-border rounded-2xl flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-purple-900/40 border border-purple-500/30 flex items-center justify-center font-bold text-purple-300 text-sm flex-shrink-0">
+                AI
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-xs font-bold text-foreground truncate">{course.title}</h4>
+                <p className="text-[11px] text-muted-foreground">{course.level} · {course.category} · {course.price}</p>
+              </div>
+            </div>
+
+            {/* Select Coupon to Attach */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Choose Discount Coupon to Gift:</span>
+                <span className="text-[10px] text-purple-400 font-normal">Auto-applies for recipient</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { code: 'NEXUS50', label: '50% OFF Storewide', badge: 'Popular' },
+                  { code: 'SUPERAI', label: '₹1,500 OFF AI Courses', badge: 'Special' },
+                  { code: 'VTU100', label: '100% Free Scholarship', badge: 'VTU' },
+                  { code: 'STUDENT20', label: '20% Extra Student OFF', badge: 'Extra' },
+                ].map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setShareCouponCode(c.code)}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      shareCouponCode === c.code
+                        ? 'bg-purple-500/20 border-purple-500 text-purple-200 ring-1 ring-purple-500'
+                        : 'bg-secondary/40 border-border text-foreground hover:bg-secondary/80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold">{c.code}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-medium">
+                        {c.badge}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{c.label}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Shareable Link Box with Copy Button */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Your Personalized Referral Link:</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 px-3 py-2 bg-secondary/50 border border-border text-xs rounded-xl text-foreground font-mono truncate focus:outline-none select-all"
+                />
+                <Button
+                  type="button"
+                  onClick={handleCopyShareLink}
+                  className={`text-xs font-bold px-4 py-2 h-9 rounded-xl transition-all cursor-pointer ${
+                    copiedShareLink
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                      : 'bg-purple-600 hover:bg-purple-500 text-white'
+                  }`}
+                >
+                  {copiedShareLink ? (
+                    <span className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5" />
+                      Copied!
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5">
+                      <Copy className="w-3.5 h-3.5" />
+                      Copy
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Social Quick Share Buttons */}
+            <div className="space-y-2 pt-1">
+              <span className="text-xs font-semibold text-muted-foreground">Or share directly:</span>
+              <div className="grid grid-cols-4 gap-2">
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this course: ${course.title}! Use my coupon code ${shareCouponCode} to get a special discount: ${shareUrl}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-center gap-1 transition-all"
+                >
+                  <span className="text-xs font-bold">WhatsApp</span>
+                </a>
+                <a
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 text-center gap-1 transition-all"
+                >
+                  <span className="text-xs font-bold">LinkedIn</span>
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Excited to learn ${course.title} on AI Nexus Hub! Use coupon ${shareCouponCode} for instant discount: ${shareUrl}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 text-center gap-1 transition-all"
+                >
+                  <span className="text-xs font-bold">X / Twitter</span>
+                </a>
+                <a
+                  href={`mailto:?subject=${encodeURIComponent(`Special Discount for ${course.title}`)}&body=${encodeURIComponent(`Hey,\n\nI found this course on AI Nexus Hub: ${course.title}.\nYou can use coupon code ${shareCouponCode} when you enroll:\n\n${shareUrl}\n\nHappy learning!`)}`}
+                  className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-center gap-1 transition-all"
+                >
+                  <span className="text-xs font-bold">Email</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Referral Incentive Badge */}
+            <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl flex items-center gap-2.5 text-xs text-purple-300">
+              <Sparkles className="w-4 h-4 text-purple-400 flex-shrink-0" />
+              <span className="text-[11px] leading-relaxed">
+                <strong>Student Perk:</strong> When a classmate enrolls using your coupon, you both earn 100 Nexus XP and a 10% certificate voucher!
+              </span>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
