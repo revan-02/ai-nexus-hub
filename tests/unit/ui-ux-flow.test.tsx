@@ -12,6 +12,11 @@ vi.mock('@/components/nexus/nexus-shell', () => ({
   NexusShell: ({ children }: any) => <div data-testid="nexus-shell">{children}</div>,
 }));
 
+vi.mock('next-auth/react', () => ({
+  signOut: vi.fn(),
+  useSession: vi.fn(() => ({ data: { user: { role: 'User', name: 'Learner' } } })),
+}));
+
 describe('UI / UX End-to-End Interaction Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();

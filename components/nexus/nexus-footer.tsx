@@ -171,7 +171,7 @@ export function NexusFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/payment-reports" className="hover:text-emerald-300 transition-colors">
+                <Link href="/settings?tab=billing" className="hover:text-emerald-300 transition-colors">
                   GST Invoicing & Billing
                 </Link>
               </li>

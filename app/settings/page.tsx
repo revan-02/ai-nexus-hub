@@ -70,14 +70,22 @@ import {
   CouponValidationResult
 } from '@/services/coupon-service';
 
+function useSafeSession() {
+  try {
+    return useSession();
+  } catch {
+    return { data: null, status: 'unauthenticated' as const };
+  }
+}
+
 interface SettingsPageProps {
   defaultTab?: string;
 }
 
 function SettingsPageInner({ defaultTab }: SettingsPageProps) {
-  const { data: session } = useSession();
+  const { data: session } = useSafeSession();
   const userRole = (session?.user as { role?: string })?.role || 'User';
-  const isAdmin = ['Admin', 'Manager', 'Super Admin'].includes(userRole);
+  const isAdmin = ['admin', 'manager', 'super admin', 'super_admin'].includes(userRole.toLowerCase().trim());
   const Shell = isAdmin ? AdminShell : NexusShell;
 
   const { theme, setTheme, accentColor, setAccentColor, userLevel, setUserLevel, isAiBotEnabled, setIsAiBotEnabled } = useNexus();
@@ -195,17 +203,48 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
     'Connected Accounts': 'accounts',
   }), []);
 
+  const allTabs = useMemo(() => [
+    'Profile',
+    'Preferences',
+    'Coupons & Promo Codes',
+    'AI Bot Controls (Admin)',
+    'Notifications',
+    'Privacy & Security',
+    'Billing & Plan',
+    'Payment Gateways & APIs',
+    'Email & WhatsApp APIs',
+    'Backup & Recovery',
+    'Connected Accounts',
+  ], []);
+
+  const adminOnlyTabs = useMemo(() => [
+    'AI Bot Controls (Admin)',
+    'Payment Gateways & APIs',
+    'Email & WhatsApp APIs',
+    'Backup & Recovery',
+  ], []);
+
+  const visibleTabs = useMemo(() => {
+    return isAdmin ? allTabs : allTabs.filter((tab) => !adminOnlyTabs.includes(tab));
+  }, [isAdmin, allTabs, adminOnlyTabs]);
+
   // Single Source of Truth: Compute activeTab directly from searchParams or defaultTab
   const activeTab = useMemo(() => {
     const tabParam = searchParams?.get('tab');
+    let resolved: string | undefined;
     if (tabParam && tabMap[tabParam]) {
-      return tabMap[tabParam];
+      resolved = tabMap[tabParam];
+    } else if (defaultTab && (tabMap[defaultTab] || Object.values(tabMap).includes(defaultTab))) {
+      resolved = tabMap[defaultTab] || defaultTab;
     }
-    if (defaultTab && (tabMap[defaultTab] || Object.values(tabMap).includes(defaultTab))) {
-      return tabMap[defaultTab] || defaultTab;
+
+    // Strictly restrict admin-only tabs to admin users; non-admins fallback to Profile
+    if (resolved && adminOnlyTabs.includes(resolved) && !isAdmin) {
+      return 'Profile';
     }
-    return 'Profile';
-  }, [searchParams, defaultTab, tabMap]);
+
+    return resolved || 'Profile';
+  }, [searchParams, defaultTab, tabMap, isAdmin, adminOnlyTabs]);
 
   // Profile Form State
   const [fullName, setFullName] = useState('Expert Learner');
@@ -401,25 +440,15 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Settings</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Manage your profile, learning preferences, notifications, security, billing, payment gateways, and system backups.
+            {isAdmin
+              ? 'Manage your profile, learning preferences, notifications, security, billing, payment gateways, APIs, and system backups.'
+              : 'Manage your profile, learning preferences, notifications, security, billing, and connected accounts.'}
           </p>
         </div>
 
         {/* Settings Navigation Tabs */}
         <div className="flex items-center gap-1.5 border-b border-border pb-2 overflow-x-auto scrollbar-none">
-          {[
-            'Profile',
-            'Preferences',
-            'Coupons & Promo Codes',
-            'AI Bot Controls (Admin)',
-            'Notifications',
-            'Privacy & Security',
-            'Billing & Plan',
-            'Payment Gateways & APIs',
-            'Email & WhatsApp APIs',
-            'Backup & Recovery',
-            'Connected Accounts',
-          ].map((tab) => {
+          {visibleTabs.map((tab) => {
             const paramKey = reverseTabMap[tab] || 'profile';
             const isSelected = activeTab === tab;
             return (
@@ -996,7 +1025,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
             )}
 
             {/* ==================== TAB: AI BOT CONTROLS (ADMIN) ==================== */}
-            {activeTab === 'AI Bot Controls (Admin)' && (
+            {isAdmin && activeTab === 'AI Bot Controls (Admin)' && (
               <div className="space-y-6">
                 <Card className="p-6 bg-card border-border rounded-2xl space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
@@ -1333,7 +1362,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
             )}
 
             {/* ==================== TAB 6: PAYMENT GATEWAYS & APIS (RAZORPAY / STRIPE) ==================== */}
-            {activeTab === 'Payment Gateways & APIs' && (
+            {isAdmin && activeTab === 'Payment Gateways & APIs' && (
               <div className="space-y-6">
                 {paymentSaveSuccess && (
                   <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-semibold flex items-center gap-2">
@@ -1470,7 +1499,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
             )}
 
             {/* ==================== TAB 7: EMAIL & WHATSAPP APIS ==================== */}
-            {activeTab === 'Email & WhatsApp APIs' && (
+            {isAdmin && activeTab === 'Email & WhatsApp APIs' && (
               <div className="space-y-6">
                 <Card className="p-6 bg-card border-border rounded-2xl space-y-6 text-xs shadow-lg">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
@@ -1649,7 +1678,7 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
             )}
 
             {/* ==================== TAB 8: BACKUP & RECOVERY ==================== */}
-            {activeTab === 'Backup & Recovery' && (
+            {isAdmin && activeTab === 'Backup & Recovery' && (
               <div className="space-y-6">
                 {snapshotSuccessMsg && (
                   <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-xs text-emerald-400 font-semibold flex items-center gap-2">

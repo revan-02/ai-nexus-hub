@@ -83,6 +83,7 @@ const navigationSections: NavSection[] = [
     title: 'REVENUE & FINANCE',
     items: [
       { label: 'Payment Reports', icon: Receipt, href: '/payment-reports', badge: 'Live' },
+      { label: 'Payment Gateways & APIs', icon: CreditCard, href: '/settings?tab=payment-gateways' },
     ],
   },
   {
@@ -103,6 +104,7 @@ const navigationSections: NavSection[] = [
       { label: 'Announcements', icon: Megaphone, href: '/announcements' },
       { label: 'Email Templates', icon: Mail, href: '/email-templates' },
       { label: 'Broadcasts', icon: Radio, href: '/broadcasts' },
+      { label: 'Email & WhatsApp APIs', icon: MessageSquareText, href: '/settings?tab=email-whatsapp' },
     ],
   },
   {
