@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AdminShell } from '@/components/layout/admin-shell';
 import { NexusShell } from '@/components/nexus/nexus-shell';
