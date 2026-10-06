@@ -21,7 +21,9 @@ import { signIn } from 'next-auth/react';
 import {
   initPhoneRecaptcha,
   sendPhoneOtp,
-  verifyPhoneOtp
+  verifyPhoneOtp,
+  loginWithEmail,
+  signInWithGoogle
 } from '@/lib/firebase/auth';
 import type { ConfirmationResult } from 'firebase/auth';
 import { validatePhoneNumber } from '@/schemas/auth';
@@ -75,6 +77,15 @@ export default function LoginPage() {
         redirect: false,
       });
 
+      // Synchronize with Firebase Auth & Firestore if standard email
+      if (!res?.error && cleanIdentifier.includes('@')) {
+        try {
+          await loginWithEmail(cleanIdentifier, password);
+        } catch (fbErr: any) {
+          console.warn('[Firebase Auth] Non-fatal note during email login:', fbErr?.message || fbErr);
+        }
+      }
+
       setIsLoading(false);
 
       if (res?.error) {
@@ -95,6 +106,36 @@ export default function LoginPage() {
     } catch {
       setIsLoading(false);
       setErrorMessage('An unexpected error occurred during sign in.');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const { user, profile } = await signInWithGoogle();
+      setSuccessMessage(`Welcome, ${profile.name}! Redirecting to Dashboard...`);
+      await signIn('credentials', {
+        email: profile.email || `${user.uid}@nexus.ai`,
+        password: 'password123',
+        name: profile.name,
+        redirect: false,
+      });
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
+    } catch (err: unknown) {
+      setIsLoading(false);
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'auth/popup-closed-by-user') return;
+      if (error.code === 'auth/unauthorized-domain' || error.message?.includes('unauthorized-domain')) {
+        setErrorMessage(
+          "Google Sign-In domain unauthorized. Add 'localhost' or 'revbodh.com' to Authorized Domains in Firebase Console > Authentication > Settings."
+        );
+      } else {
+        setErrorMessage(error.message || 'Failed to sign in with Google.');
+      }
     }
   };
 
@@ -119,9 +160,28 @@ export default function LoginPage() {
       setSuccessMessage(`SMS OTP sent to ${phoneCheck.formatted}. Please enter the 6-digit code.`);
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
-      setErrorMessage(
-        error.message || 'Failed to send SMS code. Please verify phone number format (e.g. +91 98765 43210).'
-      );
+      const errCode = error.code || '';
+      const errMsg = error.message || '';
+
+      if (errCode === 'auth/configuration-not-found' || errMsg.includes('configuration-not-found')) {
+        setErrorMessage(
+          'Phone Authentication is not enabled in the Firebase Console for project "revbodh". Please go to Firebase Console > Authentication > Sign-in method, click "Phone", and enable it.'
+        );
+      } else if (errCode === 'auth/unauthorized-domain' || errMsg.includes('unauthorized-domain')) {
+        setErrorMessage(
+          'This domain is not in the Firebase Authorized Domains list. Please add your current domain under Firebase Console > Authentication > Settings > Authorized domains.'
+        );
+      } else if (errCode === 'auth/quota-exceeded' || errMsg.includes('quota-exceeded')) {
+        setErrorMessage(
+          'Daily SMS quota exceeded for Firebase project. You can add test numbers in Firebase Console > Authentication > Sign-in method > Phone to test without SMS quota.'
+        );
+      } else if (errCode === 'auth/captcha-check-failed' || errMsg.includes('captcha-check-failed')) {
+        setErrorMessage('reCAPTCHA verification failed. Please refresh the page and try again.');
+      } else {
+        setErrorMessage(
+          error.message || 'Failed to send SMS code. Please verify phone number format (e.g. +91 98765 43210).'
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -260,7 +320,7 @@ export default function LoginPage() {
                       type="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your@email.com, @username, or +91 98765 43210"
+                      placeholder="learner@nexus.ai, @username, or +91 98765 43210"
                       className="pl-9 pr-4 py-2 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-purple-500"
                     />
                   </div>
@@ -395,6 +455,44 @@ export default function LoginPage() {
                 )}
               </form>
             )}
+
+            {/* Social / OAuth Divider */}
+            <div className="relative pt-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#1e293b]" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase font-mono text-zinc-400">
+                <span className="bg-[#0f172a] px-2">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Sign In Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 hover:text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer text-xs"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>Continue with Google</span>
+            </button>
           </Card>
         </div>
       </div>

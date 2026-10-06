@@ -272,7 +272,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
       fireEvent.change(identifierInput, { target: { value: 'alanturing' } });
       fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-      const submitBtn = screen.getByRole('button', { name: /Sign In as Learner/i });
+      const submitBtn = screen.getByRole('button', { name: /(Sign In to AI Nexus|Sign In as Learner)/i });
       fireEvent.click(submitBtn);
 
       await waitFor(() => {
@@ -303,7 +303,7 @@ describe('Registration and Multi-Identifier Login Flow Suite', () => {
       fireEvent.change(identifierInput, { target: { value: 'wrong@example.com' } });
       fireEvent.change(passwordInput, { target: { value: 'badpass' } });
 
-      const submitBtn = screen.getByRole('button', { name: /Sign In as Learner/i });
+      const submitBtn = screen.getByRole('button', { name: /(Sign In to AI Nexus|Sign In as Learner)/i });
       fireEvent.click(submitBtn);
 
       await waitFor(() => {

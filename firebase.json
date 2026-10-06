@@ -8,7 +8,7 @@
       "emailPassword": true,
       "googleSignIn": {
         "authorizedRedirectUris": [
-          "http://localhost:3000",
+          "https://revbodh.firebaseapp.com/__/auth/handler",
           "http://localhost"
         ]
       }
