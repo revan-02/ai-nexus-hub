@@ -253,14 +253,14 @@ export default function DailyChallengePage() {
             </div>
 
             {/* stat tiles */}
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 flex-shrink-0">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 flex-shrink-0 w-full lg:w-auto">
               {[
                 { label: 'Current Streak', val: '12 🔥', c: 'text-amber-400'   },
                 { label: 'Global Rank',    val: '#3',    c: 'text-purple-400'  },
                 { label: 'Completed',      val: '47',    c: 'text-emerald-400' },
                 { label: 'Accuracy',       val: '78%',   c: 'text-blue-400'    },
               ].map(s => (
-                <div key={s.label} className="p-3 rounded-2xl bg-card/80 border border-border flex items-center justify-between gap-4 min-w-[180px]">
+                <div key={s.label} className="p-3 rounded-2xl bg-card/80 border border-border flex items-center justify-between gap-3 min-w-0 sm:min-w-[150px]">
                   <span className="text-xs text-muted-foreground font-mono">{s.label}</span>
                   <span className={`text-sm font-extrabold font-mono ${s.c}`}>{s.val}</span>
                 </div>

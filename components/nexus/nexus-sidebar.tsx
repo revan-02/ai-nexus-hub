@@ -175,8 +175,8 @@ export function NexusSidebar() {
       <aside
         className={`bg-sidebar border-r border-sidebar-border flex flex-col select-none transition-all duration-300 flex-shrink-0 z-50 print:hidden ${
           sidebarCollapsed
-            ? 'hidden lg:flex lg:w-16 h-screen sticky top-0 py-4 items-center space-y-6 overflow-y-auto scrollbar-none'
-            : 'fixed inset-y-0 left-0 w-72 max-w-[85vw] lg:static lg:w-72 h-screen sticky top-0 overflow-y-auto scrollbar-none shadow-2xl lg:shadow-none'
+            ? 'hidden lg:flex lg:w-16 lg:h-screen lg:sticky lg:top-0 py-4 items-center space-y-6 overflow-y-auto scrollbar-none'
+            : 'fixed inset-y-0 left-0 w-72 max-w-[85vw] h-full z-50 lg:static lg:w-72 lg:h-screen lg:sticky lg:top-0 overflow-y-auto scrollbar-none shadow-2xl lg:shadow-none'
         }`}
       >
         {/* Collapsed Rail View (Desktop Only) */}

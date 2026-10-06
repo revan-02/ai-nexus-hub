@@ -387,7 +387,7 @@ export function OllamaStudio() {
       {activeTab === 'chat' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column: Chat Control & Model Settings */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="order-2 lg:order-1 lg:col-span-1 space-y-4">
             <Card className="p-4 bg-card border-border rounded-2xl space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
@@ -482,7 +482,7 @@ export function OllamaStudio() {
           </div>
 
           {/* Right Column: Chat Stream & Message Input */}
-          <div className="lg:col-span-3 flex flex-col h-[650px] bg-card border border-border rounded-3xl overflow-hidden shadow-lg">
+          <div className="order-1 lg:order-2 lg:col-span-3 flex flex-col h-[75vh] sm:h-[650px] bg-card border border-border rounded-3xl overflow-hidden shadow-lg">
             {/* Chat Messages Scroll Area */}
             <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4">
               {chatMessages.map((msg) => {

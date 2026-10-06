@@ -271,6 +271,10 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
         }
         setUserProfileState(parsed);
       }
+      // Auto-collapse sidebar on smaller screens (<1024px) for optimal mobile layout
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setSidebarCollapsed(true);
+      }
     } catch {
       // Ignore localStorage errors in restricted environments
     }

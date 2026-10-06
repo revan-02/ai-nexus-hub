@@ -113,9 +113,20 @@ html.light {
 @layer base {
   * {
     @apply border-border outline-ring/50 transition-colors duration-150;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    max-width: 100vw;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased selection:bg-purple-500/30 selection:text-purple-200;
+    max-width: 100vw;
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+  button, a {
+    touch-action: manipulation;
   }
 }
 

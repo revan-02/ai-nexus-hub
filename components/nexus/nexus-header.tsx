@@ -99,7 +99,8 @@ export function NexusHeader() {
           aria-label="What do you want to learn?"
         >
           <Search className="w-4 h-4 text-muted-foreground group-hover:text-purple-400 transition-colors flex-shrink-0" />
-          <span className="truncate flex-1 text-left">What do you want to learn?</span>
+          <span className="truncate flex-1 text-left hidden sm:inline">What do you want to learn?</span>
+          <span className="truncate flex-1 text-left sm:hidden text-xs">Search AI...</span>
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 bg-background border border-border rounded text-[10px] font-mono text-muted-foreground flex-shrink-0">⌘K</kbd>
         </button>
       </div>

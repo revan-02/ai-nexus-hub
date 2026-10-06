@@ -315,7 +315,7 @@ function PerformanceTestPageInner() {
             </div>
 
             {/* Test Trigger Card */}
-            <div className="bg-slate-900/90 border border-purple-500/40 p-5 rounded-2xl space-y-4 min-w-[280px]">
+            <div className="bg-slate-900/90 border border-purple-500/40 p-5 rounded-2xl space-y-4 w-full lg:w-auto lg:min-w-[280px]">
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-zinc-300">Select Load Preset:</label>
                 <div className="grid grid-cols-3 gap-1.5">

@@ -603,7 +603,7 @@ Status: 200 OK • Output validated against schema.`);
             </div>
 
             {/* Mastery Progress Card */}
-            <div className="bg-slate-900/80 border border-purple-500/30 p-5 rounded-2xl space-y-3 min-w-[260px]">
+            <div className="bg-slate-900/80 border border-purple-500/30 p-5 rounded-2xl space-y-3 w-full lg:w-auto lg:min-w-[260px]">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-zinc-400 font-medium">Mastery Progress</span>
                 <span className="text-sm font-mono font-bold text-purple-300">{masteryPercentage}% Complete</span>

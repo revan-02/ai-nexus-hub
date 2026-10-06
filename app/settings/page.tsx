@@ -1888,8 +1888,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
 
       {/* ==================== REFER & EARN MODAL ==================== */}
       {showReferralModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-card border border-border w-full max-w-lg rounded-3xl p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-card border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95">
             <button
               onClick={() => setShowReferralModal(false)}
               className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary"
@@ -1953,8 +1953,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
 
       {/* ==================== DOWNLOAD MY DATA MODAL ==================== */}
       {showDataModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-card border border-border w-full max-w-md rounded-3xl p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-card border border-border w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95">
             <button
               onClick={() => setShowDataModal(false)}
               className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary"
@@ -2022,8 +2022,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
 
       {/* ==================== HELP & SUPPORT MODAL ==================== */}
       {showSupportModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-card border border-border w-full max-w-lg rounded-3xl p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-card border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-6 space-y-6 shadow-2xl relative animate-in fade-in zoom-in-95">
             <button
               onClick={() => setShowSupportModal(false)}
               className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary"
@@ -2115,8 +2115,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
 
       {/* ==================== MODAL: UPDATE PAYMENT METHOD ==================== */}
       {showUpdateCardModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-card border border-border w-full max-w-lg rounded-3xl p-6 sm:p-7 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between border-b border-border pb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">

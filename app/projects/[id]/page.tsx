@@ -206,7 +206,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Price & Checkout CTA Sidebar */}
-            <div className="flex-shrink-0 bg-card/80 border border-purple-500/30 p-6 rounded-2xl space-y-4 text-center min-w-[260px] shadow-xl">
+            <div className="flex-shrink-0 bg-card/80 border border-purple-500/30 p-6 rounded-2xl space-y-4 text-center w-full lg:w-auto lg:min-w-[260px] shadow-xl">
               <div className="space-y-1">
                 <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">License & Codebase</span>
                 <div className="text-3xl font-bold font-mono text-purple-400 flex items-center justify-center gap-1">
