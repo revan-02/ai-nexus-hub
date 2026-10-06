@@ -75,6 +75,18 @@ export const metadata: Metadata = {
     images: ["/robot-3d.png"],
     creator: "@ainexus_ai"
   },
+  verification: {
+    google: "AbCdEfGhIjKlMnOpQrStUvWxYz123456789",
+    other: {
+      "msvalidate.01": "A8B9C10D11E12F13G14H15I16J17K18L",
+      "yandex-verification": "yandex-verification-9876543210abcdef",
+    },
+  },
+  other: {
+    "fb:app_id": "184920194819284",
+    "fb:pages": "109284729182345",
+    "google-adsense-account": "ca-pub-9842109481028401",
+  },
   robots: {
     index: true,
     follow: true,
@@ -107,6 +119,12 @@ export default function RootLayout({
     >
       <head>
         <JsonLd />
+        {/* Google AdSense Asynchronous Script */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9842109481028401"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground antialiased selection:bg-purple-500/30 selection:text-purple-200">
         <SessionProvider>

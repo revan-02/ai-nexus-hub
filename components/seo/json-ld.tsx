@@ -19,7 +19,7 @@ export function JsonLd() {
             '@type': 'SearchAction',
             target: {
               '@type': 'EntryPoint',
-              urlTemplate: 'https://ainexus.platform.io/challenges?search={search_term_string}'
+              urlTemplate: 'https://ainexus.platform.io/courses?search={search_term_string}'
             },
             'query-input': 'required name=search_term_string'
           }
@@ -38,7 +38,8 @@ export function JsonLd() {
         sameAs: [
           'https://github.com/ainexus-platform',
           'https://linkedin.com/company/ainexus-platform',
-          'https://twitter.com/ainexus_ai'
+          'https://twitter.com/ainexus_ai',
+          'https://facebook.com/ainexus_ai'
         ],
         accreditedBy: {
           '@type': 'Organization',
@@ -63,6 +64,60 @@ export function JsonLd() {
           courseMode: 'online',
           courseWorkload: 'PT40H'
         }
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': 'https://ainexus.platform.io/#faq',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: 'Are AI Nexus certificates ISO/IEC 17024 accredited?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes, all AI Nexus engineering certificates adhere to ISO/IEC 17024 standards and Open Badges 3.0 with cryptographically verifiable signatures.'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'Can students access VTU solved question papers with calculus proofs?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes, AI Nexus provides comprehensive solved question papers with step-by-step mathematical proofs and real-time code sandboxes for engineering students.'
+            }
+          },
+          {
+            '@type': 'Question',
+            name: 'Can courses be shared with referral coupons?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'Yes, students can generate personalized referral links with discount coupons (such as NEXUS50, SUPERAI, VTU100) and share directly via WhatsApp, LinkedIn, or Email.'
+            }
+          }
+        ]
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': 'https://ainexus.platform.io/#breadcrumb',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://ainexus.platform.io'
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Courses & Curriculum',
+            item: 'https://ainexus.platform.io/courses'
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: 'AI Model Comparison',
+            item: 'https://ainexus.platform.io/model-comparison'
+          }
+        ]
       }
     ]
   };

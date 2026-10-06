@@ -42,12 +42,28 @@ export default function IntegrationsPage() {
       configUrl: '/system/backup-and-recovery',
     },
     {
-      name: 'Hugging Face Model Hub',
-      category: 'AI Models & Datasets',
+      name: 'Google AdSense Monetization',
+      category: 'Ad Monetization & Revenue',
       status: 'Connected',
-      mode: 'Read / Sync',
-      lastSync: '2 hours ago',
-      configUrl: '/settings?tab=accounts',
+      mode: 'Active (ca-pub-9842...)',
+      lastSync: 'Live',
+      configUrl: '/settings?tab=seo-monetization',
+    },
+    {
+      name: 'Meta / Facebook Instant Articles',
+      category: 'Syndication & RSS',
+      status: 'Connected',
+      mode: 'Automated RSS 2.0',
+      lastSync: 'Live',
+      configUrl: '/settings?tab=seo-monetization',
+    },
+    {
+      name: 'Developer REST API & Webhooks',
+      category: 'Developer Platform',
+      status: 'Connected',
+      mode: 'Token Authentication',
+      lastSync: 'Just now',
+      configUrl: '/settings?tab=api-keys',
     },
   ];
 

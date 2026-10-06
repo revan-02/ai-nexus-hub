@@ -35,6 +35,7 @@ import {
   AIModelSpec,
   MODEL_PURPOSE_RECOMMENDATIONS
 } from '@/lib/ai/model-comparison-data';
+import { AdSenseAd } from '@/components/ads/adsense-ad';
 
 export default function ModelComparisonPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -646,6 +647,9 @@ export default function ModelComparisonPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Google AdSense Responsive Unit */}
+          <AdSenseAd format="horizontal" className="my-6" />
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════════

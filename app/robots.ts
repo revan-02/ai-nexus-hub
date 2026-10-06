@@ -23,6 +23,21 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
         disallow: ['/api/', '/admin/'],
       },
+      // Google AdSense Crawler Optimization (Needs full content access to serve contextual ads)
+      {
+        userAgent: 'Mediapartners-Google',
+        allow: '/',
+      },
+      // Google Display Ads Crawler
+      {
+        userAgent: 'AdsBot-Google',
+        allow: '/',
+      },
+      // Meta Facebook Instant Articles & OpenGraph Scraper
+      {
+        userAgent: 'facebookexternalhit',
+        allow: '/',
+      },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
     host: baseUrl,

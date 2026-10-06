@@ -50,6 +50,7 @@ import { CreateCourseModal } from '@/components/courses/create-course-modal';
 import { CourseDetailModal } from '@/components/courses/course-detail-modal';
 import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
 import { IndustryAIPlacementHighway } from '@/components/learning/industry-ai-placement-highway';
+import { AdSenseAd } from '@/components/ads/adsense-ad';
 import {
   mockCoursesMetrics,
   mockCoursesList,
@@ -498,6 +499,9 @@ function LearnerCourseCatalog() {
           </div>
         ))
       )}
+
+      {/* Google AdSense Responsive Leaderboard Unit */}
+      <AdSenseAd format="horizontal" className="my-6" />
 
       {/* Bottom CTA Banner */}
       <Card className="p-6 bg-card border border-border hover:border-purple-500/40 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm transition-all">

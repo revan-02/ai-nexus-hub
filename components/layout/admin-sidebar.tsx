@@ -84,6 +84,7 @@ const navigationSections: NavSection[] = [
     items: [
       { label: 'Payment Reports', icon: Receipt, href: '/payment-reports', badge: 'Live' },
       { label: 'Payment Gateways & APIs', icon: CreditCard, href: '/settings?tab=payment-gateways' },
+      { label: 'SEO, AdSense & Articles', icon: DollarSign, href: '/settings?tab=seo-monetization', badge: 'AdSense' },
     ],
   },
   {
@@ -111,6 +112,7 @@ const navigationSections: NavSection[] = [
     title: 'SYSTEM',
     items: [
       { label: 'Settings', icon: Settings, href: '/settings/account' },
+      { label: 'API Keys & Developers', icon: Key, href: '/settings?tab=api-keys', badge: 'REST' },
       { label: 'Integrations', icon: Puzzle, href: '/integrations' },
       { label: 'Feature Flags', icon: Flag, href: '/feature-flags' },
       { label: 'System Health', icon: Activity, href: '/system-health', badge: '99.9%' },

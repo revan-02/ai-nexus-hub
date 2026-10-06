@@ -71,6 +71,8 @@ import {
   CouponValidationResult
 } from '@/services/coupon-service';
 import { mockCoursesList } from '@/lib/mock-data/courses-data';
+import { SeoMonetizationTab } from '@/components/settings/seo-monetization-tab';
+import { ApiKeysTab } from '@/components/settings/api-keys-tab';
 
 function useSafeSession() {
   try {
@@ -191,6 +193,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
     billing: 'Billing & Plan',
     'payment-gateways': 'Payment Gateways & APIs',
     'email-whatsapp': 'Email & WhatsApp APIs',
+    'seo-monetization': 'SEO, AdSense & Instant Articles',
+    'api-keys': 'API Keys & Developer Portal',
     'backup-recovery': 'Backup & Recovery',
     accounts: 'Connected Accounts',
   }), []);
@@ -205,6 +209,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
     'Billing & Plan': 'billing',
     'Payment Gateways & APIs': 'payment-gateways',
     'Email & WhatsApp APIs': 'email-whatsapp',
+    'SEO, AdSense & Instant Articles': 'seo-monetization',
+    'API Keys & Developer Portal': 'api-keys',
     'Backup & Recovery': 'backup-recovery',
     'Connected Accounts': 'accounts',
   }), []);
@@ -219,6 +225,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
     'Billing & Plan',
     'Payment Gateways & APIs',
     'Email & WhatsApp APIs',
+    'SEO, AdSense & Instant Articles',
+    'API Keys & Developer Portal',
     'Backup & Recovery',
     'Connected Accounts',
   ], []);
@@ -227,6 +235,8 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
     'AI Bot Controls (Admin)',
     'Payment Gateways & APIs',
     'Email & WhatsApp APIs',
+    'SEO, AdSense & Instant Articles',
+    'API Keys & Developer Portal',
     'Backup & Recovery',
   ], []);
 
@@ -1937,6 +1947,16 @@ function SettingsPageInner({ defaultTab }: SettingsPageProps) {
                   </div>
                 </Card>
               </div>
+            )}
+
+            {/* ==================== TAB: SEO, ADSENSE & INSTANT ARTICLES ==================== */}
+            {isAdmin && activeTab === 'SEO, AdSense & Instant Articles' && (
+              <SeoMonetizationTab />
+            )}
+
+            {/* ==================== TAB: API KEYS & DEVELOPER PORTAL ==================== */}
+            {isAdmin && activeTab === 'API Keys & Developer Portal' && (
+              <ApiKeysTab />
             )}
 
             {/* ==================== TAB 8: CONNECTED ACCOUNTS ==================== */}
