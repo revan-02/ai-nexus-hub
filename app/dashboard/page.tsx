@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { NexusShell } from '@/components/nexus/nexus-shell';
-import { useNexus } from '@/context/nexus-context';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2 } from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -16,6 +18,44 @@ import { CompactRoadmap } from '@/components/dashboard/compact-roadmap';
 import { useLearnerDashboard } from '@/hooks/api/use-dashboard';
 import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
 import type { CourseItem } from '@/lib/mock-data/courses-data';
+
+const TIER_PEDAGOGY_GUIDES: Record<string, { mentorTip: string; focusAreas: string[]; practicalLab: string }> = {
+  'young-explorer': {
+    mentorTip: 'Hey Young Explorer (7th Standard / Class 5–7)! Don’t worry about complex calculus. Discover AI through visual experiments, drag-and-drop Scratch blocks, and teaching robots to recognize your voice and puppy photos!',
+    focusAreas: ['Visual Scratch Coding', 'Teachable Machine', 'Computer Vision Games', 'AI Ethics for Kids'],
+    practicalLab: 'Rock-Paper-Scissors AI Game & Color Sorting Bot'
+  },
+  'junior-innovator': {
+    mentorTip: 'Ready to code in Python, Junior Innovator (Class 8–10)! We connect school algebra with real data to predict sports scores and classify handwritten digits with MNIST.',
+    focusAreas: ['Python Fundamentals', 'Coordinate Plots & Best-Fit Lines', 'Probability Basics', 'MNIST Digit Recognizer'],
+    practicalLab: 'Cricket Match Score Predictor & Handwritten Digit Sorter'
+  },
+  'pre-university': {
+    mentorTip: 'Welcome Pre-University Scholar (Class 11–12 / PUC)! Master derivatives, vectors, and matrices — the true mathematical engine behind every neural network gradient step.',
+    focusAreas: ['Calculus & Rates of Change', 'Linear Algebra & Matrices', 'Data Structures (Trees & Graphs)', 'Scikit-Learn Regression'],
+    practicalLab: 'Gradient Descent Marble Simulation & House Price Predictor'
+  },
+  'undergraduate': {
+    mentorTip: 'Engineering Undergraduates (B.Tech / VTU): Master supervised ML, manual backprop derivations, ResNet vision, and VTU exam question papers with KaTeX proofs.',
+    focusAreas: ['Supervised & Unsupervised ML', 'PyTorch Neural Networks', 'CNNs & ResNet Residuals', 'VTU University Question Papers'],
+    practicalLab: 'Vernacular Crop Disease Classifier & Fraud Detection with SMOTE'
+  },
+  'postgraduate': {
+    mentorTip: 'Postgraduate Scholars (M.Tech / MSc): Deep dive into Multi-Head Attention, Reinforcement Learning (PPO), and distributed multi-GPU training with DeepSpeed.',
+    focusAreas: ['Transformers & Self-Attention', 'Reinforcement Learning (PPO/DQN)', 'Distributed Training (ZeRO/FSDP)', 'Research Methodology & Ablations'],
+    practicalLab: 'Multi-GPU PyTorch Training Pipeline & Custom Tokenizer'
+  },
+  'industry-professional': {
+    mentorTip: 'Working Engineers (0–4 yrs): Architect production RAG systems with vLLM, continuous batching, 4-bit QLoRA fine-tuning, and multi-agent LangGraph workflows.',
+    focusAreas: ['Production RAG & Vector DBs', 'QLoRA & 4-bit Quantization', 'vLLM / TensorRT Inference', 'LangGraph Multi-Agent Workflows'],
+    practicalLab: '100k RPS Enterprise Financial Copilot & Custom MCP Agent'
+  },
+  'phd-research': {
+    mentorTip: 'Frontier AI Researchers: Pioneer novel sparse Mixture of Experts (MoE), Mamba selective state spaces, and custom hardware-aware Triton GPU kernels.',
+    focusAreas: ['Sparse MoE & Routing (DeepSeek)', 'Selective State Spaces (Mamba)', 'Scaling Laws & Chinchilla Frontiers', 'Custom Triton / CUDA Attention Kernels'],
+    practicalLab: 'FlashAttention-3 SRAM Tiling & DeepSeek-R1 Emergent Reasoning'
+  }
+};
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -27,7 +67,7 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
-  const { userLevel, levelMeta: contextLevelMeta, userProfile } = useNexus();
+  const { userLevel, levelMeta: contextLevelMeta, userProfile, academicTier, setAcademicTier, academicTierMeta } = useNexus();
   const { data: apiResponse, isLoading, isError } = useLearnerDashboard();
 
   const [greeting, setGreeting] = useState('Welcome back');
@@ -147,6 +187,98 @@ export default function DashboardPage() {
               View all my courses
             </Button>
           </Link>
+        </div>
+
+        {/* ── ACADEMIC TIER CONTINUUM SELECTOR & DR. MAYA PEDAGOGY GUIDE ── */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-purple-950/60 border border-purple-500/30 p-5 sm:p-6 shadow-xl space-y-5">
+          {/* Header & Quick Selector */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline" className="border-purple-400/40 text-purple-300 text-[11px] font-mono">
+                  🎯 7-Tier Educational Continuum
+                </Badge>
+                <span className="text-xs text-muted-foreground">Class 5 (7th std) ➔ PhD & Research</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-foreground flex items-center gap-2">
+                <span>{academicTierMeta.emoji}</span>
+                <span>{academicTierMeta.label} Track</span>
+                <span className="text-sm font-normal text-muted-foreground">({academicTierMeta.gradeLabel})</span>
+              </h2>
+            </div>
+
+            {/* Quick Switcher Pills for all 7 Tiers */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {ACADEMIC_TIERS.map((tier) => {
+                const isActive = academicTier === tier.id;
+                return (
+                  <button
+                    key={tier.id}
+                    onClick={() => setAcademicTier(tier.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-900/40 ring-1 ring-purple-400'
+                        : 'bg-card/70 hover:bg-card border border-border text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span>{tier.emoji}</span>
+                    <span>{tier.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dr. Maya's Level-Specific Guidance Card */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-border grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+            {/* Dr. Maya Thumbnail */}
+            <div className="md:col-span-3 flex items-center gap-3">
+              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-purple-500/40 shrink-0 shadow-md">
+                <Image
+                  src="/images/ai-mentor-dr-maya.jpg"
+                  alt="Dr. Maya Sharma - AI Educator"
+                  fill
+                  className="object-cover object-top"
+                />
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold text-foreground">Dr. Maya Sharma</div>
+                <div className="text-[10px] text-purple-400 font-medium">Lead AI Mentor</div>
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                  Pedagogy Active
+                </Badge>
+              </div>
+            </div>
+
+            {/* Quote / Guidance */}
+            <div className="md:col-span-6 space-y-2">
+              <p className="text-xs sm:text-sm text-foreground italic leading-relaxed">
+                &ldquo;{TIER_PEDAGOGY_GUIDES[academicTier]?.mentorTip || academicTierMeta.bannerText}&rdquo;
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {TIER_PEDAGOGY_GUIDES[academicTier]?.focusAreas.map((area, idx) => (
+                  <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-border">
+                    ✓ {area}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Practical Lab & Action CTA */}
+            <div className="md:col-span-3 flex flex-col justify-between gap-2.5 md:border-l md:border-border/60 md:pl-5">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Recommended Lab:</span>
+                <span className="text-xs font-semibold text-foreground leading-snug block mt-0.5">
+                  {TIER_PEDAGOGY_GUIDES[academicTier]?.practicalLab}
+                </span>
+              </div>
+              <Link href={`/roadmap?tier=${academicTier}`}>
+                <Button size="sm" className="w-full text-xs rounded-xl gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold">
+                  Open {academicTierMeta.label} Roadmap <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Primary Action - Continue Learning */}

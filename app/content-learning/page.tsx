@@ -30,7 +30,10 @@ import {
   ChevronRight,
   Compass,
   FileText,
-  MessageSquareQuote
+  MessageSquareQuote,
+  GraduationCap,
+  Rocket,
+  Target
 } from 'lucide-react';
 
 interface ResearchPaper {
@@ -261,8 +264,116 @@ const FAQS_WITH_DR_MAYA = [
   }
 ];
 
+interface ContinuumTier {
+  id: string;
+  emoji: string;
+  gradeLabel: string;
+  stageTitle: string;
+  ageRange: string;
+  analogyHeadline: string;
+  analogyStory: string;
+  concreteExample: string;
+  handsOnLab: string;
+  mathRigor: string;
+  mathFormula?: string;
+}
+
+const CONTINUUM_TIERS: ContinuumTier[] = [
+  {
+    id: 'young-explorer',
+    emoji: '🌟',
+    gradeLabel: 'Class 5–7 (7th Standard)',
+    stageTitle: 'Young Explorer: The Spark of Curiosity',
+    ageRange: '10–12 Years',
+    analogyHeadline: 'Teaching a Puppy Tricks with Treats',
+    analogyStory: 'Imagine teaching your puppy to sit. You don’t give the puppy a math equation; you say "Sit!", gently guide it, and give a delicious biscuit when it does it right. After 10 biscuits, the puppy learns the pattern. AI in 7th grade works the exact same way: you feed computer programs pictures of cats and dogs, and give digital points whenever it guesses correctly!',
+    concreteExample: 'How Teachable Machine recognizes your hand waving through your laptop webcam without any typing.',
+    handsOnLab: 'Drag-and-Drop Scratch AI Chatbot & Rock-Paper-Scissors Camera Game',
+    mathRigor: 'Zero Equations • 100% Visual & Game-Based Intuition',
+  },
+  {
+    id: 'junior-innovator',
+    emoji: '🚀',
+    gradeLabel: 'Class 8–10 (High School)',
+    stageTitle: 'Junior Innovator: From Code to Patterns',
+    ageRange: '13–15 Years',
+    analogyHeadline: 'Drawing the Best-Fit Line on Graph Paper',
+    analogyStory: 'In 9th grade science, you plot dots of temperature vs time on graph paper and draw a straight line through the middle with a ruler. That ruler is doing Linear Regression! With Python, the computer tests thousands of rulers in a fraction of a second to find the one that fits the dots best.',
+    concreteExample: 'Predicting how many runs a cricket team will score based on the runs scored in the first 6 overs.',
+    handsOnLab: 'Python Matplotlib Scatter Plots & MNIST Handwritten Digit Sorter',
+    mathRigor: 'Linear Slopes (y = mx + c) • Elementary Probability Trees',
+    mathFormula: 'y = mx + c'
+  },
+  {
+    id: 'pre-university',
+    emoji: '📐',
+    gradeLabel: 'Class 11–12 / PUC (Pre-University)',
+    stageTitle: 'Pre-University: The Calculus Engine',
+    ageRange: '16–17 Years',
+    analogyHeadline: 'Rolling a Marble Down a Parabolic Valley',
+    analogyStory: 'If you drop a marble into a smooth bowl, gravity naturally pulls it toward the very bottom point where the slope is zero (dy/dx = 0). Gradient Descent is that exact marble! We measure the slope of the error curve and take small steps downhill until our model makes the fewest mistakes possible.',
+    concreteExample: 'Self-driving car algorithms calculating the exact steering wheel angle derivative to stay centered in lane lines.',
+    handsOnLab: 'Interactive Gradient Descent Simulator & Scikit-Learn House Price Estimator',
+    mathRigor: 'Derivatives (dy/dx) • Partial Gradients (∇f) • Dot Products (u · v)',
+    mathFormula: '\\theta_{t+1} = \\theta_t - \\eta \\frac{\\partial J}{\\partial \\theta}'
+  },
+  {
+    id: 'undergraduate',
+    emoji: '🎓',
+    gradeLabel: 'Undergraduate (B.Tech / VTU)',
+    stageTitle: 'Undergraduate: Neural Networks & Real-World Arenas',
+    ageRange: '18–21 Years',
+    analogyHeadline: 'The Multi-Layer Relay Team Coaching Session',
+    analogyStory: 'A deep neural network is like an Olympic 4x100m relay team. The coach doesn’t just clock the final runner at the finish line; using video replay, the coach calculates the exact fraction of a second lost by each individual runner during each baton pass. That backwards calculation using the Chain Rule of Calculus is Backpropagation!',
+    concreteExample: 'Rural Karnataka crop leaf disease scanner that diagnoses bacterial blight in Kannada with 94% accuracy.',
+    handsOnLab: 'PyTorch Multi-Layer Perceptron from scratch & ResNet vision classifier for VTU engineering exams',
+    mathRigor: 'Multivariate Chain Rule • Cross-Entropy Loss • ResNet Skip Connections',
+    mathFormula: '\\frac{\\partial \\mathcal{L}}{\\partial w_{ij}} = \\frac{\\partial \\mathcal{L}}{\\partial a_j} \\cdot \\frac{\\partial a_j}{\\partial z_j} \\cdot \\frac{\\partial z_j}{\\partial w_{ij}}'
+  },
+  {
+    id: 'postgraduate',
+    emoji: '🔬',
+    gradeLabel: 'Postgraduate (M.Tech / MSc)',
+    stageTitle: 'Postgraduate: Transformers & Reinforcement Learning',
+    ageRange: '22–24 Years',
+    analogyHeadline: 'The Multilingual Global Summit Interpreters',
+    analogyStory: 'In an international summit with delegates speaking 12 languages, delegates don’t translate word-by-word into a single dictionary. Instead, multi-head attention delegates track tone, idiom, cultural context, and subject-verb dependencies simultaneously across independent attention channels.',
+    concreteExample: 'Zero-shot translation from rural dialects into medical terminology for doctor consultations.',
+    handsOnLab: 'Multi-GPU PyTorch DistributedDataParallel (DDP) pipeline & PPO reinforcement learning game agent',
+    mathRigor: 'Self-Attention Scaled Dot-Product • Proximal Policy Optimization (PPO) Loss',
+    mathFormula: '\\text{MultiHead}(Q, K, V) = \\text{Concat}(\\text{head}_1, \\dots, \\text{head}_h)W^O'
+  },
+  {
+    id: 'industry-professional',
+    emoji: '💼',
+    gradeLabel: 'Industry Professional (0–4 yrs exp)',
+    stageTitle: 'Industry Pro: Enterprise Scale & MLOps Infrastructure',
+    ageRange: '22–30 Years',
+    analogyHeadline: 'The High-Speed Airport Air-Traffic Dispatch Control',
+    analogyStory: 'When 50 flights request landing clearance during a storm, the control tower doesn’t make planes circle in single-file queues (which burns fuel and causes delays). Continuous batching and PagedAttention in vLLM dynamically allocate GPU memory pages so 10,000 users stream AI answers in parallel with zero lag.',
+    concreteExample: 'Serving enterprise banking copilots with sub-40ms time-to-first-token (TTFT) and 99.99% uptime.',
+    handsOnLab: 'Production RAG with Qdrant, 4-bit QLoRA fine-tuning, and LangGraph multi-agent orchestration',
+    mathRigor: '4-bit NormalFloat (NF4) Quantization • PagedAttention Memory Page Tables',
+    mathFormula: '\\text{Memory Saved} = \\frac{\\text{Standard KV Cache}}{\\text{Paged KV Cache}} \\approx 60\\% - 85\\%'
+  },
+  {
+    id: 'phd-research',
+    emoji: '🧪',
+    gradeLabel: 'PhD & Research (Doctoral / Postdoc)',
+    stageTitle: 'PhD & Research: Frontiers, Sparse MoE & Custom Kernels',
+    ageRange: '25+ Years',
+    analogyHeadline: 'Designing Supersonic Jet Engines with Micro-Turbines',
+    analogyStory: 'At the frontier of science, we no longer scale models by simply adding billions of brute-force parameters that melt data centers. We design sparse routers that selectively ignite micro-turbines (experts) only when specific aerodynamic conditions require them, and write hardware-level GPU SRAM tiling kernels that operate directly at the speed of electricity.',
+    concreteExample: 'DeepSeek-V3/R1 activating only 37B weights out of 671B parameters for PhD-grade reasoning proofs.',
+    handsOnLab: 'Custom Triton CUDA attention kernel & Sparse MoE Top-K gating ablation benchmark',
+    mathRigor: 'Stochastic Differential Equations • Loss Surface Hessian Eigenvalues • Hardware SRAM Tiling',
+    mathFormula: 'h\'(t) = \\mathbf{A}h(t) + \\mathbf{B}(x)x(t), \\quad \\mathcal{L}_{\\text{DPO}}(\\pi_\\theta; \\pi_{\\text{ref}})'
+  }
+];
+
 export default function ContentLearningResearchPage() {
   const [selectedPaper, setSelectedPaper] = useState<ResearchPaper>(RESEARCH_PAPERS[0]);
+  const [selectedContinuumIdx, setSelectedContinuumIdx] = useState<number>(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState('1.0x');
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
@@ -712,6 +823,139 @@ export default function ContentLearningResearchPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* ── THE 7-TIER PEDAGOGICAL CONTINUUM: 7TH STANDARD TO PHD ── */}
+        <div className="space-y-6 pt-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="border-purple-400/40 text-purple-300 text-xs font-mono">
+                🎓 Complete Academic Continuum
+              </Badge>
+              <span className="text-xs text-muted-foreground">Class 5 (7th Standard) ➔ PhD & Research</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+              <GraduationCap className="w-7 h-7 text-primary" />
+              How AI Concepts Evolve: From 7th Standard to PhD
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Dr. Maya Sharma demonstrates how the exact same concept (&ldquo;How a Machine Learns&rdquo;) is taught progressively without ever dumbing it down.
+            </p>
+          </div>
+
+          {/* 7-Tier Navigation Pills */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+            {CONTINUUM_TIERS.map((tier, idx) => {
+              const isSelected = selectedContinuumIdx === idx;
+              return (
+                <button
+                  key={tier.id}
+                  onClick={() => setSelectedContinuumIdx(idx)}
+                  className={`p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-primary/10 border-primary shadow-md ring-2 ring-primary/20'
+                      : 'bg-card hover:bg-muted/40 border-border'
+                  }`}
+                >
+                  <div className="text-base sm:text-lg mb-1">{tier.emoji}</div>
+                  <div className="text-[11px] font-bold text-foreground line-clamp-1">{tier.gradeLabel}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{tier.ageRange}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Detailed Active Tier Pedagogical Card */}
+          {(() => {
+            const currentTier = CONTINUUM_TIERS[selectedContinuumIdx];
+            return (
+              <Card className="border-border shadow-xl overflow-hidden bg-card">
+                <CardHeader className="bg-muted/30 border-b border-border pb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{currentTier.emoji}</span>
+                        <Badge variant="default" className="text-xs">
+                          {currentTier.gradeLabel}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">Age: {currentTier.ageRange}</span>
+                      </div>
+                      <CardTitle className="text-xl font-bold">{currentTier.stageTitle}</CardTitle>
+                      <CardDescription className="text-xs font-semibold text-primary">
+                        Pedagogical Analogy: &ldquo;{currentTier.analogyHeadline}&rdquo;
+                      </CardDescription>
+                    </div>
+
+                    <div className="text-left sm:text-right">
+                      <Badge variant="outline" className="text-[10px] font-mono text-purple-400 border-purple-400/30">
+                        {currentTier.mathRigor}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-6 sm:p-8 space-y-6">
+                  {/* Dr. Maya's Story Box */}
+                  <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-transparent border border-purple-500/20 space-y-2">
+                    <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-semibold text-xs uppercase tracking-wider">
+                      <Sparkles className="w-4 h-4" />
+                      Dr. Maya&apos;s Level-Appropriate Analogy:
+                    </div>
+                    <p className="text-sm sm:text-base text-foreground leading-relaxed italic font-serif">
+                      &ldquo;{currentTier.analogyStory}&rdquo;
+                    </p>
+                  </div>
+
+                  {/* Concrete Real-World Example & Hands-on Lab */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1.5">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Real-Time Concrete Example:
+                      </div>
+                      <p className="text-xs sm:text-sm text-foreground leading-relaxed">
+                        {currentTier.concreteExample}
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-1.5">
+                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-xs uppercase tracking-wider">
+                        <Code2 className="w-4 h-4" />
+                        Student Hands-on Lab Activity:
+                      </div>
+                      <p className="text-xs sm:text-sm text-foreground leading-relaxed">
+                        {currentTier.handsOnLab}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Optional Math Formula for that level */}
+                  {currentTier.mathFormula && (
+                    <div className="p-4 rounded-2xl bg-muted/40 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-center sm:text-left">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Mathematical Representation:
+                      </div>
+                      <div className="overflow-x-auto">
+                        <MathRenderer math={currentTier.mathFormula} className="text-primary font-bold text-base" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Link to Roadmap */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+                    <span className="text-muted-foreground">
+                      Explore full curriculum modules for this tier:
+                    </span>
+                    <Link href={`/roadmap?tier=${currentTier.id}`}>
+                      <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs">
+                        Open {currentTier.gradeLabel} Roadmap <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
         {/* Action Callout: Transition to Career Hub */}

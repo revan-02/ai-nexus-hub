@@ -75,6 +75,24 @@ describe('Research & Career Hub with Dr. Maya Sharma AI Mentor', () => {
       expect(screen.getByText(/Frequently Confused AI Concepts: Clarified by Dr\. Maya/i)).toBeInTheDocument();
       expect(screen.getByText(/Why do Large Language Models hallucinate false facts\?/i)).toBeInTheDocument();
     });
+
+    it('renders the 7-tier educational continuum from 7th standard to PhD and allows switching tiers', () => {
+      render(
+        <NexusProvider>
+          <ContentLearningResearchPage />
+        </NexusProvider>
+      );
+
+      expect(screen.getByText(/How AI Concepts Evolve: From 7th Standard to PhD/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Class 5–7 \(7th Standard\)/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/Teaching a Puppy Tricks with Treats/i)).toBeInTheDocument();
+
+      // Click on PhD & Research continuum card button
+      const phdContinuumBtn = screen.getByText('PhD & Research (Doctoral / Postdoc)');
+      fireEvent.click(phdContinuumBtn);
+
+      expect(screen.getByText(/PhD & Research: Frontiers, Sparse MoE & Custom Kernels/i)).toBeInTheDocument();
+    });
   });
 
   describe('Career Hub (/career)', () => {
