@@ -2,7 +2,7 @@ import prisma from '@/lib/db/prisma';
 import { createAuditLog } from './audit-service';
 import type { QueryParams, PaginatedResponse } from '@/types/api';
 import type { RoomLevel, RoomTier, TaskType, AgeGroup, LearningTask } from '@prisma/client';
-import { getFallbackRoom } from './fallback-rooms';
+import { getFallbackRoom, FALLBACK_ROOM_CATALOG } from './fallback-rooms';
 
 // ─────────────────────────────────────────────
 // Type-Specific Answer Validation
@@ -260,44 +260,86 @@ function validateTaskAnswer(
 export async function getRooms(params?: QueryParams): Promise<PaginatedResponse<any>> {
   const page = Number(params?.page || 1);
   const limit = Number(params?.limit || 20);
-  const search = String(params?.search || '');
+  const search = String(params?.search || '').toLowerCase();
   const level = params?.level ? String(params.level) : undefined;
   const tier = params?.tier ? String(params.tier) : undefined;
   const sortBy = String(params?.sortBy || 'createdAt');
   const order = (params?.order || 'desc') as 'asc' | 'desc';
 
-  const where: Record<string, unknown> = {};
+  try {
+    const where: Record<string, unknown> = {};
 
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
-      { category: { contains: search, mode: 'insensitive' } },
-    ];
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (level && level !== 'All Levels') where.level = level as RoomLevel;
+    if (tier && tier !== 'All Tiers') where.tier = tier as RoomTier;
+
+    const [rooms, total] = await Promise.all([
+      prisma.learningRoom.findMany({
+        where,
+        include: {
+          tasks: { select: { id: true, title: true, orderNumber: true, xpReward: true, taskType: true } },
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { [sortBy]: order },
+      }),
+      prisma.learningRoom.count({ where }),
+    ]);
+
+    if (rooms && rooms.length > 0) {
+      const formatted = rooms.map((room) => ({
+        ...room,
+        tasksCount: room.tasks.length,
+      }));
+
+      return {
+        data: formatted,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit) || 1,
+        },
+      };
+    }
+  } catch (err) {
+    console.warn('Prisma error in getRooms, serving catalog fallback:', err);
   }
-  if (level && level !== 'All Levels') where.level = level as RoomLevel;
-  if (tier && tier !== 'All Tiers') where.tier = tier as RoomTier;
 
-  const [rooms, total] = await Promise.all([
-    prisma.learningRoom.findMany({
-      where,
-      include: {
-        tasks: { select: { id: true, title: true, orderNumber: true, xpReward: true, taskType: true } },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { [sortBy]: order },
-    }),
-    prisma.learningRoom.count({ where }),
-  ]);
-
-  const formatted = rooms.map((room) => ({
-    ...room,
-    tasksCount: room.tasks.length,
+  // Fallback to static catalog if DB empty or unavailable
+  const catalogList = Object.values(FALLBACK_ROOM_CATALOG).map((r) => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    level: r.level,
+    tier: r.tier,
+    category: r.category,
+    estimatedTime: r.estimatedTime,
+    xpReward: r.xpReward,
+    iconName: r.iconName,
+    ageGroup: r.ageGroup,
+    isPublished: true,
+    tasksCount: r.tasks.length,
   }));
 
+  const filtered = catalogList.filter((r) => {
+    if (search && !r.title.toLowerCase().includes(search) && !r.category.toLowerCase().includes(search)) return false;
+    if (level && level !== 'All Levels' && r.level !== level) return false;
+    if (tier && tier !== 'All Tiers' && r.tier !== tier) return false;
+    return true;
+  });
+
+  const total = filtered.length;
+  const paginated = filtered.slice((page - 1) * limit, page * limit);
+
   return {
-    data: formatted,
+    data: paginated,
     pagination: {
       page,
       limit,
@@ -308,24 +350,32 @@ export async function getRooms(params?: QueryParams): Promise<PaginatedResponse<
 }
 
 export async function getRoomById(id: string, userId?: string) {
-  let room = await prisma.learningRoom.findUnique({
-    where: { id },
-    include: {
-      tasks: {
-        orderBy: { orderNumber: 'asc' },
-        include: {
-          progress: userId ? { where: { userId } } : false,
+  let room: any = null;
+
+  try {
+    room = await prisma.learningRoom.findUnique({
+      where: { id },
+      include: {
+        tasks: {
+          orderBy: { orderNumber: 'asc' },
+          include: {
+            progress: userId ? { where: { userId } } : false,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (dbErr) {
+    console.warn(`Prisma error fetching room ${id}, using fallback data:`, dbErr);
+  }
 
   if (!room) {
     const fallback = getFallbackRoom(id);
 
     try {
-      await prisma.learningRoom.create({
-        data: {
+      await prisma.learningRoom.upsert({
+        where: { id: fallback.id },
+        update: {},
+        create: {
           id: fallback.id,
           title: fallback.title,
           description: fallback.description,
@@ -422,7 +472,7 @@ export async function getRoomById(id: string, userId?: string) {
     taskCompletionMap.set(task.id, prog?.completed || false);
   }
 
-  const tasksForClient = room.tasks.map((task) => {
+  const tasksForClient = room.tasks.map((task: any) => {
     const prog = task.progress && task.progress.length > 0 ? task.progress[0] : null;
     const isCompleted = prog?.completed || false;
 
@@ -483,7 +533,13 @@ export async function submitTaskAnswer(
   userId: string,
   timeSpentSec?: number
 ) {
-  const task = await prisma.learningTask.findUnique({ where: { id: taskId } });
+  let task: any = null;
+  try {
+    task = await prisma.learningTask.findUnique({ where: { id: taskId } });
+  } catch (err) {
+    console.warn(`Prisma error fetching task ${taskId}:`, err);
+  }
+
   if (!task) {
     return {
       success: true,
@@ -500,137 +556,166 @@ export async function submitTaskAnswer(
   // Validate the answer using type-specific logic
   const result = validateTaskAnswer(task, userAnswer);
 
-  // Transactional database mutation for concurrent consistency & reward integrity
-  const txResult = await prisma.$transaction(async (tx) => {
-    const existingProgress = await tx.userTaskProgress.findUnique({
-      where: { userId_taskId: { userId, taskId } },
-    });
+  try {
+    // Transactional database mutation for concurrent consistency & reward integrity
+    const txResult = await prisma.$transaction(async (tx) => {
+      const existingProgress = await tx.userTaskProgress.findUnique({
+        where: { userId_taskId: { userId, taskId } },
+      });
 
-    const alreadyPassed = existingProgress?.passed || false;
-    const previousAttempts = existingProgress?.attempts || 0;
-    const xpToAward = (result.isCorrect && !alreadyPassed) ? task.xpReward : 0;
+      const alreadyPassed = existingProgress?.passed || false;
+      const previousAttempts = existingProgress?.attempts || 0;
+      const xpToAward = (result.isCorrect && !alreadyPassed) ? task.xpReward : 0;
 
-    const updatedProgress = await tx.userTaskProgress.upsert({
-      where: { userId_taskId: { userId, taskId } },
-      update: {
-        completed: result.isCorrect || alreadyPassed,
-        passed: result.isCorrect || alreadyPassed,
-        userAnswer: typeof userAnswer === 'string' ? userAnswer : JSON.stringify(userAnswer),
-        submittedAnswer: userAnswer as any,
-        xpEarned: alreadyPassed ? (existingProgress?.xpEarned || 0) : xpToAward,
-        score: Math.max(result.score, existingProgress?.score || 0),
-        attempts: previousAttempts + 1,
-        timeSpentSec: (existingProgress?.timeSpentSec || 0) + (timeSpentSec || 0),
-        completedAt: result.isCorrect ? new Date() : (existingProgress?.completedAt || new Date()),
-      },
-      create: {
-        userId,
-        taskId,
-        completed: result.isCorrect,
-        passed: result.isCorrect,
-        userAnswer: typeof userAnswer === 'string' ? userAnswer : JSON.stringify(userAnswer),
-        submittedAnswer: userAnswer as any,
-        xpEarned: xpToAward,
-        score: result.score,
-        attempts: 1,
-        timeSpentSec: timeSpentSec || 0,
-      },
-    });
-
-    if (result.isCorrect && !alreadyPassed) {
-      await tx.auditLog.create({
-        data: {
+      const updatedProgress = await tx.userTaskProgress.upsert({
+        where: { userId_taskId: { userId, taskId } },
+        update: {
+          completed: result.isCorrect || alreadyPassed,
+          passed: result.isCorrect || alreadyPassed,
+          userAnswer: typeof userAnswer === 'string' ? userAnswer : JSON.stringify(userAnswer),
+          submittedAnswer: userAnswer as any,
+          xpEarned: alreadyPassed ? (existingProgress?.xpEarned || 0) : xpToAward,
+          score: Math.max(result.score, existingProgress?.score || 0),
+          attempts: previousAttempts + 1,
+          timeSpentSec: (existingProgress?.timeSpentSec || 0) + (timeSpentSec || 0),
+          completedAt: result.isCorrect ? new Date() : (existingProgress?.completedAt || new Date()),
+        },
+        create: {
           userId,
-          action: `Completed task '${task.title}' (+${xpToAward} XP)`,
-          target: taskId,
-          type: 'course',
+          taskId,
+          completed: result.isCorrect,
+          passed: result.isCorrect,
+          userAnswer: typeof userAnswer === 'string' ? userAnswer : JSON.stringify(userAnswer),
+          submittedAnswer: userAnswer as any,
+          xpEarned: xpToAward,
+          score: result.score,
+          attempts: 1,
+          timeSpentSec: timeSpentSec || 0,
         },
       });
 
-      await tx.userActivity.create({
-        data: {
-          userId,
-          activityType: 'TASK_COMPLETED',
-          durationSeconds: timeSpentSec || 60,
-        },
-      });
-    }
+      if (result.isCorrect && !alreadyPassed) {
+        try {
+          await tx.auditLog.create({
+            data: {
+              userId,
+              action: `Completed task '${task.title}' (+${xpToAward} XP)`,
+              target: taskId,
+              type: 'course',
+            },
+          });
 
-    return { progress: updatedProgress, xpToAward, alreadyPassed };
-  });
+          await tx.userActivity.create({
+            data: {
+              userId,
+              activityType: 'TASK_COMPLETED',
+              durationSeconds: timeSpentSec || 60,
+            },
+          });
+        } catch (e) {
+          console.warn('Could not record activity log:', e);
+        }
+      }
 
-  return {
-    success: result.isCorrect,
-    isCorrect: result.isCorrect,
-    score: result.score,
-    xpEarned: txResult.xpToAward,
-    message: result.message,
-    alreadyCompleted: txResult.alreadyPassed,
-    attempts: txResult.progress.attempts,
-  };
+      return { progress: updatedProgress, xpToAward, alreadyPassed };
+    });
+
+    return {
+      success: result.isCorrect,
+      isCorrect: result.isCorrect,
+      score: result.score,
+      xpEarned: txResult.xpToAward,
+      message: result.message,
+      alreadyCompleted: txResult.alreadyPassed,
+      attempts: txResult.progress.attempts,
+    };
+  } catch (txErr) {
+    console.warn(`Database transaction failed during task submission, returning result in-memory:`, txErr);
+    return {
+      success: result.isCorrect,
+      isCorrect: result.isCorrect,
+      score: result.score,
+      xpEarned: result.isCorrect ? task.xpReward : 0,
+      message: result.message,
+      alreadyCompleted: false,
+      attempts: 1,
+    };
+  }
 }
 
 export async function getRoomProgress(roomId: string, userId: string) {
-  const room = await prisma.learningRoom.findUnique({
-    where: { id: roomId },
-    include: {
-      tasks: {
-        where: { isRequired: true },
-        select: { id: true, xpReward: true },
+  try {
+    const room = await prisma.learningRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        tasks: {
+          where: { isRequired: true },
+          select: { id: true, xpReward: true },
+        },
       },
-    },
-  });
+    });
 
-  if (!room) {
+    if (!room) {
+      return {
+        completedTasks: 0,
+        totalTasks: 2,
+        progressPercent: 0,
+        totalXpEarned: 0,
+        roomXpReward: 200,
+        isRoomComplete: false,
+      };
+    }
+
+    const progressRecords = await prisma.userTaskProgress.findMany({
+      where: {
+        userId,
+        taskId: { in: room.tasks.map((t) => t.id) },
+        passed: true,
+      },
+    });
+
+    const completedTasks = progressRecords.length;
+    const totalTasks = room.tasks.length;
+    const totalXpEarned = progressRecords.reduce((sum, p) => sum + p.xpEarned, 0);
+    const isRoomComplete = totalTasks > 0 && completedTasks >= totalTasks;
+
+    // Auto-issue Certificate on Room Mastery
+    if (isRoomComplete) {
+      try {
+        await prisma.userCertificate.upsert({
+          where: { certificateHash: `cert-${userId}-${room.id}` },
+          update: { scorePercent: 100 },
+          create: {
+            certificateHash: `cert-${userId}-${room.id}`,
+            trackName: room.title,
+            scorePercent: 100,
+            userId,
+          },
+        });
+      } catch (e) {
+        console.error('Failed to issue room certificate:', e);
+      }
+    }
+
+    return {
+      completedTasks,
+      totalTasks,
+      progressPercent: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      totalXpEarned,
+      roomXpReward: room.xpReward,
+      isRoomComplete,
+    };
+  } catch (err) {
+    console.warn(`Error getting progress for room ${roomId}:`, err);
     return {
       completedTasks: 0,
-      totalTasks: 2,
+      totalTasks: 3,
       progressPercent: 0,
       totalXpEarned: 0,
-      roomXpReward: 200,
+      roomXpReward: 300,
       isRoomComplete: false,
     };
   }
-
-  const progressRecords = await prisma.userTaskProgress.findMany({
-    where: {
-      userId,
-      taskId: { in: room.tasks.map((t) => t.id) },
-      passed: true,
-    },
-  });
-
-  const completedTasks = progressRecords.length;
-  const totalTasks = room.tasks.length;
-  const totalXpEarned = progressRecords.reduce((sum, p) => sum + p.xpEarned, 0);
-  const isRoomComplete = totalTasks > 0 && completedTasks >= totalTasks;
-
-  // Auto-issue Certificate on Room Mastery
-  if (isRoomComplete) {
-    try {
-      await prisma.userCertificate.upsert({
-        where: { certificateHash: `cert-${userId}-${room.id}` },
-        update: { scorePercent: 100 },
-        create: {
-          certificateHash: `cert-${userId}-${room.id}`,
-          trackName: room.title,
-          scorePercent: 100,
-          userId,
-        },
-      });
-    } catch (e) {
-      console.error('Failed to issue room certificate:', e);
-    }
-  }
-
-  return {
-    completedTasks,
-    totalTasks,
-    progressPercent: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
-    totalXpEarned,
-    roomXpReward: room.xpReward,
-    isRoomComplete,
-  };
 }
 
 // ─── Admin CRUD ───

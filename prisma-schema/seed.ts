@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
+import { FALLBACK_ROOM_CATALOG } from '../services/fallback-rooms';
 
 const connectionString = process.env.DATABASE_URL!;
 const pool = new pg.Pool({ connectionString });
@@ -51,8 +52,22 @@ async function main() {
     { id: 'crs-7', title: 'High-Throughput LLM Inference Serving (vLLM, TensorRT & Triton)', description: 'Optimize GPU memory with PagedAttention, KV-Cache compression, FP8/FP4 quantization, and production Triton Inference clusters.', category: 'AI Infrastructure', level: 'Advanced' as const, price: '₹9,999', students: '1,890', status: 'Published' as const, thumbnailIcon: 'Cpu', instructorId: 'usr-1' },
     { id: 'crs-8', title: 'Enterprise GraphRAG & Hybrid Knowledge Retrieval', description: 'Eliminate LLM hallucinations by fusing Neo4j knowledge graphs with hybrid BM25 and dense vector embeddings with Cohere re-ranking.', category: 'Generative AI', level: 'Advanced' as const, price: '₹7,499', students: '1,620', status: 'Published' as const, thumbnailIcon: 'Network', instructorId: 'usr-2' },
     { id: 'crs-9', title: 'Vision-Language Models, Multimodal AI & YOLOv11 Real-Time Vision', description: 'Fine-tune CLIP and LLaVA multimodal models, real-time YOLOv11 object segmentation, and agricultural leaf pest diagnosis.', category: 'Computer Vision', level: 'Advanced' as const, price: '₹6,999', students: '2,150', status: 'Published' as const, thumbnailIcon: 'Activity', instructorId: 'usr-8' },
-    { id: 'crs-10', title: 'AI Safety, Prompt Injection Defense & Enterprise Guardrails', description: 'Master OWASP Top 10 for LLMs, adversarial red-teaming, NVIDIA NeMo Guardrails, and automated compliance auditing.', category: 'Security & Governance', level: 'Advanced' as const, price: '₹7,999', students: '1,420', status: 'Published' as const, thumbnailIcon: 'Shield', instructorId: 'usr-2' },
-    { id: 'crs-11', title: 'Edge AI, Small Language Models (SLMs) & On-Device Deployment', description: 'Deploy quantized Phi-4 and Qwen-2.5 models on Apple Silicon, Jetson, and mobile devices using ONNX Runtime, GGUF, and WebGPU.', category: 'Edge & Mobile AI', level: 'Intermediate' as const, price: '₹5,999', students: '2,810', status: 'Published' as const, thumbnailIcon: 'Smartphone', instructorId: 'usr-1' },
+    { id: 'crs-11', title: 'AI Safety, Prompt Injection Defense & Enterprise Guardrails', description: 'Master OWASP Top 10 for LLMs, adversarial red-teaming, NVIDIA NeMo Guardrails, and automated compliance auditing.', category: 'Security & Governance', level: 'Advanced' as const, price: '₹7,999', students: '1,420', status: 'Published' as const, thumbnailIcon: 'Shield', instructorId: 'usr-2' },
+    { id: 'crs-12', title: 'Edge AI, Small Language Models (SLMs) & On-Device Deployment', description: 'Deploy quantized Phi-4 and Qwen-2.5 models on Apple Silicon, Jetson, and mobile devices using ONNX Runtime, GGUF, and WebGPU.', category: 'Edge & Mobile AI', level: 'Intermediate' as const, price: '₹5,999', students: '2,810', status: 'Published' as const, thumbnailIcon: 'Smartphone', instructorId: 'usr-1' },
+    { id: 'crs-13', title: 'What is a Computer Brain? Fun Intro to Artificial Intelligence', description: 'Explore AI through drag-and-drop games, "teach the robot" activities, pattern recognition puzzles, and Teachable Machine experiments.', category: 'AI for Kids', level: 'Beginner' as const, price: 'Free', students: '12,450', status: 'Published' as const, thumbnailIcon: 'Sparkles', instructorId: 'usr-8' },
+    { id: 'crs-14', title: 'My First Chatbot: Scratch Programming & AI Conversations', description: 'Build simple chatbots using Scratch blocks, understand how computers "talk", create a quiz bot, and animate an AI story character.', category: 'AI for Kids', level: 'Beginner' as const, price: 'Free', students: '9,820', status: 'Published' as const, thumbnailIcon: 'MessageSquare', instructorId: 'usr-8' },
+    { id: 'crs-15', title: 'Python for Young Minds: From Zero to Your First AI Project', description: 'Variables, loops, functions, lists → build a number guesser, simple sentiment analyzer, and a data visualization dashboard with Matplotlib.', category: 'Programming', level: 'Beginner' as const, price: 'Free', students: '14,280', status: 'Published' as const, thumbnailIcon: 'Code', instructorId: 'usr-8' },
+    { id: 'crs-16', title: 'Math Behind AI: Matrices, Probability & Statistics for Class 9–10', description: 'Linear algebra visuals, probability trees, mean/median/mode, standard deviation, and real-world statistics problems relevant to AI.', category: 'Mathematics', level: 'Beginner' as const, price: '₹499', students: '7,640', status: 'Published' as const, thumbnailIcon: 'Calculator', instructorId: 'usr-2' },
+    { id: 'crs-17', title: 'Build Your First Neural Network: A Visual Guide for Teens', description: 'Interactive neuron diagrams, train a digit recognizer with Teachable Machine, understand how images become numbers, and explore activation functions.', category: 'Deep Learning', level: 'Beginner' as const, price: '₹699', students: '6,190', status: 'Published' as const, thumbnailIcon: 'Network', instructorId: 'usr-1' },
+    { id: 'crs-18', title: 'Calculus & Linear Algebra for AI: Derivatives, Gradients & Eigen Decomposition', description: 'Chain rule → backpropagation intuition, partial derivatives, matrix operations, eigenvalues/eigenvectors, and PCA mathematical foundations.', category: 'Mathematics', level: 'Intermediate' as const, price: '₹1,499', students: '5,420', status: 'Published' as const, thumbnailIcon: 'Calculator', instructorId: 'usr-2' },
+    { id: 'crs-19', title: 'Data Structures & Algorithms for AI Engineers', description: 'Arrays, linked lists, trees, graphs, Big-O analysis, dynamic programming, and algorithmic thinking for competitive programming & ML pipelines.', category: 'Programming', level: 'Intermediate' as const, price: '₹1,999', students: '8,130', status: 'Published' as const, thumbnailIcon: 'Code', instructorId: 'usr-8' },
+    { id: 'crs-20', title: 'Introduction to Machine Learning with Scikit-Learn', description: 'Hands-on ML: classification, regression, clustering with real datasets, model evaluation, cross-validation, and your first Kaggle submission.', category: 'Machine Learning', level: 'Intermediate' as const, price: '₹1,999', students: '10,750', status: 'Published' as const, thumbnailIcon: 'Brain', instructorId: 'usr-1' },
+    { id: 'crs-21', title: 'Statistical Machine Learning: Bayesian Inference, MLE & Hypothesis Testing', description: 'Frequentist vs Bayesian paradigms, conjugate priors, maximum likelihood estimation, A/B testing, and probabilistic graphical models.', category: 'Machine Learning', level: 'Intermediate' as const, price: '₹3,499', students: '4,890', status: 'Published' as const, thumbnailIcon: 'BarChart', instructorId: 'usr-2' },
+    { id: 'crs-22', title: 'Computer Vision & CNNs: From Convolution Kernels to ResNet Architectures', description: 'Feature maps, pooling layers, skip connections, transfer learning, image segmentation, and object detection with YOLO.', category: 'Computer Vision', level: 'Advanced' as const, price: '₹4,499', students: '3,750', status: 'Published' as const, thumbnailIcon: 'Eye', instructorId: 'usr-8' },
+    { id: 'crs-23', title: 'Advanced NLP: Sequence Models, Attention Mechanisms & BERT/GPT Pretraining', description: 'RNNs → LSTMs → Transformers evolution, masked language modeling, next-token prediction, sentence embeddings, and domain adaptation.', category: 'NLP', level: 'Advanced' as const, price: '₹6,999', students: '2,860', status: 'Published' as const, thumbnailIcon: 'MessageSquare', instructorId: 'usr-1' },
+    { id: 'crs-24', title: 'Reinforcement Learning: MDPs, Policy Gradients, PPO & Multi-Agent RL', description: 'Bellman equations, actor-critic architectures, proximal policy optimization, reward shaping, and multi-agent competitive/cooperative environments.', category: 'Reinforcement Learning', level: 'Advanced' as const, price: '₹7,999', students: '2,140', status: 'Published' as const, thumbnailIcon: 'Layers', instructorId: 'usr-2' },
+    { id: 'crs-25', title: 'Neural Architecture Search, Mixture of Experts & Scaling Laws', description: 'NAS strategies (DARTS, ENAS), MoE sparse routing (Switch Transformer, Mixtral), Chinchilla scaling laws, and compute-optimal training.', category: 'Research', level: 'Advanced' as const, price: '₹9,999', students: '1,280', status: 'Published' as const, thumbnailIcon: 'Layers', instructorId: 'usr-2' },
+    { id: 'crs-26', title: 'AI Alignment, RLHF, DPO & Constitutional AI: Frontier Safety Research', description: 'Human preference learning, reward model training, direct preference optimization, red-teaming strategies, and mechanistic interpretability.', category: 'Research', level: 'Advanced' as const, price: '₹12,999', students: '890', status: 'Published' as const, thumbnailIcon: 'BookOpen', instructorId: 'usr-1' },
   ];
 
   for (const course of courses) {
@@ -595,6 +610,78 @@ async function main() {
       create: r,
     });
   }
+
+  // ─── 14b. Seed all Course Learning Rooms & Multi-Task Edge Content from Catalog ───
+  for (const [roomId, roomData] of Object.entries(FALLBACK_ROOM_CATALOG)) {
+    await prisma.learningRoom.upsert({
+      where: { id: roomId },
+      update: {
+        title: roomData.title,
+        description: roomData.description,
+        level: roomData.level as any,
+        tier: roomData.tier as any,
+        category: roomData.category,
+        estimatedTime: roomData.estimatedTime,
+        xpReward: roomData.xpReward,
+        iconName: roomData.iconName,
+        ageGroup: roomData.ageGroup as any,
+        isPublished: true,
+      },
+      create: {
+        id: roomId,
+        title: roomData.title,
+        description: roomData.description,
+        level: roomData.level as any,
+        tier: roomData.tier as any,
+        category: roomData.category,
+        estimatedTime: roomData.estimatedTime,
+        xpReward: roomData.xpReward,
+        iconName: roomData.iconName,
+        ageGroup: roomData.ageGroup as any,
+        isPublished: true,
+      },
+    });
+
+    for (const t of roomData.tasks) {
+      await prisma.learningTask.upsert({
+        where: { id: t.id },
+        update: {
+          title: t.title,
+          instructions: t.instructions,
+          taskType: t.taskType as any,
+          questionText: t.questionText,
+          options: t.options,
+          correctAnswer: t.correctAnswer,
+          codeSnippet: t.codeSnippet || null,
+          hint: t.hint || null,
+          explanation: t.explanation,
+          explanationWrong: t.explanationWrong,
+          difficulty: t.difficulty,
+          passingScore: t.passingScore,
+          xpReward: t.xpReward,
+        },
+        create: {
+          id: t.id,
+          roomId,
+          orderNumber: t.orderNumber,
+          title: t.title,
+          instructions: t.instructions,
+          taskType: t.taskType as any,
+          questionText: t.questionText,
+          options: t.options,
+          correctAnswer: t.correctAnswer,
+          codeSnippet: t.codeSnippet || null,
+          hint: t.hint || null,
+          explanation: t.explanation,
+          explanationWrong: t.explanationWrong,
+          difficulty: t.difficulty,
+          passingScore: t.passingScore,
+          xpReward: t.xpReward,
+        },
+      });
+    }
+  }
+  console.log(`  ✅ ${Object.keys(FALLBACK_ROOM_CATALOG).length} Learning Rooms & Edge Tasks seeded`);
 
   // Seed tasks for room-0 (Math & Human Brain)
   const tasksRoom0 = [

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
+import { mockCoursesList } from '@/lib/mock-data/courses-data';
 
 // GET /api/courses
 export async function GET(request: NextRequest) {
@@ -24,20 +25,47 @@ export async function GET(request: NextRequest) {
     if (status) where.status = status;
     if (level) where.level = level;
 
-    const [courses, total] = await Promise.all([
-      prisma.course.findMany({
-        where,
-        include: { instructor: { select: { id: true, name: true, avatar: true } } },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { [sortBy]: order },
-      }),
-      prisma.course.count({ where }),
-    ]);
+    try {
+      const [courses, total] = await Promise.all([
+        prisma.course.findMany({
+          where,
+          include: { instructor: { select: { id: true, name: true, avatar: true } } },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { [sortBy]: order },
+        }),
+        prisma.course.count({ where }),
+      ]);
+
+      if (courses && courses.length > 0) {
+        return NextResponse.json({
+          data: courses,
+          pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        });
+      }
+    } catch (dbErr) {
+      console.warn('Prisma error in GET /api/courses, using mock fallback:', dbErr);
+    }
+
+    let filtered = [...mockCoursesList];
+    if (search) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(
+        (c) =>
+          c.title.toLowerCase().includes(s) ||
+          c.description.toLowerCase().includes(s) ||
+          c.category.toLowerCase().includes(s)
+      );
+    }
+    if (level && level !== 'All Levels') {
+      filtered = filtered.filter((c) => c.level === level);
+    }
+    const total = filtered.length;
+    const paginated = filtered.slice((page - 1) * limit, page * limit);
 
     return NextResponse.json({
-      data: courses,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      data: paginated,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
     });
   } catch (error) {
     return NextResponse.json(

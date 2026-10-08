@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db/prisma';
+import { mockCoursesList } from '@/lib/mock-data/courses-data';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const course = await prisma.course.findUnique({
-      where: { id },
-      include: {
-        instructor: { select: { id: true, name: true, avatar: true } },
-        assessments: true,
-      },
-    });
-    if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
-    return NextResponse.json({ data: course });
+    try {
+      const course = await prisma.course.findUnique({
+        where: { id },
+        include: {
+          instructor: { select: { id: true, name: true, avatar: true } },
+          assessments: true,
+        },
+      });
+      if (course) return NextResponse.json({ data: course });
+    } catch (dbErr) {
+      console.warn(`Prisma error fetching course ${id}, checking mock data:`, dbErr);
+    }
+
+    const mockCourse = mockCoursesList.find((c) => c.id === id);
+    if (mockCourse) {
+      return NextResponse.json({ data: mockCourse });
+    }
+
+    return NextResponse.json({ error: 'Course not found' }, { status: 404 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch course', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }

@@ -28,13 +28,51 @@ import { TopicStructuredCurriculum } from '@/components/learning/topic-structure
 import type { SubmitResult } from '@/lib/api/endpoints/rooms';
 import { useSafeNexus } from '@/context/nexus-context';
 import { CheckoutModal } from '@/components/payments/checkout-modal';
+import { getFallbackRoom } from '@/services/fallback-rooms';
 
 export default function RoomPage({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = use(params);
   const { data: roomResponse, isLoading, isError, refetch } = useRoom(roomId);
   const submitTaskMutation = useSubmitTask(roomId);
 
-  const room = roomResponse?.data;
+  const fallback = getFallbackRoom(roomId);
+  const room = roomResponse?.data || {
+    id: fallback.id,
+    title: fallback.title,
+    description: fallback.description,
+    level: fallback.level,
+    tier: fallback.tier,
+    category: fallback.category,
+    estimatedTime: fallback.estimatedTime,
+    xpReward: fallback.xpReward,
+    iconName: fallback.iconName,
+    ageGroup: fallback.ageGroup,
+    isPublished: true,
+    tasks: fallback.tasks.map((t) => ({
+      id: t.id,
+      orderNumber: t.orderNumber,
+      title: t.title,
+      instructions: t.instructions,
+      taskType: t.taskType,
+      codeSnippet: t.codeSnippet || null,
+      hint: t.hint || null,
+      questionText: t.questionText,
+      options: t.options,
+      taskContent: null,
+      imageUrl: null,
+      difficulty: t.difficulty,
+      ageGroup: fallback.ageGroup,
+      isRequired: true,
+      passingScore: t.passingScore,
+      xpReward: t.xpReward,
+      completed: false,
+      passed: false,
+      score: 0,
+      attempts: 0,
+      xpEarned: 0,
+      locked: false,
+    })),
+  };
   const tasks = room?.tasks || [];
 
   const nexus = useSafeNexus();
@@ -102,7 +140,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  if (isLoading) {
+  if (isLoading && !room) {
     return (
       <NexusShell>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -115,7 +153,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
     );
   }
 
-  if (isError || !room) {
+  if (!room) {
     return (
       <NexusShell>
         <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 text-center">

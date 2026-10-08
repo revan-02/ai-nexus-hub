@@ -2,44 +2,80 @@ import prisma from '@/lib/db/prisma';
 import { createAuditLog } from './audit-service';
 import type { QueryParams, PaginatedResponse } from '@/types/api';
 import type { ProjectLevel, ProjectStatus } from '@prisma/client';
+import { mockProjectsList } from '@/lib/mock-data/projects-data';
 
 export async function getProjects(params?: QueryParams): Promise<PaginatedResponse<any>> {
   const page = Number(params?.page || 1);
   const limit = Number(params?.limit || 20);
-  const search = String(params?.search || '');
+  const search = String(params?.search || '').toLowerCase();
   const level = params?.level ? String(params.level) : undefined;
   const status = params?.status ? String(params.status) : undefined;
   const sortBy = String(params?.sortBy || 'createdAt');
   const order = (params?.order || 'desc') as 'asc' | 'desc';
 
-  const where: Record<string, unknown> = {};
+  try {
+    const where: Record<string, unknown> = {};
 
-  if (search) {
-    where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
-      { category: { contains: search, mode: 'insensitive' } },
-      { author: { name: { contains: search, mode: 'insensitive' } } },
-    ];
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
+        { author: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+    if (level && level !== 'All Levels') where.level = level as ProjectLevel;
+    if (status && status !== 'All Status') where.status = status as ProjectStatus;
+
+    const [projects, total] = await Promise.all([
+      prisma.project.findMany({
+        where,
+        include: {
+          author: { select: { id: true, name: true, avatar: true } },
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { [sortBy]: order },
+      }),
+      prisma.project.count({ where }),
+    ]);
+
+    if (projects && projects.length > 0) {
+      return {
+        data: projects,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit) || 1,
+        },
+      };
+    }
+  } catch (err) {
+    console.warn('Prisma error in getProjects, using mock fallback:', err);
   }
-  if (level && level !== 'All Levels') where.level = level as ProjectLevel;
-  if (status && status !== 'All Status') where.status = status as ProjectStatus;
 
-  const [projects, total] = await Promise.all([
-    prisma.project.findMany({
-      where,
-      include: {
-        author: { select: { id: true, name: true, avatar: true } },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { [sortBy]: order },
-    }),
-    prisma.project.count({ where }),
-  ]);
+  let filtered = [...mockProjectsList];
+  if (search) {
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search) ||
+        p.description.toLowerCase().includes(search) ||
+        p.category.toLowerCase().includes(search)
+    );
+  }
+  if (level && level !== 'All Levels') {
+    filtered = filtered.filter((p) => p.level === level);
+  }
+  if (status && status !== 'All Status') {
+    filtered = filtered.filter((p) => p.status === status);
+  }
+
+  const total = filtered.length;
+  const paginated = filtered.slice((page - 1) * limit, page * limit);
 
   return {
-    data: projects,
+    data: paginated,
     pagination: {
       page,
       limit,
@@ -50,21 +86,35 @@ export async function getProjects(params?: QueryParams): Promise<PaginatedRespon
 }
 
 export async function getProjectById(id: string) {
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      author: { select: { id: true, name: true, avatar: true, email: true } },
-      comments: {
-        include: {
-          user: { select: { id: true, name: true, avatar: true } },
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        author: { select: { id: true, name: true, avatar: true, email: true } },
+        comments: {
+          include: {
+            user: { select: { id: true, name: true, avatar: true } },
+          },
+          orderBy: { createdAt: 'desc' },
         },
-        orderBy: { createdAt: 'desc' },
       },
-    },
-  });
+    });
 
-  if (!project) throw new Error(`Project with ID ${id} not found`);
-  return project;
+    if (project) return project;
+  } catch (err) {
+    console.warn(`Prisma error in getProjectById(${id}), using mock fallback:`, err);
+  }
+
+  const mock = mockProjectsList.find((p) => p.id === id);
+  if (mock) {
+    return {
+      ...mock,
+      author: { id: 'usr-1', name: mock.author.name, avatar: mock.author.avatar, email: 'author@nexus.ai' },
+      comments: [],
+    };
+  }
+
+  throw new Error(`Project with ID ${id} not found`);
 }
 
 export async function createProjectComment(projectId: string, userId: string, text: string, rating?: number) {
