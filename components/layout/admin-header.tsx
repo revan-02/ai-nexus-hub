@@ -137,9 +137,9 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
               ))}
             </div>
             <div className="p-2 border-t border-[#272730] text-center">
-              <button className="text-xs text-purple-400 hover:text-purple-300 font-medium">
+              <Link href="/settings/notifications" className="inline-block text-xs text-purple-400 hover:text-purple-300 font-medium">
                 View all notifications →
-              </button>
+              </Link>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

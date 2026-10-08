@@ -74,6 +74,9 @@ export function NexusHeader() {
         .toUpperCase() || 'LN';
 
 
+  const userRoleStr = String((session?.user as { role?: string })?.role || (userProfile as any)?.role || '').toLowerCase();
+  const isAdminUser = userRoleStr === 'admin' || userRoleStr === 'super admin' || userRoleStr === 'manager';
+
   const [language, setLanguage] = useState('EN');
 
   const toggleTheme = () => {
@@ -159,24 +162,29 @@ export function NexusHeader() {
 
         {/* Notifications */}
         <div className="relative">
-          <button className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative">
+          <Link
+            href="/settings/notifications"
+            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative flex items-center justify-center cursor-pointer min-h-[38px] min-w-[38px]"
+            title="Notifications"
+            aria-label="Notifications"
+          >
             <Bell className="w-4 h-4" />
             {notificationCount > 0 && (
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-background animate-pulse" />
             )}
-          </button>
+          </Link>
         </div>
 
         {/* User Profile Badge */}
         <DropdownMenu>
-          <DropdownMenuTrigger render={<button className="flex items-center gap-2.5 pl-2 pr-1 py-1 rounded-xl hover:bg-secondary transition-colors" />}>
+          <DropdownMenuTrigger render={<button className="flex items-center gap-2.5 pl-2 pr-1 py-1 rounded-xl hover:bg-secondary transition-colors cursor-pointer" />}>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white font-bold flex items-center justify-center text-xs shadow-md shadow-purple-900/30">
               {initials}
             </div>
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-foreground leading-tight">{displayName}</span>
               <span className="text-[10px] font-semibold text-purple-400 capitalize">
-                {(session?.user as { role?: string })?.role === 'Admin'
+                {isAdminUser
                   ? 'System Admin'
                   : `${userLevel} Track`}
               </span>
@@ -188,11 +196,11 @@ export function NexusHeader() {
               <p className="text-xs font-bold text-foreground">{displayName}</p>
               <p className="text-[11px] text-muted-foreground font-mono">{displayEmail}</p>
               <span className="mt-1 inline-block px-2 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] font-bold rounded-md capitalize">
-                {(session?.user as { role?: string })?.role === 'Admin' ? 'Admin' : `${userLevel} Track`}
+                {isAdminUser ? 'Admin' : `${userLevel} Track`}
               </span>
             </div>
 
-            {(session?.user as { role?: string })?.role === 'Admin' && (
+            {isAdminUser && (
               <DropdownMenuItem className="p-0">
                 <Link href="/admin" className="flex items-center justify-between px-3 py-2 w-full text-xs font-semibold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-xl transition-colors">
                   <div className="flex items-center gap-2.5">

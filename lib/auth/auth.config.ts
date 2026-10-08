@@ -73,7 +73,8 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;
       const userRole = (auth?.user as any)?.role;
-      const isAdmin = userRole === 'Admin' || userRole === 'Manager';
+      const userRoleLower = String(userRole || '').toLowerCase();
+      const isAdmin = userRoleLower === 'admin' || userRoleLower === 'manager' || userRoleLower === 'super admin';
 
       // Handle /admin and /admin/login
       if (pathname === '/admin/login') {

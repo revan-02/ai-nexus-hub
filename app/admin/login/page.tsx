@@ -152,10 +152,10 @@ export default function AdminLoginPage() {
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@yourdomain.com"
+                    placeholder="admin@yourdomain.com or @ainexus_admin"
                     autoComplete="username"
                     className="pl-9 bg-[#131c31] border-[#1e293b] text-white text-xs h-10 rounded-xl focus:border-red-500/60 focus:ring-red-500/20"
                   />

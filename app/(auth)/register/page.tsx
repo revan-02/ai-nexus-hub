@@ -827,24 +827,6 @@ export default function RegisterPage() {
                 )}
               </div>
             )}
-
-            {/* Social / Google Quick Register */}
-            <div className="relative pt-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#1e293b]" /></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-mono text-zinc-400">
-                <span className="bg-[#0f172a] px-2">Or quick register with</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-              className="w-full p-2.5 bg-[#131c31] border border-[#1e293b] hover:bg-[#1e293b] text-zinc-200 hover:text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer text-xs"
-            >
-              <Globe className="w-4 h-4 text-purple-400" />
-              <span>Continue with Google</span>
-            </button>
           </Card>
         </div>
       </main>

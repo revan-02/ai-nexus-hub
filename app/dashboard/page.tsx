@@ -10,7 +10,7 @@ import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield } from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -128,10 +128,13 @@ export default function DashboardPage() {
     completionPercent: dashboardData?.levelMeta?.completionPercent ?? 0,
   };
 
+  const userRoleStr = String((session?.user as { role?: string })?.role || (userProfile as any)?.role || '').toLowerCase();
+  const isAdminUser = userRoleStr === 'admin' || userRoleStr === 'super admin' || userRoleStr === 'manager';
+
   const rawCourses = dashboardData?.activeCourses || [
-    { id: 1, title: 'Generative Models Overview', desc: 'Introduction to VAEs and GANs.', progress: 15, duration: '2h 10m', difficulty: 'Intermediate', level: 'Intermediate' },
-    { id: 2, title: 'PyTorch for Deep Learning', desc: 'Tensors, Autograd, and Neural Networks.', progress: 5, duration: '4h 30m', difficulty: 'Beginner', level: 'Beginner' },
-    { id: 3, title: 'Natural Language Processing', desc: 'Tokenization, Embeddings, and Transformers.', progress: 0, duration: '6h 15m', difficulty: 'Advanced', level: 'Advanced' },
+    { id: 'crs-0', title: 'Stage 1: AI Foundations & Intelligent Agents', desc: 'Symbolic AI, agent environments (PEAS), search algorithms, logic, and expert systems.', progress: 15, duration: '2h 10m', difficulty: 'Beginner', level: 'Beginner' },
+    { id: 'crs-1', title: 'Stage 1: Search Problem Solving & Knowledge Systems', desc: 'Informed A* search, Minimax game trees, first-order logic, and inference engines.', progress: 5, duration: '4h 30m', difficulty: 'Beginner', level: 'Beginner' },
+    { id: 'crs-2', title: 'Stage 2: Classical Machine Learning & Scikit-Learn', desc: 'Supervised regression, Random Forests, SVMs, K-Means, and model evaluation.', progress: 0, duration: '6h 15m', difficulty: 'Intermediate', level: 'Intermediate' },
   ];
 
   const activeCourses = rawCourses.filter((course: any) => {
@@ -182,11 +185,21 @@ export default function DashboardPage() {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Ready to continue your AI journey?</p>
           </div>
-          <Link href="/roadmap">
-            <Button variant="outline" className="bg-secondary border-border text-xs font-semibold rounded-xl h-9">
-              View all my courses
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {isAdminUser && (
+              <Link href="/admin">
+                <Button className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-xl h-9 shadow-md shadow-purple-900/30 gap-1.5 cursor-pointer">
+                  <Shield className="w-3.5 h-3.5" />
+                  Admin Panel
+                </Button>
+              </Link>
+            )}
+            <Link href="/roadmap">
+              <Button variant="outline" className="bg-secondary border-border text-xs font-semibold rounded-xl h-9 cursor-pointer">
+                View all my courses
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* ── ACADEMIC TIER CONTINUUM SELECTOR & DR. MAYA PEDAGOGY GUIDE ── */}
@@ -421,27 +434,29 @@ export default function DashboardPage() {
           <div className="lg:col-span-4 space-y-6">
             
             {/* Minimal Progress Card */}
-            <Card className="p-5 bg-card border-border rounded-2xl flex items-center justify-between group cursor-pointer hover:border-purple-500/40 transition-colors">
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-foreground">Track Progress</h3>
-                <p className="text-xs text-muted-foreground">{levelMeta.completionPercent}% overall completion</p>
-              </div>
-              <div className="w-12 h-12 rounded-full border-4 border-secondary flex items-center justify-center relative">
-                <svg className="w-full h-full transform -rotate-90 absolute" viewBox="0 0 36 36">
-                  <path
-                    className="text-purple-600"
-                    strokeDasharray={`${levelMeta.completionPercent}, 100`}
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                </svg>
-                <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </Card>
+            <Link href="/roadmap" className="block group">
+              <Card className="p-5 bg-card border-border rounded-2xl flex items-center justify-between cursor-pointer hover:border-purple-500/40 hover:shadow-md transition-all">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-foreground group-hover:text-purple-400 transition-colors">Track Progress</h3>
+                  <p className="text-xs text-muted-foreground">{levelMeta.completionPercent}% overall completion</p>
+                </div>
+                <div className="w-12 h-12 rounded-full border-4 border-secondary flex items-center justify-center relative">
+                  <svg className="w-full h-full transform -rotate-90 absolute" viewBox="0 0 36 36">
+                    <path
+                      className="text-purple-600"
+                      strokeDasharray={`${levelMeta.completionPercent}, 100`}
+                      d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                  </svg>
+                  <ArrowRight className="w-4 h-4 text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </Card>
+            </Link>
 
             {/* Daily Challenge */}
             <DailyChallengeCard />
