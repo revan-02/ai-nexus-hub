@@ -354,7 +354,7 @@ function LearnerCourseCatalog() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="flex flex-col gap-4">
               {categoryCourses.map((course) => {
                 const Icon = courseIconMap[course.thumbnailIcon] || Brain;
                 const diff = difficultyConfig[course.level] || difficultyConfig.Beginner;
@@ -366,146 +366,151 @@ function LearnerCourseCatalog() {
                 return (
                   <Card
                     key={course.id}
-                    className="group bg-[#121217] border border-[#272730] rounded-2xl overflow-hidden hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-900/10 transition-all duration-300"
+                    className="w-full group bg-[#121217] border border-[#272730] rounded-2xl overflow-hidden hover:border-purple-500/40 hover:shadow-xl hover:shadow-purple-900/10 transition-all duration-300"
                   >
                     {/* Card Header Accent */}
-                    <div className={`h-1 w-full ${
+                    <div className={`h-1.5 w-full ${
                       course.level === 'Beginner' ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' :
                       course.level === 'Intermediate' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
                       'bg-gradient-to-r from-rose-500 to-pink-600'
                     }`} />
 
-                    <div className="p-5 space-y-4">
-                      {/* Title Row */}
-                      <div className="flex items-start gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${diff.bg} ${diff.border}`}>
-                          <Icon className={`w-5 h-5 ${diff.color}`} />
+                    <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                      {/* Left: Course Details (Strictly left-aligned, evenly spaced) */}
+                      <div className="flex-1 min-w-0 space-y-3.5 text-left">
+                        {/* Title Row with Icon */}
+                        <div className="flex items-start gap-4 text-left">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border ${diff.bg} ${diff.border}`}>
+                            <Icon className={`w-6 h-6 ${diff.color}`} />
+                          </div>
+                          <div className="min-w-0 flex-1 text-left">
+                            <h3 className="text-base sm:text-lg font-bold text-zinc-100 group-hover:text-purple-300 transition-colors line-clamp-1 text-left">
+                              {course.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-zinc-400 mt-1 line-clamp-2 leading-relaxed text-left">
+                              {course.description}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-bold text-zinc-100 leading-snug group-hover:text-purple-300 transition-colors line-clamp-2">
-                            {course.title}
-                          </h3>
-                          <p className="text-[11px] text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
-                            {course.description}
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Meta Tags Row */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${diff.bg} ${diff.border} ${diff.color}`}>
-                          <Flame className="w-3 h-3" />
-                          {diff.label}
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${levelBadgeStyles[course.level]}`}>
-                          {course.level}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono">
-                          <Clock className="w-3 h-3 text-purple-400" />
-                          {course.totalHours || '18.5 hrs'}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-secondary text-muted-foreground border border-border">
-                          <BookOpen className="w-3 h-3 text-purple-400" />
-                          {course.totalLectures || 38} lectures
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          {course.rating || 4.9}
-                        </span>
-                        {course.price === 'Free' || isUnlocked ? (
-                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold rounded-md flex items-center gap-1">
-                            {course.level === 'Beginner' ? 'Free (Beginner)' : 'Unlocked'}
+                        {/* Meta Tags Row */}
+                        <div className="flex items-center gap-2 flex-wrap text-left">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${diff.bg} ${diff.border} ${diff.color}`}>
+                            <Flame className="w-3.5 h-3.5" />
+                            {diff.label}
                           </span>
-                        ) : (
-                          <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold rounded-md flex items-center gap-1">
-                            <Lock className="w-3 h-3 text-amber-400" />
-                            {course.price}
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border ${levelBadgeStyles[course.level]}`}>
+                            {course.level}
                           </span>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono">
+                            <Clock className="w-3.5 h-3.5 text-purple-400" />
+                            {course.totalHours || '18.5 hrs'}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-secondary text-muted-foreground border border-border">
+                            <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                            {course.totalLectures || 38} lectures
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            {course.rating || 4.9}
+                          </span>
+                          {course.price === 'Free' || isUnlocked ? (
+                            <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold rounded-lg flex items-center gap-1">
+                              {course.level === 'Beginner' ? 'Free (Beginner)' : 'Unlocked'}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold rounded-lg flex items-center gap-1">
+                              <Lock className="w-3.5 h-3.5 text-amber-400" />
+                              {course.price}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Instructor & Stats */}
+                        <div className="flex items-center gap-4 text-xs text-zinc-400 pt-0.5 text-left">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6 border border-[#2e2e3a]">
+                              <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                              <AvatarFallback className="text-[10px]">{course.instructor.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium text-zinc-300">{course.instructor.name}</span>
+                          </div>
+                          <span className="text-zinc-600">•</span>
+                          <div className="flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-zinc-500" />
+                            <span>{course.students} students enrolled</span>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar (if started) */}
+                        {isStarted && (
+                          <div className="space-y-1.5 max-w-md pt-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-zinc-500 font-medium">Progress</span>
+                              <span className="font-mono font-bold text-purple-400">{progress}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-[#1a1a24] rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-purple-600'}`}
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
                         )}
                       </div>
 
-                      {/* Instructor & Stats */}
-                      <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="w-5 h-5 border border-[#2e2e3a]">
-                            <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
-                            <AvatarFallback className="text-[8px]">{course.instructor.name[0]}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-zinc-300 truncate max-w-[120px]">{course.instructor.name}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            {course.students}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Progress Bar (only shown if started) */}
-                      {isStarted && (
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-zinc-500 font-medium">Progress</span>
-                            <span className="font-mono font-bold text-purple-400">{progress}%</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-[#1a1a24] rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-purple-600'}`}
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Watch Animated Video & Launch Realtime Lab Trigger */}
-                      <Button
-                        variant="outline"
-                        onClick={() => setAnimatedVideoCourse(course)}
-                        className="w-full bg-purple-600/15 hover:bg-purple-600/25 border-purple-500/35 text-purple-300 hover:text-white text-[11px] font-bold h-8 rounded-xl gap-1.5 transition-all shadow-sm shadow-purple-900/20 cursor-pointer"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-                        <span>Watch Animated Video & Launch Realtime Lab</span>
-                      </Button>
-
-                      {/* Action Buttons: Udemy Syllabus Modal + Start Course */}
-                      <div className="pt-1 grid grid-cols-2 gap-2">
+                      {/* Right: Actions Column (Balanced, evenly spaced buttons) */}
+                      <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 lg:w-72 flex-shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#272730]">
+                        {/* Watch Animated Video & Launch Realtime Lab Trigger */}
                         <Button
                           variant="outline"
-                          onClick={() => setSelectedDetailCourse(course)}
-                          className="w-full bg-[#181820] hover:bg-secondary border-[#272730] text-zinc-300 hover:text-white text-[11px] font-bold h-9 rounded-xl gap-1.5 cursor-pointer"
+                          onClick={() => setAnimatedVideoCourse(course)}
+                          className="w-full bg-purple-600/15 hover:bg-purple-600/25 border-purple-500/35 text-purple-300 hover:text-white text-xs font-bold h-10 rounded-xl gap-2 transition-all shadow-sm shadow-purple-900/20 cursor-pointer justify-center"
                         >
-                          <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                          <span>Syllabus & Times</span>
+                          <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                          <span>Watch Animated Video & Lab</span>
                         </Button>
 
-                        {isUnlocked ? (
-                          isCompleted ? (
-                            <Link href={`/learn/${course.id}`} className="block">
-                              <Button
-                                variant="outline"
-                                className="w-full bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-bold h-9 rounded-xl gap-1.5 transition-all"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Review
-                              </Button>
-                            </Link>
-                          ) : (
-                            <Link href={`/learn/${course.id}`} className="block">
-                              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold h-9 rounded-xl gap-1.5 shadow-md shadow-purple-900/30 transition-all group-hover:shadow-lg group-hover:shadow-purple-900/40">
-                                <Play className="w-3.5 h-3.5" />
-                                Start
-                              </Button>
-                            </Link>
-                          )
-                        ) : (
+                        {/* Action Buttons: Syllabus Modal + Start/Unlock Course */}
+                        <div className="grid grid-cols-2 gap-2.5 w-full">
                           <Button
+                            variant="outline"
                             onClick={() => setSelectedDetailCourse(course)}
-                            className="w-full bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold h-9 rounded-xl gap-1.5 shadow-md shadow-amber-900/30 transition-all cursor-pointer"
+                            className="w-full bg-[#181820] hover:bg-secondary border-[#272730] text-zinc-300 hover:text-white text-xs font-bold h-10 rounded-xl gap-1.5 cursor-pointer justify-center"
                           >
-                            <Lock className="w-3.5 h-3.5" />
-                            Unlock
+                            <BookOpen className="w-4 h-4 text-purple-400" />
+                            <span>Syllabus</span>
                           </Button>
-                        )}
+
+                          {isUnlocked ? (
+                            isCompleted ? (
+                              <Link href={`/learn/${course.id}`} className="block w-full">
+                                <Button
+                                  variant="outline"
+                                  className="w-full bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-xs font-bold h-10 rounded-xl gap-1.5 transition-all justify-center"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Review
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Link href={`/learn/${course.id}`} className="block w-full">
+                                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold h-10 rounded-xl gap-1.5 shadow-md shadow-purple-900/30 transition-all justify-center">
+                                  <Play className="w-4 h-4" />
+                                  Start
+                                </Button>
+                              </Link>
+                            )
+                          ) : (
+                            <Button
+                              onClick={() => setSelectedDetailCourse(course)}
+                              className="w-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold h-10 rounded-xl gap-1.5 shadow-md shadow-amber-900/30 transition-all cursor-pointer justify-center"
+                            >
+                              <Lock className="w-4 h-4" />
+                              Unlock
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Card>

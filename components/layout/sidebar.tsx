@@ -67,12 +67,10 @@ const navGroups: NavGroup[] = [
   },
   {
     id: 'careers',
-    title: 'Careers',
+    title: 'Interview & Prep',
     icon: Target,
     items: [
       { icon: UserCheck, label: 'Interview Prep (0-4y)', href: '/interview-prep', badge: '0-4y' },
-      { icon: Briefcase, label: 'Careers & Job Portal', href: '/careers', badge: 'Jobs' },
-      { icon: GraduationCap, label: 'VTU Old Papers (AI/ML/DL)', href: '/vtu-question-papers', badge: 'VTU' },
     ]
   },
   {

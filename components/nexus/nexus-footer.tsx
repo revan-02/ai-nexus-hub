@@ -92,32 +92,16 @@ export function NexusFooter() {
                   Security & Crypto Lab
                 </Link>
               </li>
-              <li>
-                <Link href="/performance-test" className="hover:text-purple-300 transition-colors flex items-center gap-1 text-purple-300 font-semibold">
-                  <span>100k Users Stress Test</span>
-                  <span className="text-[10px] px-1 bg-purple-500/30 rounded">100k</span>
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Column 3: Careers & Academics */}
+          {/* Column 3: Academics & Preparation */}
           <div className="space-y-3">
             <h4 className="font-bold text-xs text-foreground uppercase tracking-wider flex items-center gap-1.5">
               <GraduationCap className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Careers & Exams</span>
+              <span>Interview & Academics</span>
             </h4>
             <ul className="space-y-2 text-xs">
-              <li>
-                <Link href="/careers" className="hover:text-purple-300 transition-colors">
-                  Careers & Job Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/vtu-question-papers" className="hover:text-purple-300 transition-colors">
-                  VTU Exam Question Papers
-                </Link>
-              </li>
               <li>
                 <Link href="/interview-prep" className="hover:text-purple-300 transition-colors">
                   AI Interview Prep (0-4y)

@@ -10,7 +10,7 @@ import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock } from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -36,8 +36,8 @@ const TIER_PEDAGOGY_GUIDES: Record<string, { mentorTip: string; focusAreas: stri
     practicalLab: 'Gradient Descent Marble Simulation & House Price Predictor'
   },
   'undergraduate': {
-    mentorTip: 'Engineering Undergraduates (B.Tech / VTU): Master supervised ML, manual backprop derivations, ResNet vision, and VTU exam question papers with KaTeX proofs.',
-    focusAreas: ['Supervised & Unsupervised ML', 'PyTorch Neural Networks', 'CNNs & ResNet Residuals', 'VTU University Question Papers'],
+    mentorTip: 'Engineering Undergraduates (B.Tech / B.E.): Master supervised ML, manual backprop derivations, ResNet vision, and rigorous algorithmic proofs.',
+    focusAreas: ['Supervised & Unsupervised ML', 'PyTorch Neural Networks', 'CNNs & ResNet Residuals', 'Algorithmic Problem Solving'],
     practicalLab: 'Vernacular Crop Disease Classifier & Fraud Detection with SMOTE'
   },
   'postgraduate': {
@@ -48,7 +48,7 @@ const TIER_PEDAGOGY_GUIDES: Record<string, { mentorTip: string; focusAreas: stri
   'industry-professional': {
     mentorTip: 'Working Engineers (0–4 yrs): Architect production RAG systems with vLLM, continuous batching, 4-bit QLoRA fine-tuning, and multi-agent LangGraph workflows.',
     focusAreas: ['Production RAG & Vector DBs', 'QLoRA & 4-bit Quantization', 'vLLM / TensorRT Inference', 'LangGraph Multi-Agent Workflows'],
-    practicalLab: '100k RPS Enterprise Financial Copilot & Custom MCP Agent'
+    practicalLab: 'High-Throughput Enterprise Financial Copilot & Custom MCP Agent'
   },
   'phd-research': {
     mentorTip: 'Frontier AI Researchers: Pioneer novel sparse Mixture of Experts (MoE), Mamba selective state spaces, and custom hardware-aware Triton GPU kernels.',
@@ -317,28 +317,48 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-3.5">
                 {activeCourses.map((course) => (
-                  <Card key={course.id} className="p-4 bg-card border-border rounded-2xl hover:border-purple-500/40 transition-all flex flex-col h-full group">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <BookOpen className="w-5 h-5" />
+                  <Card key={course.id} className="w-full p-4 sm:p-5 bg-card border border-border rounded-2xl hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-950/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
+                    <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <BookOpen className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1.5 flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-1 text-left">{course.title}</h3>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 uppercase tracking-wide">
+                            {course.difficulty}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-2 text-left">{course.desc}</p>
+                        <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground pt-0.5">
+                          <span className="flex items-center gap-1 font-mono">
+                            <Clock className="w-3 h-3 text-purple-400" />
+                            {course.duration}
+                          </span>
+                          <span>•</span>
+                          <span className="text-emerald-400 font-semibold">Free Track</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-2">
-                      <h3 className="font-bold text-sm text-foreground line-clamp-2">{course.title}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{course.desc}</p>
+
+                    <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedVideoCourse(course)}
+                        className="py-2 px-3.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-purple-300" />
+                        <span>Watch Video & Lab</span>
+                      </button>
+                      <Link
+                        href={`/learn/${course.id}`}
+                        className="py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 hover:shadow-purple-900/50"
+                      >
+                        <span>Start</span>
+                      </Link>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-                      <span>{course.duration}</span>
-                      <span className="text-purple-400">{course.difficulty}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedVideoCourse(course)}
-                      className="w-full mt-3 py-1.5 px-2.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
-                    >
-                      <Play className="w-3 h-3 fill-purple-300" />
-                      <span>Watch Animated Video & Lab</span>
-                    </button>
                   </Card>
                 ))}
               </div>
