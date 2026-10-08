@@ -226,6 +226,11 @@ interface NexusContextType {
   setIsAiBotEnabled: (enabled: boolean) => void;
   userProfile: UserCustomProfile;
   updateUserProfile: (updates: Partial<UserCustomProfile>) => void;
+  unlockedCourseIds: string[];
+  unlockCourse: (courseId: string) => void;
+  hasPaidAccess: boolean;
+  setHasPaidAccess: (paid: boolean) => void;
+  isCourseUnlocked: (courseId: string, level?: string, price?: string) => boolean;
 }
 
 const NexusContext = createContext<NexusContextType | undefined>(undefined);
@@ -247,6 +252,8 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
     phone: '',
     bio: '',
   });
+  const [unlockedCourseIds, setUnlockedCourseIds] = useState<string[]>([]);
+  const [hasPaidAccess, setHasPaidAccessState] = useState<boolean>(false);
 
   // Load saved settings & profile from localStorage on mount
   useEffect(() => {
@@ -270,6 +277,16 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
           parsed.name = '';
         }
         setUserProfileState(parsed);
+      }
+      const savedUnlocked = localStorage.getItem('nexus_unlocked_courses');
+      if (savedUnlocked) {
+        try {
+          setUnlockedCourseIds(JSON.parse(savedUnlocked));
+        } catch {}
+      }
+      const savedPaid = localStorage.getItem('nexus_has_paid_access');
+      if (savedPaid === 'true') {
+        setHasPaidAccessState(true);
       }
       // Auto-collapse sidebar on smaller screens (<1024px) for optimal mobile layout
       if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -379,6 +396,35 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const unlockCourse = (courseId: string) => {
+    setUnlockedCourseIds((prev) => {
+      if (prev.includes(courseId)) return prev;
+      const updated = [...prev, courseId];
+      try {
+        localStorage.setItem('nexus_unlocked_courses', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const setHasPaidAccess = (paid: boolean) => {
+    setHasPaidAccessState(paid);
+    try {
+      localStorage.setItem('nexus_has_paid_access', String(paid));
+    } catch {}
+  };
+
+  const isCourseUnlocked = (courseId: string, level?: string, price?: string): boolean => {
+    if (hasPaidAccess) return true;
+    const isBeginner =
+      level?.toLowerCase() === 'beginner' ||
+      level?.toLowerCase() === 'novice' ||
+      price?.toLowerCase() === 'free';
+    if (isBeginner) return true;
+    if (unlockedCourseIds.includes(courseId)) return true;
+    return false;
+  };
+
   return (
     <NexusContext.Provider
       value={{
@@ -403,6 +449,11 @@ export function NexusProvider({ children }: { children: React.ReactNode }) {
         setIsAiBotEnabled,
         userProfile,
         updateUserProfile,
+        unlockedCourseIds,
+        unlockCourse,
+        hasPaidAccess,
+        setHasPaidAccess,
+        isCourseUnlocked,
       }}
     >
       {children}

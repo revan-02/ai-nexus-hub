@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useSafeRouter } from '@/hooks/use-safe-router';
 import { useNexus } from '@/context/nexus-context';
 import {
+  ArrowLeft,
   Menu,
   Search,
   Sun,
@@ -30,21 +32,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSession, signOut } from 'next-auth/react';
-
+import { useSafeNexus } from '@/context/nexus-context';
+import { useSafeSession } from '@/hooks/use-safe-session';
+import { signOut } from 'next-auth/react';
 
 export function NexusHeader() {
-  const { data: session } = useSession();
-  const {
-    theme,
-    setTheme,
-    userLevel,
-    levelMeta,
-    setIsSearchOpen,
-    setSidebarCollapsed,
-    notificationCount,
-    userProfile,
-  } = useNexus();
+  const { data: session } = useSafeSession();
+  const router = useSafeRouter();
+  const nexus = useSafeNexus();
+  const theme = nexus?.theme || 'dark';
+  const setTheme = nexus?.setTheme || (() => {});
+  const userLevel = nexus?.userLevel || 'beginner';
+  const levelMeta = nexus?.levelMeta;
+  const setIsSearchOpen = nexus?.setIsSearchOpen || (() => {});
+  const setSidebarCollapsed = nexus?.setSidebarCollapsed || (() => {});
+  const notificationCount = nexus?.notificationCount || 0;
+  const userProfile = nexus?.userProfile;
+
+  const handleGoBack = () => {
+    if (typeof window !== 'undefined') {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  };
 
   const rawName = userProfile?.name || session?.user?.name || '';
   const isPhoneNumber = !rawName || /^[0-9\s\-+]+$/.test(rawName);
@@ -80,8 +93,19 @@ export function NexusHeader() {
 
   return (
     <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between px-3 sm:px-6 select-none print:hidden safe-top">
-      {/* Left: Collapse Button + Search Bar */}
+      {/* Left: Back Button + Collapse Button + Search Bar */}
       <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-2xl min-w-0">
+        <button
+          type="button"
+          onClick={handleGoBack}
+          className="p-2 sm:px-3 sm:py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary bg-secondary/50 border border-border/80 transition-all cursor-pointer min-h-[40px] flex items-center gap-1.5 flex-shrink-0 group shadow-sm active:scale-95"
+          title="Back to previous action"
+          aria-label="Back to previous action"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-purple-400" />
+          <span className="hidden sm:inline text-xs font-semibold">Back</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setSidebarCollapsed((prev) => !prev)}

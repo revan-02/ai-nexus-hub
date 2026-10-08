@@ -26,6 +26,8 @@ import { TaskRenderer } from '@/components/learning/task-renderer';
 import { MicroLearningPlayer, DifficultyLevel } from '@/components/learning/micro-learning-player';
 import { TopicStructuredCurriculum } from '@/components/learning/topic-structured-curriculum';
 import type { SubmitResult } from '@/lib/api/endpoints/rooms';
+import { useSafeNexus } from '@/context/nexus-context';
+import { CheckoutModal } from '@/components/payments/checkout-modal';
 
 export default function RoomPage({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = use(params);
@@ -35,6 +37,10 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
   const room = roomResponse?.data;
   const tasks = room?.tasks || [];
 
+  const nexus = useSafeNexus();
+  const unlockCourse = nexus?.unlockCourse || (() => {});
+  const isCourseUnlocked = nexus?.isCourseUnlocked || ((_id: string, level?: string) => level === 'Novice' || level === 'Beginner');
+  const [showCheckout, setShowCheckout] = useState(false);
   const [activeTaskIndex, setActiveTaskIndex] = useState(0);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<SubmitResult | null>(null);
@@ -122,6 +128,66 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
             <RotateCcw className="w-3.5 h-3.5 mr-2" /> Retry Loading
           </Button>
         </div>
+      </NexusShell>
+    );
+  }
+
+  const isUnlocked = isCourseUnlocked(roomId, room.level);
+
+  if (!isUnlocked) {
+    return (
+      <NexusShell>
+        <div className="max-w-xl mx-auto py-16 px-4 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-950/30">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Paid Content · {room.level} Tier</span>
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">
+              {room.title} is Locked
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+              Beginner-level courses are 100% free on AI Nexus. This advanced module requires an active course enrollment. Unlock full lifetime access with hands-on labs and verified certification.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+            <Button
+              onClick={() => setShowCheckout(true)}
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2.5 rounded-xl gap-2 shadow-lg shadow-purple-900/30 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Unlock Module for ₹1,999</span>
+            </Button>
+            <Link href="/courses">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto border-border text-foreground hover:bg-secondary rounded-xl"
+              >
+                Back to Free Beginner Courses
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        <CheckoutModal
+          isOpen={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          course={{
+            id: roomId,
+            title: room.title,
+            price: 1999,
+            level: room.level || 'Intermediate',
+            duration: '18.5 hrs',
+          }}
+          onSuccess={() => {
+            unlockCourse(roomId);
+            setShowCheckout(false);
+          }}
+        />
       </NexusShell>
     );
   }

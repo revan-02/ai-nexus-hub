@@ -34,6 +34,7 @@ import { CourseItem, CourseSection } from '@/lib/mock-data/courses-data';
 import { validateCoupon, CouponValidationResult, formatNumberToINR } from '@/services/coupon-service';
 import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
 import { CheckoutModal } from '@/components/payments/checkout-modal';
+import { useSafeNexus } from '@/context/nexus-context';
 
 interface CourseDetailModalProps {
   course: CourseItem | null;
@@ -43,6 +44,9 @@ interface CourseDetailModalProps {
 }
 
 export function CourseDetailModal({ course, isOpen, onClose, initialCouponCode }: CourseDetailModalProps) {
+  const nexus = useSafeNexus();
+  const unlockCourse = nexus?.unlockCourse || (() => {});
+  const isCourseUnlocked = nexus?.isCourseUnlocked || ((_id: string, level?: string, price?: string) => level === 'Beginner' || price === 'Free');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'sec-0': true,
     'sec-1': true,
@@ -572,19 +576,22 @@ export function CourseDetailModal({ course, isOpen, onClose, initialCouponCode }
 
                 {/* Action CTA Buttons */}
                 <div className="space-y-2.5">
-                  {enrolled ? (
-                    <Link href="/learn/room-1" className="block w-full">
+                  {(enrolled || isCourseUnlocked(course.id, course.level, course.price)) ? (
+                    <Link href={`/learn/${course.id}`} className="block w-full">
                       <Button
                         className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6 text-sm rounded-2xl shadow-lg shadow-emerald-950/50 gap-2 cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Enrolled · Continue Learning</span>
+                        <span>Enrolled & Unlocked · Start Learning</span>
                       </Button>
                     </Link>
                   ) : (couponResult?.isValid && couponResult.finalPrice === 0) || course.price === 'Free' ? (
-                    <Link href="/learn/room-1" className="block w-full">
+                    <Link href={`/learn/${course.id}`} className="block w-full">
                       <Button
-                        onClick={() => setEnrolled(true)}
+                        onClick={() => {
+                          setEnrolled(true);
+                          unlockCourse(course.id);
+                        }}
                         className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-6 text-sm rounded-2xl shadow-lg shadow-purple-950/50 gap-2 cursor-pointer"
                       >
                         <Sparkles className="w-4 h-4" />
@@ -603,13 +610,13 @@ export function CourseDetailModal({ course, isOpen, onClose, initialCouponCode }
                       <Sparkles className="w-4 h-4" />
                       <span>
                         {couponResult?.isValid
-                          ? `Pay ${formatNumberToINR(couponResult.finalPrice)} & Get Certified`
-                          : `Buy for ${course.price} & Get Certified`}
+                          ? `Pay ${formatNumberToINR(couponResult.finalPrice)} & Unlock Course`
+                          : `Buy for ${course.price} & Unlock Course`}
                       </span>
                     </Button>
                   )}
 
-                  <Link href="/learn/room-1" className="block w-full">
+                  <Link href={`/learn/${course.id}`} className="block w-full">
                     <Button
                       variant="outline"
                       className="w-full border-border hover:bg-secondary text-foreground text-xs py-5 rounded-2xl gap-2 cursor-pointer"
@@ -705,6 +712,7 @@ export function CourseDetailModal({ course, isOpen, onClose, initialCouponCode }
         couponCode={couponCode}
         onSuccess={() => {
           setEnrolled(true);
+          unlockCourse(course.id);
         }}
       />
 

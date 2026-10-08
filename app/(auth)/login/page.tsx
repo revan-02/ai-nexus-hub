@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
   Smartphone
@@ -221,17 +222,35 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#070a14] text-[#f8fafc] flex flex-col justify-between selection:bg-purple-500/30 selection:text-purple-200">
       {/* Top Header Bar */}
       <header className="p-4 sm:p-6 flex items-center justify-between max-w-[1400px] w-full mx-auto">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-900/30 group-hover:scale-105 transition-transform">
-            <Brain className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="font-bold text-base tracking-tight text-white flex items-center gap-1">
-              AI Nexus
-            </h1>
-            <p className="text-[11px] text-purple-400 font-medium">Intelligence. Amplified.</p>
-          </div>
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                if (window.history.length > 1) window.history.back();
+                else window.location.href = '/dashboard';
+              }
+            }}
+            className="p-2 sm:px-3 sm:py-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-[#1a2333] bg-[#101726] border border-[#1e293b] transition-all cursor-pointer min-h-[38px] flex items-center gap-1.5 flex-shrink-0 group shadow-sm active:scale-95"
+            title="Back to previous action"
+            aria-label="Back to previous action"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-purple-400" />
+            <span className="hidden sm:inline text-xs font-semibold">Back</span>
+          </button>
+
+          <Link href="/dashboard" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-900/30 group-hover:scale-105 transition-transform">
+              <Brain className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-bold text-base tracking-tight text-white flex items-center gap-1">
+                AI Nexus
+              </h1>
+              <p className="text-[11px] text-purple-400 font-medium">Intelligence. Amplified.</p>
+            </div>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-2 text-xs">
           <span className="text-zinc-400 hidden sm:inline">Don&apos;t have an account?</span>
@@ -380,7 +399,7 @@ export default function LoginPage() {
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      Sign In to AI Nexus
+                      Sign In as Learner
                       <ArrowRight className="w-4 h-4" />
                     </span>
                   )}

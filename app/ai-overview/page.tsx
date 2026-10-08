@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { NexusShell } from '@/components/nexus/nexus-shell';
 import { AdminShell } from '@/components/layout/admin-shell';
-import { useSession } from 'next-auth/react';
+import { useSafeSession } from '@/hooks/use-safe-session';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +30,7 @@ import {
 import { MathRenderer } from '@/components/ui/math-renderer';
 
 export default function AIOverviewPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSafeSession();
   const userRole = (session?.user as { role?: string })?.role || 'User';
   const isAdmin = ['Admin', 'Manager', 'Super Admin'].includes(userRole);
   const Shell = isAdmin ? AdminShell : NexusShell;

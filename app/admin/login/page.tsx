@@ -10,6 +10,7 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
   Brain,
@@ -72,12 +73,30 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-[#070a14] text-[#f8fafc] flex flex-col justify-between">
       {/* Top bar */}
       <header className="p-5 flex items-center justify-between border-b border-[#1e293b]/60">
-        <Link href="/login" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-purple-900/30">
-            <Brain className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-bold text-sm text-white">AI Nexus</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                if (window.history.length > 1) window.history.back();
+                else window.location.href = '/admin';
+              }
+            }}
+            className="p-2 sm:px-3 sm:py-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-[#1a2333] bg-[#101726] border border-[#1e293b] transition-all cursor-pointer min-h-[38px] flex items-center gap-1.5 flex-shrink-0 group shadow-sm active:scale-95"
+            title="Back to previous action"
+            aria-label="Back to previous action"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-purple-400" />
+            <span className="hidden sm:inline text-xs font-semibold">Back</span>
+          </button>
+
+          <Link href="/login" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-purple-900/30">
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-sm text-white">AI Nexus</span>
+          </Link>
+        </div>
         <Link
           href="/login"
           className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors border border-[#1e293b] hover:border-zinc-600 px-3 py-1.5 rounded-lg"

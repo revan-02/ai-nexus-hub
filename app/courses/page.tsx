@@ -41,10 +41,12 @@ import {
   Star,
   Zap,
   Briefcase,
+  Lock,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import Link from 'next/link';
+import { useSafeNexus } from '@/context/nexus-context';
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/api/use-courses';
 import { CreateCourseModal } from '@/components/courses/create-course-modal';
 import { CourseDetailModal } from '@/components/courses/course-detail-modal';
@@ -118,6 +120,8 @@ type ApiCourseData = Partial<CourseItem> & {
 // LEARNER COURSE CATALOG (TryHackMe-style)
 // ─────────────────────────────────────────────
 function LearnerCourseCatalog() {
+  const nexus = useSafeNexus();
+  const isCourseUnlocked = nexus?.isCourseUnlocked || ((_id: string, level?: string, price?: string) => level === 'Beginner' || price === 'Free');
   const { data: apiResponse, isLoading } = useCourses({ page: 1, limit: 100 });
 
   const courses: CourseItem[] = useMemo(() => {
@@ -357,6 +361,7 @@ function LearnerCourseCatalog() {
                 const progress = 0;
                 const isStarted = progress > 0;
                 const isCompleted = progress >= 100;
+                const isUnlocked = isCourseUnlocked(course.id, course.level, course.price);
 
                 return (
                   <Card
@@ -407,12 +412,13 @@ function LearnerCourseCatalog() {
                           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                           {course.rating || 4.9}
                         </span>
-                        {course.price === 'Free' ? (
-                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold rounded-md">
-                            Free
+                        {course.price === 'Free' || isUnlocked ? (
+                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold rounded-md flex items-center gap-1">
+                            {course.level === 'Beginner' ? 'Free (Beginner)' : 'Unlocked'}
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold rounded-md">
+                          <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold rounded-md flex items-center gap-1">
+                            <Lock className="w-3 h-3 text-amber-400" />
                             {course.price}
                           </span>
                         )}
@@ -472,23 +478,33 @@ function LearnerCourseCatalog() {
                           <span>Syllabus & Times</span>
                         </Button>
 
-                        {isCompleted ? (
-                          <Link href={`/learn/${course.id}`} className="block">
-                            <Button
-                              variant="outline"
-                              className="w-full bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-bold h-9 rounded-xl gap-1.5 transition-all"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Review
-                            </Button>
-                          </Link>
+                        {isUnlocked ? (
+                          isCompleted ? (
+                            <Link href={`/learn/${course.id}`} className="block">
+                              <Button
+                                variant="outline"
+                                className="w-full bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 text-[11px] font-bold h-9 rounded-xl gap-1.5 transition-all"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Review
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Link href={`/learn/${course.id}`} className="block">
+                              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold h-9 rounded-xl gap-1.5 shadow-md shadow-purple-900/30 transition-all group-hover:shadow-lg group-hover:shadow-purple-900/40">
+                                <Play className="w-3.5 h-3.5" />
+                                Start
+                              </Button>
+                            </Link>
+                          )
                         ) : (
-                          <Link href={`/learn/${course.id}`} className="block">
-                            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold h-9 rounded-xl gap-1.5 shadow-md shadow-purple-900/30 transition-all group-hover:shadow-lg group-hover:shadow-purple-900/40">
-                              <Play className="w-3.5 h-3.5" />
-                              Start
-                            </Button>
-                          </Link>
+                          <Button
+                            onClick={() => setSelectedDetailCourse(course)}
+                            className="w-full bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold h-9 rounded-xl gap-1.5 shadow-md shadow-amber-900/30 transition-all cursor-pointer"
+                          >
+                            <Lock className="w-3.5 h-3.5" />
+                            Unlock
+                          </Button>
                         )}
                       </div>
                     </div>

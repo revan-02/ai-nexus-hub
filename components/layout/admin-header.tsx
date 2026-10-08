@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Bell, Moon, Sun, Menu, ChevronDown, CheckCircle2, ShieldCheck, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
+import { useSafeRouter } from '@/hooks/use-safe-router';
+import { ArrowLeft, Search, Bell, Moon, Sun, Menu, ChevronDown, CheckCircle2, ShieldCheck, User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,19 +16,32 @@ import {
 import { CommandSearchDialog } from '@/components/dashboard/command-dialog';
 import { mockAlerts } from '@/lib/mock-data/admin-data';
 
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { useNexus } from '@/context/nexus-context';
+import { useSafeNexus } from '@/context/nexus-context';
+import { useSafeSession } from '@/hooks/use-safe-session';
 
 interface AdminHeaderProps {
   onToggleMobileSidebar?: () => void;
 }
 
 export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
-  const { data: session } = useSession();
-  const { userProfile } = useNexus();
+  const { data: session } = useSafeSession();
+  const nexus = useSafeNexus();
+  const userProfile = nexus?.userProfile;
+  const router = useSafeRouter();
   const [commandOpen, setCommandOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+
+  const handleGoBack = () => {
+    if (typeof window !== 'undefined') {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        router.push('/admin');
+      }
+    }
+  };
 
   const displayName = userProfile?.name || session?.user?.name || 'John Doe';
   const displayEmail = userProfile?.email || session?.user?.email || 'admin@nexus.ai';
@@ -46,7 +60,18 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
   return (
     <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-[#09090c] border-b border-[#23232b] sticky top-0 z-20">
       {/* Left Search Bar & Mobile Trigger */}
-      <div className="flex items-center gap-3 flex-1">
+      <div className="flex items-center gap-2 sm:gap-3 flex-1">
+        <button
+          type="button"
+          onClick={handleGoBack}
+          className="p-2 sm:px-3 sm:py-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-[#1a1a24] bg-[#121217] border border-[#272730] transition-all cursor-pointer min-h-[38px] flex items-center gap-1.5 flex-shrink-0 group shadow-sm active:scale-95"
+          title="Back to previous action"
+          aria-label="Back to previous action"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-purple-400" />
+          <span className="hidden sm:inline text-xs font-semibold">Back</span>
+        </button>
+
         <Button
           variant="ghost"
           size="icon"
