@@ -29,6 +29,8 @@ import type { SubmitResult } from '@/lib/api/endpoints/rooms';
 import { useSafeNexus } from '@/context/nexus-context';
 import { CheckoutModal } from '@/components/payments/checkout-modal';
 import { getFallbackRoom } from '@/services/fallback-rooms';
+import { REV_BODH_PYTHON_COURSE } from '@/lib/data/revbodh-python-course';
+import { RevBodhLessonView } from '@/components/learning/revbodh-lesson-view';
 
 export default function RoomPage({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = use(params);
@@ -290,6 +292,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
         </Card>
 
         {/* ── View Mode Selector Bar ── */}
+        {/* ── View Mode Selector Bar ── */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-2 bg-secondary/40 border border-border rounded-2xl">
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
@@ -300,10 +303,10 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
               }`}
             >
-              <Tv className="w-4 h-4 text-red-400" />
-              <span>Educational Video Masterclass &amp; Curriculum</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-black/40 text-purple-200">
-                Official YouTube
+              <BookOpen className="w-4 h-4 text-purple-400" />
+              <span>RevBodh Original Curriculum &amp; Masterclass</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-purple-500/20 text-purple-200">
+                Original Content
               </span>
             </button>
 
@@ -337,20 +340,24 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
 
           <div className="flex items-center gap-2 px-3 py-1 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>100% Legal YouTube Attribution</span>
+            <span>100% Original RevBodh Learning</span>
           </div>
         </div>
 
-        {/* ── VIEW MODE 1: CURATED VIDEO MASTERCLASS & STRUCTURED CURRICULUM ── */}
+        {/* ── VIEW MODE 1: ORIGINAL CURRICULUM & MASTERCLASS ── */}
         {viewMode === 'curriculum' && (
           <div className="space-y-6">
-            <TopicStructuredCurriculum topicId={roomId} />
+            {roomId === 'revbodh-python-mastery' || roomId === 'python-programming' || roomId === 'crs-1' ? (
+              <RevBodhLessonView course={REV_BODH_PYTHON_COURSE} />
+            ) : (
+              <TopicStructuredCurriculum topicId={roomId} />
+            )}
 
             {/* Bottom Call-to-Action to proceed to Hands-On Tasks */}
             <div className="p-5 bg-gradient-to-r from-purple-950/40 via-card to-card border border-purple-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left">
-                <h4 className="text-sm font-bold text-foreground">Finished the educational video masterclass?</h4>
-                <p className="text-xs text-muted-foreground">Test your knowledge with hands-on interactive coding tasks and earn XP toward your verified certificate.</p>
+                <h4 className="text-sm font-bold text-foreground">Completed the foundational lesson?</h4>
+                <p className="text-xs text-muted-foreground">Apply your skills in the interactive room tasks and earn verified XP.</p>
               </div>
               <Button
                 onClick={() => setViewMode('tasks')}

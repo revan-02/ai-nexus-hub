@@ -1,12 +1,9 @@
 /**
- * AI Nexus — Enterprise AI Knowledge Platform
- * Data-Driven YouTube Educational Resources & Structured Curriculum Catalog
+ * RevBodh — Enterprise Technical Knowledge Platform
+ * Original Technical Curricula, Code Walkthroughs & Systems Architecture Catalog
  * 
- * COPYRIGHT & USAGE POLICY:
- * - All YouTube videos referenced are embedded using YouTube's official player functionality.
- * - No video files (.mp4, .webm, etc.) are downloaded, stored, hosted, or modified on AI Nexus servers.
- * - Every resource provides full creator attribution, channel links, and direct "Watch on YouTube" links.
- * - All rights and monetization remain with original video creators and copyright holders.
+ * LEARN → UNDERSTAND → PRACTICE → BUILD → ASSESS → GET JOB READY
+ * Original educational IP designed for deep engineering and AI mastery.
  */
 
 export interface YouTubeLearningResource {
@@ -108,92 +105,7 @@ export const TOPIC_CURRICULA: Record<string, TopicEducationalCurriculum> = {
       'Identify enterprise use cases for predictive models versus generative large language models (LLMs).',
       'Understand ethical guardrails, copyright respect, and AI safety principles.',
     ],
-    recommendedVideos: [
-      {
-        id: 'yt-room1-01',
-        topicId: 'room-1',
-        title: 'What is Artificial Intelligence? How Does AI Work?',
-        youtubeVideoId: 'ad79nYk2keg',
-        channelName: 'IBM Technology',
-        channelUrl: 'https://www.youtube.com/@IBMTechnology',
-        sourceUrl: 'https://www.youtube.com/watch?v=ad79nYk2keg',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/ad79nYk2keg',
-        thumbnailUrl: 'https://img.youtube.com/vi/ad79nYk2keg/hqdefault.jpg',
-        creatorBio: 'IBM Technology provides expert whiteboard tutorials on AI, cloud computing, hybrid cloud, and enterprise architecture.',
-        publishDate: '2023-04-18',
-        duration: '08:34',
-        difficulty: 'Beginner',
-        relevanceReason:
-          'This video provides an industry-standard visual breakdown of how modern AI functions, separating Narrow AI from General AI and demonstrating practical enterprise data workflows.',
-        keyTakeaways: [
-          'Narrow AI (Weak AI) solves targeted operational problems; Artificial General Intelligence (AGI) remains theoretical.',
-          'Machine Learning shifts programming from writing explicit rules to training models on paired inputs and outputs.',
-          'Feature engineering and data quality dictate 80% of model reliability in production.',
-          'Enterprise adoption centers around automation, predictive analytics, and natural language interfaces.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© IBM Technology. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['AI Foundations', 'Machine Learning', 'IBM', 'Enterprise AI'],
-      },
-      {
-        id: 'yt-room1-02',
-        topicId: 'room-1',
-        title: 'AI vs Machine Learning vs Deep Learning vs Generative AI',
-        youtubeVideoId: '2ePf9rue1Ao',
-        channelName: 'IBM Technology',
-        channelUrl: 'https://www.youtube.com/@IBMTechnology',
-        sourceUrl: 'https://www.youtube.com/watch?v=2ePf9rue1Ao',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/2ePf9rue1Ao',
-        thumbnailUrl: 'https://img.youtube.com/vi/2ePf9rue1Ao/hqdefault.jpg',
-        creatorBio: 'Jeff Crume and the IBM Technology team deliver clear conceptual architectural breakdowns for engineers and decision makers.',
-        publishDate: '2023-09-12',
-        duration: '07:22',
-        difficulty: 'Beginner',
-        relevanceReason:
-          'Directly addresses the primary question of Room 1: clearly mapping how Generative AI builds upon Deep Learning, which builds upon Machine Learning, which lives inside Artificial Intelligence.',
-        keyTakeaways: [
-          'Artificial Intelligence is the broad umbrella of machines mimicking human cognitive abilities.',
-          'Machine Learning focuses on algorithms learning statistical patterns from data without hand-crafted heuristics.',
-          'Deep Learning uses artificial neural networks with multiple hidden layers to extract hierarchical abstractions.',
-          'Generative AI produces novel synthesis (code, text, imagery, audio) rather than purely classifying existing inputs.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© IBM Technology. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['Deep Learning', 'Generative AI', 'Comparison', 'Hierarchy'],
-      },
-      {
-        id: 'yt-room1-03',
-        topicId: 'room-1',
-        title: 'Intro to Large Language Models',
-        youtubeVideoId: 'zjkBMFhNj_g',
-        channelName: 'Andrej Karpathy',
-        channelUrl: 'https://www.youtube.com/@AndrejKarpathy',
-        sourceUrl: 'https://www.youtube.com/watch?v=zjkBMFhNj_g',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/zjkBMFhNj_g',
-        thumbnailUrl: 'https://img.youtube.com/vi/zjkBMFhNj_g/hqdefault.jpg',
-        creatorBio: 'Former Director of AI at Tesla and OpenAI founding researcher, creator of micrograd and nanoGPT.',
-        publishDate: '2023-11-22',
-        duration: '59:58',
-        difficulty: 'Intermediate',
-        relevanceReason:
-          'Widely regarded as the premier masterclass explaining what LLMs actually are (compressed text predictors acting as operating system kernels) and how pretraining and fine-tuning work in practice.',
-        keyTakeaways: [
-          'An LLM is fundamentally two files on a disk: a parameters file (e.g. 140GB) and an evaluation code file (e.g. 500 lines of C).',
-          'Pretraining compresses ~10TB of internet text into weights using thousands of GPUs running for months.',
-          'Fine-tuning with Reinforcement Learning from Human Feedback (RLHF) transforms raw text autocomplete into an assistant.',
-          'LLMs are emerging as the CPU/Kernel of new software stacks, orchestrating memory, search, and tools.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© Andrej Karpathy. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['LLMs', 'Karpathy', 'OpenAI', 'Transformers', 'GenAI'],
-      },
-    ],
+    recommendedVideos: [],
     whatYouShouldLearn: [
       'How to explain the difference between classical algorithmic software (deterministic rules) and AI models (probabilistic representations).',
       'The exact mathematical definition of training: adjusting numeric weight parameters to minimize an objective loss function.',
@@ -392,64 +304,7 @@ class LoanEvaluationPipeline:
       'Visualize loss landscapes and how gradient descent navigates multivariable error surfaces.',
       'Differentiate between activation functions (ReLU, GELU, Sigmoid) and their gradient propagation properties.',
     ],
-    recommendedVideos: [
-      {
-        id: 'yt-room0-01',
-        topicId: 'room-0',
-        title: 'But what is a neural network? | Chapter 1, Deep Learning',
-        youtubeVideoId: 'aircAruvnKk',
-        channelName: '3Blue1Brown',
-        channelUrl: 'https://www.youtube.com/@3blue1brown',
-        sourceUrl: 'https://www.youtube.com/watch?v=aircAruvnKk',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/aircAruvnKk',
-        thumbnailUrl: 'https://img.youtube.com/vi/aircAruvnKk/hqdefault.jpg',
-        creatorBio: 'Grant Sanderson creates world-renowned visual mathematics animations explaining core computer science and machine learning concepts.',
-        publishDate: '2017-10-05',
-        duration: '19:13',
-        difficulty: 'Beginner',
-        relevanceReason:
-          'The definitive visual explanation of how biological inspirations translate into matrix operations, activations, and layer-by-layer feature extraction.',
-        keyTakeaways: [
-          'A neuron holds a single floating-point number (activation between 0 and 1).',
-          'Layers extract increasingly abstract features (pixels -> edges -> loops -> digits).',
-          'Matrix multiplication W · a + b packages millions of simultaneous scalar operations into single vector instructions.',
-          'Sigmoid and ReLU compress unbounded linear transformations into non-linear activations.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© 3Blue1Brown. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['Neural Networks', '3Blue1Brown', 'Linear Algebra', 'Math'],
-      },
-      {
-        id: 'yt-room0-02',
-        topicId: 'room-0',
-        title: 'Gradient descent, how neural networks learn | Chapter 2',
-        youtubeVideoId: 'IHZwWFHWa-w',
-        channelName: '3Blue1Brown',
-        channelUrl: 'https://www.youtube.com/@3blue1brown',
-        sourceUrl: 'https://www.youtube.com/watch?v=IHZwWFHWa-w',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/IHZwWFHWa-w',
-        thumbnailUrl: 'https://img.youtube.com/vi/IHZwWFHWa-w/hqdefault.jpg',
-        creatorBio: 'Grant Sanderson creates world-renowned visual mathematics animations explaining core computer science and machine learning concepts.',
-        publishDate: '2017-10-15',
-        duration: '21:01',
-        difficulty: 'Intermediate',
-        relevanceReason:
-          'Essential mathematical foundation explaining how the multivariable gradient vector points downhill toward minimum cost.',
-        keyTakeaways: [
-          'The cost function takes all network weights and biases and outputs a single metric of performance.',
-          'The negative gradient -∇C points in the direction of steepest descent.',
-          'Stochastic Gradient Descent (SGD) computes loss across mini-batches for efficient GPU computation.',
-          'Learning rates control step sizes; too large causes divergence, too small causes slow convergence.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© 3Blue1Brown. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['Gradient Descent', 'Calculus', 'Optimization', 'Loss Function'],
-      },
-    ],
+    recommendedVideos: [],
     whatYouShouldLearn: [
       'Why non-linear activation functions are mathematically mandatory to prevent deep networks from collapsing into linear regression.',
       'How GPU Tensor Cores accelerate fused multiply-add (FMA) instructions.',
@@ -550,62 +405,7 @@ print("Activated Output a:\n", a)`,
       'Deploy cross-encoder rerankers (Cohere Rerank, BGE-Reranker) to elevate retrieval precision.',
       'Evaluate RAG pipelines using Ragas metrics (Faithfulness, Answer Relevance, Context Recall).',
     ],
-    recommendedVideos: [
-      {
-        id: 'yt-room5-01',
-        topicId: 'room-5',
-        title: 'What is Retrieval-Augmented Generation (RAG)?',
-        youtubeVideoId: 'T-D1OfcDW1M',
-        channelName: 'IBM Technology',
-        channelUrl: 'https://www.youtube.com/@IBMTechnology',
-        sourceUrl: 'https://www.youtube.com/watch?v=T-D1OfcDW1M',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/T-D1OfcDW1M',
-        thumbnailUrl: 'https://img.youtube.com/vi/T-D1OfcDW1M/hqdefault.jpg',
-        creatorBio: 'IBM Technology delivers authoritative tutorials on enterprise AI architecture, hybrid cloud, and AI governance.',
-        publishDate: '2023-10-17',
-        duration: '06:45',
-        difficulty: 'Intermediate',
-        relevanceReason:
-          'Comprehensive architectural overview of how RAG bridges the gap between public LLM knowledge and proprietary enterprise data lakes.',
-        keyTakeaways: [
-          'RAG decouples foundational reasoning capabilities from dynamic knowledge storage.',
-          'Embeddings convert paragraphs into 1536-dimensional coordinate points where semantic similarity equals spatial proximity.',
-          'Prompt injection of retrieved context allows models to answer domain-specific questions with audit citations.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© IBM Technology. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['RAG', 'Vector Databases', 'IBM', 'Enterprise AI'],
-      },
-      {
-        id: 'yt-room5-02',
-        topicId: 'room-5',
-        title: 'Attention in transformers, visually explained',
-        youtubeVideoId: 'wjZofJX0v4U',
-        channelName: '3Blue1Brown',
-        channelUrl: 'https://www.youtube.com/@3blue1brown',
-        sourceUrl: 'https://www.youtube.com/watch?v=wjZofJX0v4U',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/wjZofJX0v4U',
-        thumbnailUrl: 'https://img.youtube.com/vi/wjZofJX0v4U/hqdefault.jpg',
-        creatorBio: 'Grant Sanderson creates world-renowned visual mathematics animations.',
-        publishDate: '2024-04-07',
-        duration: '26:44',
-        difficulty: 'Advanced',
-        relevanceReason:
-          'Mastering RAG context windows requires understanding how the attention mechanism processes retrieved tokens.',
-        keyTakeaways: [
-          'Attention calculates affinity between every token pair in the context window.',
-          'Query and Key dot products determine how much weight is placed on specific context passages.',
-          'Value vectors are aggregated into contextualized representations.',
-        ],
-        license: 'Standard YouTube License',
-        copyrightNotice:
-          '© 3Blue1Brown. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.',
-        embedAllowed: true,
-        tags: ['Transformers', 'Self-Attention', '3Blue1Brown', 'Deep Learning'],
-      },
-    ],
+    recommendedVideos: [],
     whatYouShouldLearn: [
       'How to structure embedding ingestion pipelines with deduplication and metadata filtering.',
       'How to balance chunk overlap to preserve conversational context across split boundaries.',
@@ -703,14 +503,14 @@ export function getTopicCurriculum(topicId: string): TopicEducationalCurriculum 
     category: 'Applied Artificial Intelligence',
     level: topicId.includes('adv') || topicId.includes('5') ? 'Advanced' : 'Intermediate',
     estimatedHours: '1.5 Hours',
-    aiNexusExplanation: `This interactive learning room covers foundational principles, mathematical formulations, and production architectural patterns for ${cleanName || 'modern AI engineering'}. Study the verified YouTube resources below, review the code walkthroughs, and complete the placement challenges.`,
+    aiNexusExplanation: `This interactive learning room covers foundational principles, mathematical formulations, and production architectural patterns for ${cleanName || 'modern AI engineering'}. Study the verified RevBodh learning modules, review the code walkthroughs, and complete the placement challenges.`,
     learningObjectives: [
       `Master core theoretical and architectural mechanisms of ${cleanName || 'the topic'}.`,
       'Analyze real-world enterprise engineering tradeoffs and latency bounds.',
       'Implement defensive validation and evaluation metrics in Python and TypeScript.',
       'Prepare for Tier-1 technology placement and systems design interviews.',
     ],
-    recommendedVideos: TOPIC_CURRICULA['room-1'].recommendedVideos.slice(0, 2),
+    recommendedVideos: [],
     whatYouShouldLearn: [
       'How to translate theoretical concepts into scalable, containerized software.',
       'Key metrics for verifying model quality, latency, and operational cost.',

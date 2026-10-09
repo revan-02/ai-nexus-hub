@@ -18,7 +18,7 @@ describe('Micro-Learning Player & Multi-Level Simulations', () => {
 
     expect(screen.getByText(/Basic \/ School \(AI & Tools\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Max 5 Min Lesson \(3:30\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Curated Video Masterclass/i)).toBeInTheDocument();
+    expect(screen.getByText(/5-Min Video Lesson/i)).toBeInTheDocument();
     expect(screen.getByText(/Step-by-Step Concept Breakdown/i)).toBeInTheDocument();
   });
 
@@ -57,7 +57,7 @@ describe('Micro-Learning Player & Multi-Level Simulations', () => {
   it('switches between Curated Video Masterclass and 100% Original AI Canvas with Voice Narrator', () => {
     render(<MicroLearningPlayer activeDifficulty="BASIC" />);
 
-    expect(screen.getByText(/Curated Video Masterclass/i)).toBeInTheDocument();
+    expect(screen.getByText(/5-Min Video Lesson/i)).toBeInTheDocument();
     expect(screen.getByText(/Sentence Slicing \(Tokens\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Visual Demonstration: How LLMs Slice Words into Tokens/i)).toBeInTheDocument();
     expect(screen.getByText(/Closed Captions \/ Spoken Script/i)).toBeInTheDocument();

@@ -96,7 +96,7 @@ function RoadmapPageInner() {
         tier: 'Free',
         progress: 100,
         prereq: 'No Prior Knowledge — Just Curiosity!',
-        topics: ['What is Artificial Intelligence?', 'How Does a Robot Think?', 'AI in Your Daily Life (Google, YouTube, Alexa)', 'Pattern Recognition Games & Puzzles'],
+        topics: ['What is Artificial Intelligence?', 'How Does a Robot Think?', 'AI in Your Daily Life (Search Engines, Speech Assistants, Recommender Systems)', 'Pattern Recognition Games & Puzzles'],
         projects: ['Teach a Robot to Sort Colors', 'AI Scavenger Hunt'],
       },
       {

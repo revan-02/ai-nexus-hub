@@ -29,7 +29,6 @@ import {
   TopicEducationalCurriculum,
   PracticeQuizQuestion
 } from '@/lib/data/youtube-learning-resources';
-import { YouTubeResourceCard } from '@/components/learning/youtube-resource-card';
 
 interface TopicStructuredCurriculumProps {
   topicId: string;
@@ -121,7 +120,7 @@ export function TopicStructuredCurriculum({
 
           <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>100% Legal YouTube Embed Integration</span>
+            <span>100% Original RevBodh Content</span>
           </div>
         </div>
 
@@ -189,44 +188,13 @@ export function TopicStructuredCurriculum({
       </Card>
 
       {/* ─────────────────────────────────────────────────────────────────
-          SECTION 4: RECOMMENDED YOUTUBE VIDEO(S) INSIDE ENTERPRISE CARDS
-      ───────────────────────────────────────────────────────────────── */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-              <Tv className="w-5 h-5 text-red-500" />
-              <span>Recommended YouTube Educational Resources</span>
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Curated masterclasses embedded using official YouTube player APIs with verified creator attribution.
-            </p>
-          </div>
-
-          <span className="px-3 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl font-mono text-xs font-bold self-start sm:self-auto">
-            {curriculum.recommendedVideos.length} Curated Video{curriculum.recommendedVideos.length > 1 ? 's' : ''}
-          </span>
-        </div>
-
-        <div className="space-y-6">
-          {curriculum.recommendedVideos.map((video, vIdx) => (
-            <YouTubeResourceCard
-              key={video.id}
-              resource={video}
-              index={vIdx + 1}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────────
-          SECTION 5: WHAT YOU SHOULD LEARN FROM THIS VIDEO
+          SECTION 4: CORE ARCHITECTURAL & PRACTICAL TAKEAWAYS
       ───────────────────────────────────────────────────────────────── */}
       <Card className="p-6 bg-card border-border rounded-2xl space-y-4 shadow-md">
         <div className="flex items-center gap-2 border-b border-border pb-3">
           <CheckSquare className="w-5 h-5 text-emerald-400" />
           <h2 className="text-sm sm:text-base font-bold text-foreground">
-            What You Should Learn from These Resources
+            Core Architectural &amp; Practical Takeaways
           </h2>
         </div>
 

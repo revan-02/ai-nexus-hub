@@ -38,6 +38,7 @@ import {
   Receipt,
   CreditCard,
   FolderTree,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,7 @@ const navigationSections: NavSection[] = [
   {
     title: 'CONTENT & LEARNING',
     items: [
+      { label: 'RevBodh Curriculum CMS', icon: Sparkles, href: '/admin/courses', badge: 'Original' },
       { label: 'Content', icon: BookOpen, href: '/content' },
       { label: 'Categories', icon: FolderTree, href: '/categories' },
       { label: 'Courses', icon: GraduationCap, href: '/courses' },

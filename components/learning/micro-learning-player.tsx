@@ -39,7 +39,6 @@ import {
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { DeepMathAndLLMBuilder } from '@/components/learning/deep-math-and-llm-builder';
 import { IndustryAIPlacementHighway } from '@/components/learning/industry-ai-placement-highway';
-import { YouTubeResourceCard } from '@/components/learning/youtube-resource-card';
 
 export type DifficultyLevel = 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
 
@@ -68,7 +67,6 @@ export interface LessonContent {
   category: string;
   duration: string; // e.g. "4:15" (max 5:00)
   videoTitle: string;
-  youtubeEmbedUrl: string;
   videoChapters: VideoChapter[];
   eli5Analogy: string;
   technicalSummary: string;
@@ -128,7 +126,6 @@ export function MicroLearningPlayer({
         category: 'Everyday AI & Tools',
         duration: '3:30',
         videoTitle: 'Everyday AI: From Prompts to Intelligent Responses',
-        youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/aircAruvnKk?enablejsapi=1&rel=0',
         videoChapters: [
           {
             title: '1. What is an AI Tool & Token Streams',
@@ -204,7 +201,6 @@ export function MicroLearningPlayer({
         category: 'Deep Learning Architecture',
         duration: '4:15',
         videoTitle: 'Inside the Neural Network: Weights, Biases & Activation Functions',
-        youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/IHZwWFHWa-w?enablejsapi=1&rel=0',
         videoChapters: [
           {
             title: '1. Biological vs Artificial Neurons',
@@ -280,7 +276,6 @@ export function MicroLearningPlayer({
       category: 'Advanced Generative Systems',
       duration: '4:50',
       videoTitle: 'Scaled Dot-Product Attention QKV Mechanics & Vector Indexing',
-      youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/wjZofJX0v4U?enablejsapi=1&rel=0',
       videoChapters: [
         {
           title: '1. Query, Key, and Value Matrix Projections',
@@ -828,49 +823,19 @@ export function MicroLearningPlayer({
         {/* ── TAB 2: 5-MINUTE ANIMATED VIDEO CLASSROOM WITH VOICE NARRATION & SIMULATION ── */}
         {activeTab === 'video' && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            {/* Mode Switcher: 100% Copyright-Free AI Canvas vs Embedded Video */}
+            {/* Micro-Learning Header & Voice Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-secondary/60 border border-border rounded-2xl">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-foreground">Video Mode:</span>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-purple-500/20">
-                  <button
-                    onClick={() => {
-                      setVideoMode('interactive_canvas');
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      videoMode === 'interactive_canvas'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-900/40'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>100% Original AI Canvas (Copyright-Free)</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setVideoMode('embedded_video');
-                      setIsPlaying(false);
-                      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                        window.speechSynthesis.cancel();
-                      }
-                      setSpeechActive(false);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      videoMode === 'embedded_video'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-900/40'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>Curated Video Masterclass</span>
-                  </button>
-                </div>
+                <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white shadow-md shadow-purple-900/40 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>100% Original RevBodh Interactive AI Lab</span>
+                </span>
               </div>
 
               {/* Voice Narrator Quick Trigger */}
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold rounded-lg border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> 100% Royalty-Free
+                  <CheckCircle2 className="w-3 h-3" /> Original RevBodh Content
                 </span>
                 <Button
                   onClick={() => {
@@ -895,35 +860,6 @@ export function MicroLearningPlayer({
                 </Button>
               </div>
             </div>
-
-            {/* ── A. REAL EMBEDDED HD VIDEO PLAYER (YOUTUBE / ANIMATED MASTERCLASS) ── */}
-            {videoMode === 'embedded_video' && (
-              <div className="space-y-4">
-                <YouTubeResourceCard
-                  resource={{
-                    id: activeContent.id,
-                    topicId: 'micro-learning',
-                    title: activeContent.videoTitle,
-                    youtubeVideoId: activeContent.youtubeEmbedUrl.split('/embed/')[1]?.split('?')[0] || 'ad79nYk2keg',
-                    channelName: activeDifficulty === 'ADVANCED' ? 'Andrej Karpathy' : activeDifficulty === 'INTERMEDIATE' ? '3Blue1Brown' : 'IBM Technology',
-                    channelUrl: activeDifficulty === 'ADVANCED' ? 'https://www.youtube.com/@AndrejKarpathy' : activeDifficulty === 'INTERMEDIATE' ? 'https://www.youtube.com/@3blue1brown' : 'https://www.youtube.com/@IBMTechnology',
-                    sourceUrl: `https://www.youtube.com/watch?v=${activeContent.youtubeEmbedUrl.split('/embed/')[1]?.split('?')[0] || 'ad79nYk2keg'}`,
-                    embedUrl: activeContent.youtubeEmbedUrl.split('?')[0],
-                    thumbnailUrl: `https://img.youtube.com/vi/${activeContent.youtubeEmbedUrl.split('/embed/')[1]?.split('?')[0] || 'ad79nYk2keg'}/hqdefault.jpg`,
-                    creatorBio: activeDifficulty === 'ADVANCED' ? 'Andrej Karpathy - Former Director of AI at Tesla and OpenAI founding researcher.' : activeDifficulty === 'INTERMEDIATE' ? 'Grant Sanderson (3Blue1Brown) - Renowned visual mathematics animator.' : 'IBM Technology - Enterprise AI and hybrid cloud engineering team.',
-                    publishDate: '2023-11-22',
-                    duration: activeContent.duration,
-                    difficulty: activeDifficulty === 'BASIC' ? 'Beginner' : activeDifficulty === 'INTERMEDIATE' ? 'Intermediate' : 'Advanced',
-                    relevanceReason: activeContent.technicalSummary,
-                    keyTakeaways: activeContent.videoChapters.map((c) => c.title),
-                    license: 'Standard YouTube License',
-                    copyrightNotice: `© ${activeDifficulty === 'ADVANCED' ? 'Andrej Karpathy' : activeDifficulty === 'INTERMEDIATE' ? '3Blue1Brown' : 'IBM Technology'}. Content belongs to original creator. Embedded for educational reference under YouTube Terms of Service.`,
-                    embedAllowed: true,
-                    tags: ['AI', activeContent.category],
-                  }}
-                />
-              </div>
-            )}
 
             {/* ── B. INTERACTIVE AI SLIDE CANVAS (SYNCHRONIZED ANIMATIONS & TTS VOICE) ── */}
             {videoMode === 'interactive_canvas' && (

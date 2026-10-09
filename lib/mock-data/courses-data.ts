@@ -66,6 +66,34 @@ export const mockCoursesMetrics = [
 
 export const mockCoursesList: CourseItem[] = [
   {
+    id: 'revbodh-python-mastery',
+    title: 'Python Programming — Beginner to Advanced',
+    description: 'Complete original RevBodh curriculum from syntax basics to OOP, algorithms, file processing, and production Capstone projects. 100% interactive with real-time sandbox & quizzes.',
+    category: 'Programming & CS',
+    level: 'Beginner',
+    academicTier: 'Undergraduate',
+    totalHours: '24.0 hrs',
+    totalLectures: 42,
+    rating: 5.0,
+    ratingsCount: '1,420',
+    objectives: [
+      'Master core Python fundamentals, data structures, and algorithms',
+      'Build object-oriented software architectures from scratch',
+      'Handle production file I/O, exceptions, and third-party APIs',
+      'Create 3 real-world portfolio capstone projects with full test coverage',
+    ],
+    instructor: {
+      id: 'inst-revbodh-1',
+      name: 'RevBodh Curriculum Faculty',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    },
+    price: 'Free',
+    students: '12,850',
+    status: 'Published',
+    updatedAt: 'October 2026',
+    thumbnailIcon: 'Code',
+  },
+  {
     id: 'crs-0',
     title: 'Stage 1: AI Foundations & Intelligent Agents',
     description: 'Master Symbolic AI, agent environments (PEAS), search algorithms, logic, and expert systems.',
