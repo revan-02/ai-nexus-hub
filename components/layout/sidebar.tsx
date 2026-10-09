@@ -48,6 +48,7 @@ const navGroups: NavGroup[] = [
     icon: LayoutDashboard,
     items: [
       { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', active: true },
+      { icon: GraduationCap, label: 'Courses', href: '/courses', badge: '28' },
       { icon: BookOpen, label: 'AI Overview', href: '/ai-overview' },
       { icon: Map, label: 'Roadmap', href: '/roadmap' },
     ]

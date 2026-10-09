@@ -72,6 +72,7 @@ export function NexusSidebar() {
       title: 'Learn',
       icon: BookOpen,
       items: [
+        { label: 'Courses', href: '/courses', icon: GraduationCap, badge: '28' },
         { label: 'My Learning', href: '/roadmap', icon: BookOpen },
       ]
     },
