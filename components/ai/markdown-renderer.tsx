@@ -1,12 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Copy, CheckCircle2 } from 'lucide-react';
 
 interface MarkdownRendererProps {
   content: string;
+}
+
+/**
+ * Normalizes LaTeX / mathematical expressions in markdown while safeguarding code blocks.
+ * - Preserves ```fenced code blocks``` and `inline code` completely untouched.
+ * - Converts LaTeX display math \[ ... \] to display blocks.
+ * - Ensures single-line $$ ... $$ are placed on their own block lines so remark-math parses them as display equations.
+ * - Converts LaTeX inline math \( ... \) to standard $...$.
+ */
+function preprocessMath(raw: string): string {
+  if (!raw) return '';
+
+  const codeBlockRegex = /(```[\s\S]*?```|`[^`\n]*`)/g;
+  const parts = raw.split(codeBlockRegex);
+
+  return parts
+    .map((part, index) => {
+      // Odd indices are code blocks; preserve them exactly as-is
+      if (index % 2 === 1) {
+        return part;
+      }
+
+      return part
+        // Normalize LaTeX block math \[ ... \] to display math block
+        .replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => `\n\n$$\n${formula.trim()}\n$$\n\n`)
+        // Normalize single-line $$ ... $$ to display math block with newlines
+        .replace(/\$\$([\s\S]*?)\$\$/g, (_, formula) => `\n\n$$\n${formula.trim()}\n$$\n\n`)
+        // Normalize LaTeX inline math \( ... \) to $ ... $
+        .replace(/\\\(([\s\S]*?)\\\)/g, (_, formula) => `$${formula.trim()}$`);
+    })
+    .join('');
 }
 
 function CodeBlock({ inline, className, children, ...props }: any) {
@@ -64,10 +97,15 @@ function CodeBlock({ inline, className, children, ...props }: any) {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
+  const processedContent = useMemo(() => preprocessMath(content), [content]);
+
   return (
-    <div className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed">
+    <div className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed [&_.katex-display]:overflow-x-auto [&_.katex-display]:py-2 [&_.katex-display]:my-2 [&_.katex-display]:scrollbar-none">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[
+          [rehypeKatex, { output: 'htmlAndMathml', strict: false, throwOnError: false }]
+        ]}
         components={{
           // Headings
           h1: ({ children }) => (
@@ -79,7 +117,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           h3: ({ children }) => (
             <h3 className="text-base font-bold text-foreground mt-3 mb-1.5">{children}</h3>
           ),
-          // Paragraphs — use div to avoid invalid nesting when code blocks appear inside
+          // Paragraphs — use div to avoid invalid nesting when code or display math blocks appear inside
           p: ({ children }) => (
             <div className="text-foreground leading-relaxed mb-3 last:mb-0">{children}</div>
           ),
@@ -130,7 +168,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           ),
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
