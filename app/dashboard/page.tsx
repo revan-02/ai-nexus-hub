@@ -10,14 +10,14 @@ import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield } from 'lucide-react';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield, Search, X, Filter } from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
 import { CompactRoadmap } from '@/components/dashboard/compact-roadmap';
 import { useLearnerDashboard } from '@/hooks/api/use-dashboard';
 import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
-import type { CourseItem } from '@/lib/mock-data/courses-data';
+import { mockCoursesList, type CourseItem } from '@/lib/mock-data/courses-data';
 
 const TIER_PEDAGOGY_GUIDES: Record<string, { mentorTip: string; focusAreas: string[]; practicalLab: string }> = {
   'young-explorer': {
@@ -91,7 +91,9 @@ export default function DashboardPage() {
   const firstName = displayName ? displayName.split(' ')[0] : '';
 
   const dashboardData = apiResponse?.data;
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'beginner');
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>('All Levels');
+  const [selectedTierFilter, setSelectedTierFilter] = useState<string>('All Tiers');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedVideoCourse, setSelectedVideoCourse] = useState<any | null>(null);
 
   const modalCourse: CourseItem | null = selectedVideoCourse
@@ -105,13 +107,13 @@ export default function DashboardPage() {
           : selectedVideoCourse.difficulty === 'Medium'
           ? 'Intermediate'
           : 'Advanced') as any,
-        price: 'Free',
-        students: '12,420',
+        price: selectedVideoCourse.price || 'Free',
+        students: selectedVideoCourse.students || '12,420',
         status: 'Published',
         updatedAt: 'Recently',
-        thumbnailIcon: 'Brain',
+        thumbnailIcon: selectedVideoCourse.thumbnailIcon || 'Brain',
         instructor: {
-          name: 'Dr. Alex Morgan',
+          name: 'RevBodh Academic Faculty',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         },
       }
@@ -119,7 +121,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (userLevel && ['beginner', 'intermediate', 'advanced', 'expert'].includes(userLevel)) {
-      setSelectedLevelFilter(userLevel);
+      setSelectedLevelFilter(userLevel as any);
     }
   }, [userLevel]);
 
@@ -131,29 +133,107 @@ export default function DashboardPage() {
   const userRoleStr = String((session?.user as { role?: string })?.role || (userProfile as any)?.role || '').toLowerCase();
   const isAdminUser = userRoleStr === 'admin' || userRoleStr === 'super admin' || userRoleStr === 'manager';
 
-  const rawCourses = dashboardData?.activeCourses || [
-    { id: 'crs-0', title: 'Stage 1: AI Foundations & Intelligent Agents', desc: 'Symbolic AI, agent environments (PEAS), search algorithms, logic, and expert systems.', progress: 15, duration: '2h 10m', difficulty: 'Beginner', level: 'Beginner' },
-    { id: 'crs-1', title: 'Stage 1: Search Problem Solving & Knowledge Systems', desc: 'Informed A* search, Minimax game trees, first-order logic, and inference engines.', progress: 5, duration: '4h 30m', difficulty: 'Beginner', level: 'Beginner' },
-    { id: 'crs-2', title: 'Stage 2: Classical Machine Learning & Scikit-Learn', desc: 'Supervised regression, Random Forests, SVMs, K-Means, and model evaluation.', progress: 0, duration: '6h 15m', difficulty: 'Intermediate', level: 'Intermediate' },
-  ];
+  // Merge all 28 mockCoursesList courses with any live progress from API
+  const activeCourseProgressMap = React.useMemo(() => {
+    const map = new Map<string, any>();
+    if (dashboardData?.activeCourses) {
+      dashboardData.activeCourses.forEach((c: any) => map.set(c.id, c));
+    }
+    return map;
+  }, [dashboardData?.activeCourses]);
 
-  const activeCourses = rawCourses.filter((course: any) => {
-    if (selectedLevelFilter === 'All Levels') return true;
-    const lvl = (course.level || course.difficulty || '').toLowerCase();
-    if (selectedLevelFilter === 'expert') {
-      return lvl === 'expert' || lvl === 'advanced' || lvl === 'hard';
+  const allDashboardCourses = React.useMemo(() => {
+    const list: any[] = [];
+    const seen = new Set<string>();
+
+    mockCoursesList.forEach((mc) => {
+      seen.add(mc.id);
+      const live = activeCourseProgressMap.get(mc.id);
+      list.push({
+        id: mc.id,
+        title: mc.title,
+        desc: mc.description,
+        level: mc.level,
+        category: mc.category,
+        academicTier: mc.academicTier,
+        duration: mc.totalHours || live?.duration || '4h 00m',
+        difficulty:
+          mc.level === 'Beginner'
+            ? 'Easy'
+            : mc.level === 'Intermediate'
+            ? 'Medium'
+            : 'Hard',
+        progress: live?.progress ?? 0,
+        status: live?.status || 'available',
+        action: live?.action || 'Start Lesson',
+        price: mc.price || 'Free',
+        thumbnailIcon: mc.thumbnailIcon || 'BookOpen',
+      });
+    });
+
+    if (dashboardData?.activeCourses) {
+      dashboardData.activeCourses.forEach((c: any) => {
+        if (!seen.has(c.id)) {
+          list.push({
+            id: c.id,
+            title: c.title,
+            desc: c.desc || c.description || '',
+            level: c.level || 'Beginner',
+            category: c.category || 'General',
+            academicTier: undefined,
+            duration: c.duration || '3h 00m',
+            difficulty: c.difficulty || 'Easy',
+            progress: c.progress ?? 0,
+            status: c.status || 'available',
+            action: c.action || 'Start Lesson',
+            price: 'Free',
+            thumbnailIcon: c.thumbnailIcon || 'BookOpen',
+          });
+        }
+      });
     }
-    if (selectedLevelFilter === 'advanced') {
-      return lvl === 'advanced' || lvl === 'hard';
-    }
-    if (selectedLevelFilter === 'intermediate') {
-      return lvl === 'intermediate' || lvl === 'medium';
-    }
-    if (selectedLevelFilter === 'beginner') {
-      return lvl === 'beginner' || lvl === 'easy';
-    }
-    return false;
-  });
+
+    return list;
+  }, [activeCourseProgressMap, dashboardData?.activeCourses]);
+
+  const activeCourses = React.useMemo(() => {
+    return allDashboardCourses.filter((course) => {
+      // 1. Search Query filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        const matchesTitle = course.title.toLowerCase().includes(query);
+        const matchesDesc = (course.desc || '').toLowerCase().includes(query);
+        const matchesCat = (course.category || '').toLowerCase().includes(query);
+        const matchesTier = (course.academicTier || '').toLowerCase().includes(query);
+        if (!matchesTitle && !matchesDesc && !matchesCat && !matchesTier) {
+          return false;
+        }
+      }
+
+      // 2. Track Level filter
+      if (selectedLevelFilter !== 'All Levels') {
+        const lvl = (course.level || course.difficulty || '').toLowerCase();
+        if (selectedLevelFilter === 'expert') {
+          if (lvl !== 'expert' && lvl !== 'advanced' && lvl !== 'hard') return false;
+        } else if (selectedLevelFilter === 'advanced') {
+          if (lvl !== 'advanced' && lvl !== 'hard') return false;
+        } else if (selectedLevelFilter === 'intermediate') {
+          if (lvl !== 'intermediate' && lvl !== 'medium') return false;
+        } else if (selectedLevelFilter === 'beginner') {
+          if (lvl !== 'beginner' && lvl !== 'easy') return false;
+        }
+      }
+
+      // 3. Academic Tier filter
+      if (selectedTierFilter !== 'All Tiers') {
+        if (course.academicTier !== selectedTierFilter) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allDashboardCourses, searchQuery, selectedLevelFilter, selectedTierFilter]);
 
   if (isLoading) {
     return (
@@ -301,80 +381,184 @@ export default function DashboardPage() {
           {/* Main Content (8 cols) */}
           <div className="lg:col-span-8 space-y-8">
             
-            {/* Recommended Learning */}
+            {/* Recommended Learning & 28-Course Curriculum */}
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
-                  Recommended For You
-                </h2>
-                <div className="flex items-center gap-2 flex-wrap text-xs">
-                  <span className="font-semibold text-muted-foreground">Track Level:</span>
-                  {(['All Levels', 'beginner', 'intermediate', 'advanced', 'expert'] as const).map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setSelectedLevelFilter(lvl)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                        selectedLevelFilter === lvl
-                          ? 'bg-purple-600 text-white shadow-sm'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    Courses & Curriculum
+                  </h2>
+                  <Badge variant="outline" className="border-purple-500/30 text-purple-300 text-xs font-mono font-bold">
+                    {activeCourses.length} of {allDashboardCourses.length} Courses
+                  </Badge>
                 </div>
                 <Link href="/explore" className="text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-                  Browse Catalog →
+                  Browse Full Catalog →
                 </Link>
               </div>
 
-              <div className="flex flex-col gap-3.5">
-                {activeCourses.map((course) => (
-                  <Card key={course.id} className="w-full p-4 sm:p-5 bg-card border border-border rounded-2xl hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-950/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
-                    <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                        <BookOpen className="w-5 h-5" />
-                      </div>
-                      <div className="space-y-1.5 flex-1 min-w-0 text-left">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-1 text-left">{course.title}</h3>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 uppercase tracking-wide">
-                            {course.difficulty}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-2 text-left">{course.desc}</p>
-                        <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground pt-0.5">
-                          <span className="flex items-center gap-1 font-mono">
-                            <Clock className="w-3 h-3 text-purple-400" />
-                            {course.duration}
-                          </span>
-                          <span>•</span>
-                          <span className="text-emerald-400 font-semibold">Free Track</span>
-                        </div>
-                      </div>
-                    </div>
+              {/* Search & Multi-Filters Toolbar */}
+              <div className="p-3.5 rounded-2xl bg-card/70 border border-border space-y-3 shadow-sm">
+                {/* Search Bar */}
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search courses by title, topic, or keyword..."
+                    className="w-full bg-secondary/60 border border-border/80 rounded-xl pl-9 pr-9 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
-                    <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border">
+                {/* Level & Tier Filter Pills */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 border-t border-border/50 text-xs">
+                  {/* Level Filter */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-muted-foreground text-[11px]">Level:</span>
+                    {(['All Levels', 'beginner', 'intermediate', 'advanced', 'expert'] as const).map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setSelectedLevelFilter(lvl)}
+                        className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                          selectedLevelFilter === lvl
+                            ? 'bg-purple-600 text-white shadow-sm'
+                            : 'bg-secondary/70 hover:bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Academic Tier Filter */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-muted-foreground text-[11px]">Tier:</span>
+                    <select
+                      value={selectedTierFilter}
+                      onChange={(e) => setSelectedTierFilter(e.target.value)}
+                      className="bg-secondary/80 border border-border text-[11px] font-semibold text-foreground rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="All Tiers">All Academic Tiers</option>
+                      <option value="Young Explorer">Young Explorer (Class 5–7)</option>
+                      <option value="Junior Innovator">Junior Innovator (Class 8–10)</option>
+                      <option value="Pre-University">Pre-University (Class 11–12)</option>
+                      <option value="Undergraduate">Undergraduate (B.Tech / BSc)</option>
+                      <option value="Postgraduate">Postgraduate (M.Tech / MSc)</option>
+                      <option value="PhD & Research">PhD & Research</option>
+                    </select>
+                    {(selectedLevelFilter !== 'All Levels' || selectedTierFilter !== 'All Tiers' || searchQuery) && (
                       <button
                         type="button"
-                        onClick={() => setSelectedVideoCourse(course)}
-                        className="py-2 px-3.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
+                        onClick={() => {
+                          setSelectedLevelFilter('All Levels');
+                          setSelectedTierFilter('All Tiers');
+                          setSearchQuery('');
+                        }}
+                        className="text-[10px] text-purple-400 hover:text-purple-300 underline font-medium cursor-pointer ml-1"
                       >
-                        <Play className="w-3.5 h-3.5 fill-purple-300" />
-                        <span>Watch Video & Lab</span>
+                        Reset
                       </button>
-                      <Link
-                        href={`/learn/${course.id}`}
-                        className="py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 hover:shadow-purple-900/50"
-                      >
-                        <span>Start</span>
-                      </Link>
-                    </div>
-                  </Card>
-                ))}
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Course Cards List */}
+              {activeCourses.length === 0 ? (
+                <div className="p-8 text-center rounded-2xl bg-card border border-border space-y-3">
+                  <BookOpen className="w-8 h-8 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-sm font-semibold text-foreground">No courses match your filter criteria.</p>
+                  <p className="text-xs text-muted-foreground">Try clearing your search query or selecting &quot;All Levels&quot;.</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedLevelFilter('All Levels');
+                      setSelectedTierFilter('All Tiers');
+                      setSearchQuery('');
+                    }}
+                    className="text-xs mt-2"
+                  >
+                    Reset All Filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3.5">
+                  {activeCourses.map((course) => (
+                    <Card key={course.id} className="w-full p-4 sm:p-5 bg-card border border-border rounded-2xl hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-950/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
+                      <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                        <div className="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-1.5 flex-1 min-w-0 text-left">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-1 text-left">{course.title}</h3>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 uppercase tracking-wide">
+                              {course.difficulty}
+                            </span>
+                            {course.academicTier && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                                {course.academicTier}
+                              </span>
+                            )}
+                            {course.category && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-muted-foreground border border-border">
+                                {course.category}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-2 text-left">{course.desc}</p>
+                          <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground pt-0.5 flex-wrap">
+                            <span className="flex items-center gap-1 font-mono">
+                              <Clock className="w-3 h-3 text-purple-400" />
+                              {course.duration}
+                            </span>
+                            <span>•</span>
+                            <span className={course.price === 'Free' ? 'text-emerald-400 font-semibold' : 'text-purple-300 font-semibold font-mono'}>
+                              {course.price === 'Free' ? 'Free Track' : course.price}
+                            </span>
+                            {course.progress > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-purple-400 font-semibold">{course.progress}% completed</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedVideoCourse(course)}
+                          className="py-2 px-3.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-purple-300" />
+                          <span>Watch Video & Lab</span>
+                        </button>
+                        <Link
+                          href={`/learn/${course.id}`}
+                          className="py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 hover:shadow-purple-900/50"
+                        >
+                          <span>{course.progress > 0 ? 'Continue' : 'Start'}</span>
+                        </Link>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Active Projects Quick Resume */}

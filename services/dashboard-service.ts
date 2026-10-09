@@ -1,4 +1,5 @@
 import prisma from '@/lib/db/prisma';
+import { mockCoursesList } from '@/lib/mock-data/courses-data';
 
 export interface DashboardPhaseDTO {
   id: string;
@@ -302,9 +303,16 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
     };
   });
 
-  // 2. Calculate Active Courses & Progress
-  const activeCourses: DashboardCourseDTO[] = dbCourses.map((course, idx) => {
-    const courseLessons = course.lessons || [];
+  // 2. Calculate Active Courses & Progress across all 28 curriculum courses + custom DB courses
+  const dbCourseMap = new Map(dbCourses.map((c) => [c.id, c]));
+  const seenIds = new Set<string>();
+  const allCourseItems: DashboardCourseDTO[] = [];
+
+  // First process all courses from mockCoursesList (flagship + stages + academic tiers)
+  mockCoursesList.forEach((mockCourse, idx) => {
+    seenIds.add(mockCourse.id);
+    const dbCourse = dbCourseMap.get(mockCourse.id);
+    const courseLessons = dbCourse?.lessons || [];
     const totalCourseLessons = courseLessons.length;
     const completedCourseLessons = courseLessons.filter((l) =>
       completedLessonIds.has(l.id)
@@ -315,12 +323,8 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
         ? Math.round((completedCourseLessons / totalCourseLessons) * 100)
         : 0;
 
-    let status: 'completed' | 'in_progress' | 'available' | 'locked' = 'locked';
-    let action: 'Review' | 'Continue' | 'Start Lesson' | 'Locked' = 'Locked';
-
-    // Determine course status based on calculated progress & phase status
-    const parentPhase = steps.find((s) => s.id === course.phaseId);
-    const isPhaseUnlocked = parentPhase ? parentPhase.status !== 'locked' : true;
+    let status: 'completed' | 'in_progress' | 'available' | 'locked' = 'available';
+    let action: 'Review' | 'Continue' | 'Start Lesson' | 'Locked' = 'Start Lesson';
 
     if (progress === 100) {
       status = 'completed';
@@ -328,40 +332,77 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
     } else if (progress > 0) {
       status = 'in_progress';
       action = 'Continue';
-    } else if (isPhaseUnlocked) {
-      status = 'in_progress'; // or available
-      action = 'Start Lesson';
     } else {
-      status = 'locked';
-      action = 'Locked';
+      status = 'available';
+      action = 'Start Lesson';
     }
 
-    const totalDurationMinutes = courseLessons.reduce(
-      (sum, l) => sum + l.durationMinutes,
-      0
-    );
-    const durationStr = formatDuration(totalDurationMinutes * 60 || 18000);
+    const durationStr =
+      mockCourse.totalHours ||
+      (totalCourseLessons > 0
+        ? formatDuration(
+            courseLessons.reduce((sum, l) => sum + l.durationMinutes, 0) * 60
+          )
+        : '4h 00m');
 
-    return {
-      id: course.id,
-      num: (idx + 1).toString(),
-      title: course.title,
-      desc: course.description,
-      level: course.level,
-      category: course.category,
+    allCourseItems.push({
+      id: mockCourse.id,
+      num: String(idx + 1).padStart(2, '0'),
+      title: mockCourse.title,
+      desc: mockCourse.description,
+      level: mockCourse.level,
+      category: mockCourse.category,
       duration: durationStr,
       difficulty:
-        course.level === 'Beginner'
+        mockCourse.level === 'Beginner'
           ? 'Easy'
-          : course.level === 'Intermediate'
+          : mockCourse.level === 'Intermediate'
           ? 'Medium'
           : 'Hard',
       progress,
       status,
       action,
-      thumbnailIcon: course.thumbnailIcon,
-    };
+      thumbnailIcon: mockCourse.thumbnailIcon || 'BookOpen',
+    });
   });
+
+  // Then append any extra published courses from DB not in mockCoursesList
+  dbCourses.forEach((dbCourse) => {
+    if (seenIds.has(dbCourse.id)) return;
+    const courseLessons = dbCourse.lessons || [];
+    const totalCourseLessons = courseLessons.length;
+    const completedCourseLessons = courseLessons.filter((l) =>
+      completedLessonIds.has(l.id)
+    ).length;
+    const progress =
+      totalCourseLessons > 0
+        ? Math.round((completedCourseLessons / totalCourseLessons) * 100)
+        : 0;
+
+    allCourseItems.push({
+      id: dbCourse.id,
+      num: String(allCourseItems.length + 1).padStart(2, '0'),
+      title: dbCourse.title,
+      desc: dbCourse.description,
+      level: dbCourse.level,
+      category: dbCourse.category,
+      duration: formatDuration(
+        courseLessons.reduce((sum, l) => sum + l.durationMinutes, 0) * 60 || 18000
+      ),
+      difficulty:
+        dbCourse.level === 'Beginner'
+          ? 'Easy'
+          : dbCourse.level === 'Intermediate'
+          ? 'Medium'
+          : 'Hard',
+      progress,
+      status: progress > 0 ? 'in_progress' : 'available',
+      action: progress > 0 ? 'Continue' : 'Start Lesson',
+      thumbnailIcon: dbCourse.thumbnailIcon,
+    });
+  });
+
+  const activeCourses = allCourseItems;
 
   // 3. Calculate "Your Progress" Metrics
   const lessonsCompleted = completedLessonIds.size;
@@ -543,11 +584,25 @@ export async function getLearnerDashboardData(userId?: string): Promise<LearnerD
         { id: 'phase-5', num: 5, title: 'AI Systems Design & High-Performance Inference', order: 5, description: 'Quantization, vLLM serving, and distributed GPU clusters.', status: 'locked', progress: 0, availableContentCount: 2, completedContentCount: 0 },
         { id: 'phase-6', num: 6, title: 'Expert Research & AI Frontiers', order: 6, description: 'State-space models, research papers, and custom CUDA optimization.', status: 'locked', progress: 0, availableContentCount: 2, completedContentCount: 0 },
       ],
-      activeCourses: [
-        { id: 'crs-0', num: '01', title: 'AI Foundations & Intelligent Agents', desc: 'Search strategies, logic, and expert systems', level: 'Beginner', category: 'AI Foundations', duration: '180 mins', difficulty: 'Easy', progress: 0, status: 'in_progress', action: 'Start Lesson', thumbnailIcon: 'Sparkles' },
-        { id: 'crs-2', num: '02', title: 'Classical Machine Learning & Scikit-Learn', desc: 'Supervised and unsupervised ML models', level: 'Intermediate', category: 'Machine Learning', duration: '330 mins', difficulty: 'Medium', progress: 0, status: 'available', action: 'Locked', thumbnailIcon: 'Brain' },
-        { id: 'crs-3', num: '03', title: 'Deep Learning & PyTorch Neural Networks', desc: 'Multi-layer perceptrons, CNNs, and backpropagation', level: 'Intermediate', category: 'Deep Learning', duration: '540 mins', difficulty: 'Medium', progress: 0, status: 'locked', action: 'Locked', thumbnailIcon: 'Network' },
-      ],
+      activeCourses: mockCoursesList.map((mc, idx) => ({
+        id: mc.id,
+        num: String(idx + 1).padStart(2, '0'),
+        title: mc.title,
+        desc: mc.description,
+        level: mc.level,
+        category: mc.category,
+        duration: mc.totalHours || '4h 00m',
+        difficulty:
+          mc.level === 'Beginner'
+            ? 'Easy'
+            : mc.level === 'Intermediate'
+            ? 'Medium'
+            : 'Hard',
+        progress: 0,
+        status: idx === 0 ? 'in_progress' : 'available',
+        action: 'Start Lesson',
+        thumbnailIcon: mc.thumbnailIcon || 'BookOpen',
+      })),
       recommended: {
         papers: [],
         projects: [],
