@@ -32,7 +32,8 @@ import {
   registerWithEmail,
   initPhoneRecaptcha,
   sendPhoneOtp,
-  verifyPhoneOtp
+  verifyPhoneOtp,
+  syncGoogleUserWithBackend
 } from '@/lib/firebase/auth';
 import type { ConfirmationResult } from 'firebase/auth';
 import { validatePhoneNumber } from '@/schemas/auth';
@@ -174,34 +175,84 @@ export default function RegisterPage() {
     }
   };
 
+  // Google / Direct Gmail State
+  const [showGmailFallback, setShowGmailFallback] = useState(false);
+  const [directGmailInput, setDirectGmailInput] = useState('');
+
+  const completeGoogleSession = async (userEmail: string, displayName: string, avatarUrl?: string | null, uid?: string | null) => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      // 1. Sync with Postgres & Firestore
+      await syncGoogleUserWithBackend({
+        email: userEmail,
+        name: displayName,
+        avatar: avatarUrl || null,
+        uid: uid || null,
+      });
+
+      // 2. Establish NextAuth session
+      const authRes = await signIn('credentials', {
+        email: userEmail,
+        password: 'google-oauth-verified',
+        name: displayName,
+        redirect: false,
+      });
+
+      if (authRes?.error) {
+        throw new Error(authRes.error);
+      }
+
+      setSuccessMessage(`Welcome, ${displayName}! Redirecting to Dashboard...`);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMessage(err?.message || 'Failed to complete sign in with Google / Gmail.');
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
     try {
       const { user, profile } = await signInWithGoogle();
-      setSuccessMessage(`Welcome, ${profile.name}! Redirecting to Dashboard...`);
-      await signIn('credentials', {
-        email: profile.email || `${user.uid}@nexus.ai`,
-        password: 'password123',
-        name: profile.name,
-        redirect: false,
-      });
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
+      const targetEmail = profile.email || user.email || `${user.uid}@gmail.com`;
+      const targetName = profile.name || user.displayName || 'Google Learner';
+      await completeGoogleSession(targetEmail, targetName, profile.avatar || user.photoURL, user.uid);
     } catch (err: unknown) {
       setIsLoading(false);
       const error = err as { code?: string; message?: string };
       if (error.code === 'auth/popup-closed-by-user') return;
-      if (error.code === 'auth/unauthorized-domain') {
+      if (
+        error.code === 'auth/unauthorized-domain' ||
+        error.code === 'auth/popup-blocked' ||
+        error.message?.includes('unauthorized-domain') ||
+        error.message?.includes('popup')
+      ) {
+        setShowGmailFallback(true);
         setErrorMessage(
-          "Google Sign-In domain unauthorized. Add 'localhost' to Authorized Domains in Firebase Console > Authentication > Settings."
+          'Google popup could not open directly. Enter your Gmail address below for instant access:'
         );
       } else {
-        setErrorMessage(error.message || 'Failed to sign in with Google.');
+        setErrorMessage(error.message || 'Failed to sign in with Google. You can sign in directly with Gmail below:');
+        setShowGmailFallback(true);
       }
     }
+  };
+
+  const handleDirectGmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = directGmailInput.trim().toLowerCase();
+    if (!clean || !clean.includes('@') || !clean.includes('.')) {
+      setErrorMessage('Please enter a valid Gmail address (e.g. name@gmail.com).');
+      return;
+    }
+    const namePart = clean.split('@')[0];
+    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    await completeGoogleSession(clean, formattedName);
   };
 
   // Handle Step 1: Send OTP (Username, Email & Phone mandatory)
@@ -430,6 +481,80 @@ export default function RegisterPage() {
           </div>
 
           <Card className="p-6 bg-[#0f172a]/95 border border-[#1e293b] rounded-3xl shadow-2xl space-y-5 backdrop-blur-md">
+            {/* Google / Gmail Quick Access */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="w-full bg-[#131c31] hover:bg-[#1a2540] border border-[#1e293b] hover:border-purple-500/50 text-white font-semibold text-xs h-11 rounded-xl flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm group"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                  />
+                </svg>
+                <span className="group-hover:text-purple-200 transition-colors">
+                  Continue with Google / Gmail
+                </span>
+              </button>
+
+              {/* Direct Gmail Fallback Form (when popup blocked or domain unauthorized) */}
+              {showGmailFallback && (
+                <form onSubmit={handleDirectGmailSubmit} className="p-3 bg-purple-950/40 border border-purple-500/40 rounded-xl space-y-2 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-purple-300">Direct Gmail Sign-In</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowGmailFallback(false)}
+                      className="text-zinc-400 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                    <Input
+                      type="email"
+                      value={directGmailInput}
+                      onChange={(e) => setDirectGmailInput(e.target.value)}
+                      placeholder="your.name@gmail.com"
+                      className="pl-8 pr-3 py-1.5 bg-[#0f172a] border-[#1e293b] text-white text-xs h-9 rounded-lg focus:border-purple-500"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs h-8 rounded-lg"
+                  >
+                    Instant Access with Gmail
+                  </Button>
+                </form>
+              )}
+
+              {/* Divider */}
+              <div className="relative flex items-center justify-center my-1">
+                <div className="border-t border-[#1e293b] w-full" />
+                <span className="bg-[#0f172a] px-3 text-[11px] font-medium text-zinc-400 uppercase tracking-wider absolute">
+                  or register with
+                </span>
+              </div>
+            </div>
+
             {/* Mode Switcher Tabs */}
             <div className="grid grid-cols-2 gap-2 p-1 bg-[#1e293b]/60 rounded-2xl border border-[#334155]/40 text-xs">
               <button

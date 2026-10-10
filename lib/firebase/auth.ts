@@ -189,6 +189,28 @@ export async function signInWithGoogle(): Promise<AuthSuccessResult> {
 }
 
 /**
+ * Synchronize Google OAuth user with Prisma database and NextAuth
+ */
+export async function syncGoogleUserWithBackend(params: {
+  email: string;
+  name?: string | null;
+  avatar?: string | null;
+  uid?: string | null;
+}): Promise<any> {
+  try {
+    const res = await fetch('/api/auth/google-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    return await res.json();
+  } catch (err) {
+    console.warn('[Google Sync] Network error during backend sync:', err);
+    return null;
+  }
+}
+
+/**
  * Initialize Invisible reCAPTCHA verifier for Phone Auth
  */
 export function initPhoneRecaptcha(containerId: string): RecaptchaVerifier {
