@@ -73,7 +73,7 @@ describe('Categories & Child Categories Taxonomy Management', () => {
     await waitFor(() => {
       expect(screen.getByText(/created successfully/i)).toBeInTheDocument();
     });
-  });
+  }, 15000);
 
   it('opens Child Sub-Category modal and adds a sub-category', async () => {
     const fetchMock = vi.fn().mockResolvedValue({

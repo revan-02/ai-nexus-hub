@@ -18,13 +18,13 @@ import {
   HelpCircle,
   Trophy,
   ArrowRight,
-  Terminal,
-  Lock,
-  MessageSquare,
-  Bot,
-  Copy,
+  Menu,
+  X,
   Check,
-  Award
+  Copy,
+  Award,
+  Circle,
+  CheckCircle
 } from 'lucide-react';
 import { RevBodhCourse, RevBodhModule, RevBodhLesson } from '@/types/revbodh-course';
 import { RevBodhCourseService, UserCourseProgressData } from '@/services/revbodh-course-service';
@@ -32,14 +32,17 @@ import { RevBodhCodeSandbox } from '@/components/learning/revbodh-code-sandbox';
 import { RevBodhLessonQuiz } from '@/components/learning/revbodh-lesson-quiz';
 import { RevBodhAITutor } from '@/components/learning/revbodh-ai-tutor';
 import { MarkdownRenderer } from '@/components/ai/markdown-renderer';
+import { LessonAudioPlayer } from '@/components/learning/lesson-audio-player';
 
 interface RevBodhLessonViewProps {
   course: RevBodhCourse;
   initialLessonId?: string;
 }
 
+const STORAGE_KEY_SEEN_GUIDE = 'revbodh_seen_welcome_guide';
+
 export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonViewProps) {
-  // Find initial lesson or default to first lesson of first module
+  // Flatten all lessons into linear sequence
   const allLessons: { module: RevBodhModule; lesson: RevBodhLesson }[] = [];
   course.modules.forEach((mod) => {
     mod.lessons.forEach((les) => {
@@ -53,12 +56,48 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
   const [progress, setProgress] = useState<UserCourseProgressData>(
     RevBodhCourseService.getUserProgress(course.id)
   );
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [revealedInterviewAnswers, setRevealedInterviewAnswers] = useState<Record<string, boolean>>({});
   const [copiedSnippetIndex, setCopiedSnippetIndex] = useState<number | null>(null);
 
-  // Sync progress from localStorage
+  // Check if first-time learner
   useEffect(() => {
-    setProgress(RevBodhCourseService.getUserProgress(course.id));
+    if (typeof window !== 'undefined') {
+      const hasSeen = localStorage.getItem(STORAGE_KEY_SEEN_GUIDE);
+      if (!hasSeen) {
+        setShowWelcomeGuide(true);
+      }
+    }
+  }, []);
+
+  const handleDismissWelcomeGuide = () => {
+    setShowWelcomeGuide(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_SEEN_GUIDE, 'true');
+    }
+  };
+
+  // Sync progress from localStorage and backend DB
+  useEffect(() => {
+    const local = RevBodhCourseService.getUserProgress(course.id);
+    setProgress(local);
+
+    // Fetch DB-persisted progress in background
+    fetch(`/api/courses/${course.id}/progress`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.completedLessons && Array.isArray(data.completedLessons)) {
+          // Merge remote completed lessons with local
+          const merged = Array.from(new Set([...local.completedLessons, ...data.completedLessons]));
+          const updated: UserCourseProgressData = {
+            ...local,
+            completedLessons: merged,
+          };
+          setProgress(updated);
+        }
+      })
+      .catch((err) => console.warn('Could not sync remote course progress:', err));
   }, [course.id, activeLessonId]);
 
   const activeLessonData = allLessons.find((item) => item.lesson.id === activeLessonId) || allLessons[0];
@@ -77,9 +116,42 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
   const { module: activeModule, lesson: currentLesson } = activeLessonData;
   const isLessonCompleted = progress.completedLessons.includes(currentLesson.id);
 
+  const totalCourseLessons = allLessons.length;
+  const completedLessonsCount = allLessons.filter((item) =>
+    progress.completedLessons.includes(item.lesson.id)
+  ).length;
+  const courseProgressPercent =
+    totalCourseLessons > 0 ? Math.round((completedLessonsCount / totalCourseLessons) * 100) : 0;
+
+  // Persist progress to DB and localStorage
+  const syncProgressToBackend = async (lessonId: string, isCompleted: boolean) => {
+    try {
+      await fetch(`/api/courses/${course.id}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId,
+          completed: isCompleted,
+          progressPercent: courseProgressPercent,
+        }),
+      });
+    } catch (err) {
+      console.warn('Progress DB sync failed, kept in local storage:', err);
+    }
+  };
+
+  const handleNextLesson = () => {
+    if (nextLesson) {
+      setActiveLessonId(nextLesson.lesson.id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleCompleteLesson = () => {
     const updated = RevBodhCourseService.markLessonComplete(course.id, currentLesson.id);
     setProgress(updated);
+    syncProgressToBackend(currentLesson.id, true);
+
     if (nextLesson) {
       setActiveLessonId(nextLesson.lesson.id);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -89,6 +161,10 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
   const handleQuizCompleted = (score: number, total: number) => {
     const updated = RevBodhCourseService.recordQuizScore(course.id, currentLesson.id, score, total);
     setProgress(updated);
+    const passed = total > 0 && Math.round((score / total) * 100) >= 70;
+    if (passed) {
+      syncProgressToBackend(currentLesson.id, true);
+    }
   };
 
   const handleCopyCode = (codeText: string, idx: number) => {
@@ -97,19 +173,38 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
     setTimeout(() => setCopiedSnippetIndex(null), 2000);
   };
 
-  const totalCourseLessons = allLessons.length;
-  const completedLessonsCount = allLessons.filter((item) =>
-    progress.completedLessons.includes(item.lesson.id)
-  ).length;
-  const courseProgressPercent =
-    totalCourseLessons > 0 ? Math.round((completedLessonsCount / totalCourseLessons) * 100) : 0;
-
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
       {/* ─────────────────────────────────────────────────────────────────
-          LEFT COLUMN: STICKY COURSE CURRICULUM DRAWER & PROGRESS
+          MOBILE DRAWER TRIGGER (Shows only on small screens)
       ───────────────────────────────────────────────────────────────── */}
-      <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-20 space-y-4">
+      <div className="w-full lg:hidden flex items-center justify-between p-3.5 bg-card border border-border rounded-xl">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-purple-400" />
+          <span className="text-xs font-bold text-foreground truncate max-w-[200px]">
+            {currentLesson.title}
+          </span>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="text-xs h-8 gap-1.5 border-border bg-secondary"
+        >
+          {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          <span>{isMobileMenuOpen ? 'Close Menu' : 'Curriculum'}</span>
+        </Button>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────
+          LEFT COLUMN: SIMPLIFIED COURSE CURRICULUM DRAWER & PROGRESS
+          Visual hierarchy: ✓ completed, → current, ○ upcoming
+      ───────────────────────────────────────────────────────────────── */}
+      <aside
+        className={`w-full lg:w-80 shrink-0 lg:sticky lg:top-20 space-y-4 ${
+          isMobileMenuOpen ? 'block' : 'hidden lg:block'
+        }`}
+      >
         {/* Course Progress Card */}
         <Card className="p-4 bg-card border-border rounded-2xl space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-xs font-bold">
@@ -128,7 +223,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
             />
           </div>
           <div className="text-[11px] text-muted-foreground flex items-center justify-between pt-1">
-            <span>{course.level} → Advanced</span>
+            <span>{course.level} Tier</span>
             <span className="font-semibold text-emerald-400">100% Original RevBodh</span>
           </div>
         </Card>
@@ -140,8 +235,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
           </div>
 
           <div className="space-y-3">
-            {course.modules.map((mod, modIdx) => {
-              const isCurrentModule = mod.id === activeModule.id;
+            {course.modules.map((mod) => {
               const completedInModule = mod.lessons.filter((l) =>
                 progress.completedLessons.includes(l.id)
               ).length;
@@ -149,9 +243,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
               return (
                 <div key={mod.id} className="space-y-1">
                   <div className="flex items-center justify-between px-2 py-1 text-xs font-semibold text-foreground/90">
-                    <span className="truncate">
-                      {mod.title}
-                    </span>
+                    <span className="truncate">{mod.title}</span>
                     <span className="text-[10px] text-muted-foreground shrink-0 ml-2 font-mono">
                       {completedInModule}/{mod.lessons.length}
                     </span>
@@ -167,6 +259,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
                           key={les.id}
                           onClick={() => {
                             setActiveLessonId(les.id);
+                            setIsMobileMenuOpen(false);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between gap-2 transition-all cursor-pointer ${
@@ -176,18 +269,38 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
                           }`}
                         >
                           <div className="flex items-center gap-2 truncate">
+                            {/* Visual Status Indicator: ✓ completed, → current, ○ upcoming */}
                             {isCompleted ? (
-                              <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-emerald-400'}`} />
+                              <span
+                                className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
+                                  isSelected ? 'bg-white text-purple-700' : 'bg-emerald-500/20 text-emerald-400'
+                                }`}
+                                title="Completed"
+                              >
+                                ✓
+                              </span>
+                            ) : isSelected ? (
+                              <span
+                                className="w-4 h-4 rounded-full bg-white/20 text-white flex items-center justify-center shrink-0 text-xs font-bold"
+                                title="Current Lesson"
+                              >
+                                →
+                              </span>
                             ) : (
-                              <span className={`w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center text-[9px] ${
-                                isSelected ? 'border-white text-white' : 'border-zinc-500 text-zinc-500'
-                              }`}>
-                                {les.orderNumber}
+                              <span
+                                className="w-4 h-4 rounded-full border border-zinc-600 text-zinc-500 flex items-center justify-center shrink-0 text-[9px]"
+                                title="Upcoming Lesson"
+                              >
+                                ○
                               </span>
                             )}
                             <span className="truncate">{les.title}</span>
                           </div>
-                          <span className={`text-[10px] shrink-0 font-mono ${isSelected ? 'text-purple-200' : 'text-zinc-500'}`}>
+                          <span
+                            className={`text-[10px] shrink-0 font-mono ${
+                              isSelected ? 'text-purple-200' : 'text-zinc-500'
+                            }`}
+                          >
                             {les.durationMinutes}m
                           </span>
                         </button>
@@ -202,10 +315,66 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
       </aside>
 
       {/* ─────────────────────────────────────────────────────────────────
-          RIGHT COLUMN: FULL ORIGINAL REVBODH LESSON CONTENT
+          RIGHT COLUMN: LESSON CONTENT (ONE SCREEN = ONE TASK)
       ───────────────────────────────────────────────────────────────── */}
-      <main className="flex-1 w-full space-y-8 select-text">
-        {/* Lesson Header Banner */}
+      <main className="flex-1 w-full space-y-7 select-text">
+        {/* ── NEW-USER GUIDANCE BANNER (Dismissible, persisted once) ── */}
+        {showWelcomeGuide && (
+          <div className="p-5 bg-gradient-to-r from-purple-950/70 via-secondary/60 to-card border border-purple-500/40 rounded-2xl space-y-3 shadow-xl animate-in fade-in duration-300">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">👋</span>
+                  <h3 className="text-sm font-bold text-foreground">Welcome to Your First Lesson!</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  AI Nexus uses an interactive 3-step learning approach designed for complete concept retention:
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleDismissWelcomeGuide}
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
+              <div className="p-2.5 rounded-xl bg-card/60 border border-border/50 space-y-1">
+                <span className="font-bold text-purple-300">1. Learn Concept</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Read the deep-dive or listen to the AI Audio Narration.
+                </p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-card/60 border border-border/50 space-y-1">
+                <span className="font-bold text-indigo-300">2. Inspect Code</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Explore practical examples and real-world industry patterns.
+                </p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-card/60 border border-border/50 space-y-1">
+                <span className="font-bold text-emerald-300">3. Pass Quiz</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Score 70% or higher to mark complete and unlock the next lesson.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-1 flex justify-end">
+              <Button
+                size="sm"
+                onClick={handleDismissWelcomeGuide}
+                className="h-8 px-4 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl cursor-pointer"
+              >
+                Got it, Start Lesson →
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── LESSON HEADER BANNER ── */}
         <div className="p-6 bg-gradient-to-br from-purple-950/40 via-card to-card border border-purple-500/20 rounded-2xl space-y-3 shadow-xl">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs text-purple-400 font-semibold">
@@ -232,6 +401,15 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             {currentLesson.conceptExplanation.summary}
           </p>
+
+          {/* Audio Narration Controller (Single-play, never loops) */}
+          <div className="pt-2">
+            <LessonAudioPlayer
+              lessonId={currentLesson.id}
+              lessonTitle={currentLesson.title}
+              contentToRead={`${currentLesson.conceptExplanation.summary}. ${currentLesson.conceptExplanation.detailedMarkdown}`}
+            />
+          </div>
         </div>
 
         {/* ── SECTION A: LEARNING OBJECTIVES ── */}
@@ -289,7 +467,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
           )}
         </Card>
 
-        {/* ── SECTION C: EXAMPLES & CODE WALKTHROUGHS ── */}
+        {/* ── SECTION C: PRACTICAL CODE EXAMPLES ── */}
         {currentLesson.examples.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-foreground font-bold text-sm">
@@ -343,7 +521,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
               <span className="p-1.5 bg-rose-500/10 text-rose-400 rounded-lg">
                 <AlertTriangle className="w-4 h-4" />
               </span>
-              <h3>Common Mistakes & How to Avoid Them</h3>
+              <h3>Common Mistakes &amp; How to Avoid Them</h3>
             </div>
 
             <div className="space-y-4">
@@ -411,7 +589,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
           </div>
         </Card>
 
-        {/* ── SECTION F: INTERACTIVE PRACTICE CHALLENGE ── */}
+        {/* ── SECTION F: INTERACTIVE CODE SANDBOX ── */}
         {currentLesson.practiceChallenge && (
           <div className="space-y-2">
             <RevBodhCodeSandbox
@@ -427,12 +605,13 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
           </div>
         )}
 
-        {/* ── SECTION G: LESSON QUIZ ── */}
+        {/* ── SECTION G: 1-QUESTION-AT-A-TIME KNOWLEDGE QUIZ ── */}
         {currentLesson.quizQuestions.length > 0 && (
           <div className="space-y-2">
             <RevBodhLessonQuiz
               questions={currentLesson.quizQuestions}
               onComplete={handleQuizCompleted}
+              onContinueNextLesson={handleNextLesson}
             />
           </div>
         )}
@@ -482,7 +661,6 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
                       </Button>
                     </div>
 
-                    {/* Key Concepts Expected */}
                     <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-1.5">
                       <span className="font-semibold text-foreground">Interview Rubric:</span>
                       {iq.expectedConcepts.map((ec, i) => (
@@ -492,7 +670,6 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
                       ))}
                     </div>
 
-                    {/* Collapsible Answer */}
                     {isRevealed && (
                       <div className="p-3 bg-secondary/60 rounded-xl border border-purple-500/20 text-xs text-foreground space-y-1.5">
                         <span className="font-semibold text-purple-300">Model Answer:</span>
@@ -520,7 +697,7 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
                   setActiveLessonId(prevLesson.lesson.id);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="gap-1.5 text-xs"
+                className="gap-1.5 text-xs border-border bg-secondary/60 text-foreground"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Previous Lesson</span>
@@ -531,14 +708,23 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              onClick={handleCompleteLesson}
-              className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-6 shadow-md cursor-pointer"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isLessonCompleted ? 'Next Lesson' : 'Complete Lesson & Continue'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            {nextLesson ? (
+              <Button
+                onClick={handleCompleteLesson}
+                className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-6 shadow-md cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isLessonCompleted ? 'Next Lesson' : 'Complete Lesson & Continue'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Link href="/dashboard">
+                <Button className="gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-6 shadow-md cursor-pointer">
+                  <Trophy className="w-4 h-4" />
+                  <span>Course Complete 🎉 Return to Dashboard</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </main>

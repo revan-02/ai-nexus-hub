@@ -43,6 +43,7 @@ const AUTH_REQUIRED_PATHS = [
   '/roadmap',
   '/ollama',
   '/create-ai',
+  '/academic',
   '/career',
   '/profile',
   '/progress',

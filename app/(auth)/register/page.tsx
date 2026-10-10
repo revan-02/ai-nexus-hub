@@ -141,12 +141,18 @@ export default function RegisterPage() {
       } catch {}
 
       // Auto sign-in using NextAuth credentials
-      await signIn('credentials', {
-        email: cleanEmail,
-        password,
-        name: fullName.trim(),
-        redirect: false,
-      });
+      let loginSuccess = false;
+      try {
+        const signInRes = await signIn('credentials', {
+          email: cleanEmail,
+          password,
+          name: fullName.trim(),
+          redirect: false,
+        });
+        loginSuccess = !signInRes?.error;
+      } catch (signInErr) {
+        console.warn('[Registration] Auto-signin non-fatal notice:', signInErr);
+      }
 
       // Sync to Firebase Auth & Firestore in background
       try {
@@ -163,15 +169,20 @@ export default function RegisterPage() {
 
       setIsLoading(false);
 
-      setTimeout(() => {
-        try {
-          router.refresh();
-        } catch {}
-        router.push('/dashboard');
-      }, 700);
+      if (loginSuccess) {
+        setSuccessMessage('Account created successfully! Launching your dashboard...');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
+      } else {
+        setSuccessMessage('Account created successfully! Redirecting to sign in...');
+        setTimeout(() => {
+          window.location.href = '/login?registered=true';
+        }, 600);
+      }
     } catch {
       setIsLoading(false);
-      setErrorMessage('An unexpected error occurred during account creation.');
+      setErrorMessage('Registration could not be completed. Please verify your details and try again.');
     }
   };
 

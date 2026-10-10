@@ -25,37 +25,52 @@ export async function POST(request: NextRequest) {
     const digitsOnlyPhone = cleanPhone.replace(/[^0-9]/g, '');
     const last10Digits = digitsOnlyPhone.length >= 10 ? digitsOnlyPhone.slice(-10) : digitsOnlyPhone;
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
+    // 1. Check Username Uniqueness
+    const existingUsername = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: { equals: cleanEmail, mode: 'insensitive' } },
           { username: { equals: formattedUsername, mode: 'insensitive' } },
           { username: { equals: rawUsername, mode: 'insensitive' } },
-          { phone: cleanPhone },
-          ...(digitsOnlyPhone ? [{ phone: digitsOnlyPhone }] : []),
-          ...(last10Digits.length >= 10 ? [{ phone: { contains: last10Digits } }] : []),
         ],
       },
     });
-
-    if (existingUser) {
-      let field = 'email, username, or phone number';
-      if (existingUser.email?.toLowerCase() === cleanEmail) {
-        field = 'email address';
-      } else if (
-        existingUser.username?.toLowerCase() === formattedUsername.toLowerCase() ||
-        existingUser.username?.toLowerCase() === rawUsername.toLowerCase()
-      ) {
-        field = 'username';
-      } else if (existingUser.phone) {
-        field = 'phone number';
-      }
-
+    if (existingUsername) {
       return NextResponse.json(
-        { error: `An account with this ${field} already exists` },
+        { error: 'Username is already taken.' },
         { status: 409 }
       );
+    }
+
+    // 2. Check Email Uniqueness
+    const existingEmail = await prisma.user.findFirst({
+      where: {
+        email: { equals: cleanEmail, mode: 'insensitive' },
+      },
+    });
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: 'Email is already registered.' },
+        { status: 409 }
+      );
+    }
+
+    // 3. Check Phone Uniqueness (if phone is provided)
+    if (cleanPhone) {
+      const existingPhone = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { phone: cleanPhone },
+            ...(digitsOnlyPhone ? [{ phone: digitsOnlyPhone }] : []),
+            ...(last10Digits.length >= 10 ? [{ phone: { contains: last10Digits } }] : []),
+          ],
+        },
+      });
+      if (existingPhone) {
+        return NextResponse.json(
+          { error: 'Mobile number is already registered.' },
+          { status: 409 }
+        );
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -87,14 +102,23 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[Registration Error]:', error);
     if (error?.code === 'P2002') {
-      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(', ') : 'field';
+      const targetStr = Array.isArray(error.meta?.target) ? error.meta.target.join(' ') : String(error.meta?.target || '');
+      if (targetStr.includes('username')) {
+        return NextResponse.json({ error: 'Username is already taken.' }, { status: 409 });
+      }
+      if (targetStr.includes('email')) {
+        return NextResponse.json({ error: 'Email is already registered.' }, { status: 409 });
+      }
+      if (targetStr.includes('phone')) {
+        return NextResponse.json({ error: 'Mobile number is already registered.' }, { status: 409 });
+      }
       return NextResponse.json(
-        { error: `An account with this ${target} already exists. Please log in or use a different value.` },
+        { error: 'An account with this information already exists. Please log in or use different details.' },
         { status: 409 }
       );
     }
     return NextResponse.json(
-      { error: error?.message || 'Registration failed. Please check the provided information and try again.' },
+      { error: 'Registration could not be completed. Please try again.' },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,6 +92,7 @@ export function MicroLearningPlayer({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [speechActive, setSpeechActive] = useState(false);
+  const lastSpokenChapterIdxRef = useRef<number | null>(null);
   const [videoMode, setVideoMode] = useState<'embedded_video' | 'interactive_canvas'>('interactive_canvas');
   const [activeTab, setActiveTab] = useState<'video' | 'simulation' | 'eli5' | 'suggested' | 'industry_gap' | 'math_studio' | 'curriculum'>('video');
 
@@ -400,14 +401,20 @@ export function MicroLearningPlayer({
     }
   };
 
-  // Trigger speech when chapter changes or play state toggles
+  // Trigger speech when chapter changes or play state toggles (plays once per chapter, stops cleanly)
   useEffect(() => {
     if (isPlaying && !isMuted) {
-      speakCurrentChapter(currentChapter.narrationScript);
+      if (lastSpokenChapterIdxRef.current !== currentChapterIdx) {
+        lastSpokenChapterIdxRef.current = currentChapterIdx;
+        speakCurrentChapter(currentChapter.narrationScript);
+      }
     } else {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         setSpeechActive(false);
+      }
+      if (!isPlaying) {
+        lastSpokenChapterIdxRef.current = null;
       }
     }
     return () => {
@@ -415,7 +422,7 @@ export function MicroLearningPlayer({
         window.speechSynthesis.cancel();
       }
     };
-  }, [isPlaying, currentChapterIdx, isMuted, playbackSpeed]);
+  }, [isPlaying, currentChapterIdx, isMuted]);
 
   // Video timer simulation
   useEffect(() => {

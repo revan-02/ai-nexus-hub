@@ -73,6 +73,7 @@ export function NexusSidebar() {
       icon: BookOpen,
       items: [
         { label: 'Courses', href: '/courses', icon: GraduationCap, badge: '28' },
+        { label: 'Academic Tracks', href: '/academic', icon: Sparkles, badge: '7 Tiers' },
         { label: 'My Learning', href: '/roadmap', icon: BookOpen },
       ]
     },
