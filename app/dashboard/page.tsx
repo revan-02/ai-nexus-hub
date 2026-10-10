@@ -91,7 +91,7 @@ export default function DashboardPage() {
   const firstName = displayName ? displayName.split(' ')[0] : '';
 
   const dashboardData = apiResponse?.data;
-  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>('All Levels');
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'beginner');
   const [selectedTierFilter, setSelectedTierFilter] = useState<string>('All Tiers');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVideoCourse, setSelectedVideoCourse] = useState<any | null>(null);
@@ -133,68 +133,52 @@ export default function DashboardPage() {
   const userRoleStr = String((session?.user as { role?: string })?.role || (userProfile as any)?.role || '').toLowerCase();
   const isAdminUser = userRoleStr === 'admin' || userRoleStr === 'super admin' || userRoleStr === 'manager';
 
-  // Merge all 28 mockCoursesList courses with any live progress from API
-  const activeCourseProgressMap = React.useMemo(() => {
-    const map = new Map<string, any>();
-    if (dashboardData?.activeCourses) {
-      dashboardData.activeCourses.forEach((c: any) => map.set(c.id, c));
-    }
-    return map;
-  }, [dashboardData?.activeCourses]);
-
   const allDashboardCourses = React.useMemo(() => {
-    const list: any[] = [];
-    const seen = new Set<string>();
-
-    mockCoursesList.forEach((mc) => {
-      seen.add(mc.id);
-      const live = activeCourseProgressMap.get(mc.id);
-      list.push({
-        id: mc.id,
-        title: mc.title,
-        desc: mc.description,
-        level: mc.level,
-        category: mc.category,
-        academicTier: mc.academicTier,
-        duration: mc.totalHours || live?.duration || '4h 00m',
+    if (dashboardData?.activeCourses && dashboardData.activeCourses.length > 0) {
+      return dashboardData.activeCourses.map((c: any) => ({
+        id: c.id,
+        title: c.title,
+        desc: c.desc || c.description || '',
+        level: c.level || 'Beginner',
+        category: c.category || 'General',
+        academicTier: c.academicTier,
+        duration: c.duration || '4h 00m',
         difficulty:
-          mc.level === 'Beginner'
+          c.difficulty ||
+          (c.level === 'Beginner'
             ? 'Easy'
-            : mc.level === 'Intermediate'
+            : c.level === 'Intermediate'
             ? 'Medium'
-            : 'Hard',
-        progress: live?.progress ?? 0,
-        status: live?.status || 'available',
-        action: live?.action || 'Start Lesson',
-        price: mc.price || 'Free',
-        thumbnailIcon: mc.thumbnailIcon || 'BookOpen',
-      });
-    });
-
-    if (dashboardData?.activeCourses) {
-      dashboardData.activeCourses.forEach((c: any) => {
-        if (!seen.has(c.id)) {
-          list.push({
-            id: c.id,
-            title: c.title,
-            desc: c.desc || c.description || '',
-            level: c.level || 'Beginner',
-            category: c.category || 'General',
-            academicTier: undefined,
-            duration: c.duration || '3h 00m',
-            difficulty: c.difficulty || 'Easy',
-            progress: c.progress ?? 0,
-            status: c.status || 'available',
-            action: c.action || 'Start Lesson',
-            price: 'Free',
-            thumbnailIcon: c.thumbnailIcon || 'BookOpen',
-          });
-        }
-      });
+            : 'Hard'),
+        progress: c.progress ?? 0,
+        status: c.status || 'available',
+        action: c.action || 'Start Lesson',
+        price: c.price || 'Free',
+        thumbnailIcon: c.thumbnailIcon || 'BookOpen',
+      }));
     }
 
-    return list;
-  }, [activeCourseProgressMap, dashboardData?.activeCourses]);
+    return mockCoursesList.map((mc) => ({
+      id: mc.id,
+      title: mc.title,
+      desc: mc.description,
+      level: mc.level,
+      category: mc.category,
+      academicTier: mc.academicTier,
+      duration: mc.totalHours || '4h 00m',
+      difficulty:
+        mc.level === 'Beginner'
+          ? 'Easy'
+          : mc.level === 'Intermediate'
+          ? 'Medium'
+          : 'Hard',
+      progress: 0,
+      status: 'available',
+      action: 'Start Lesson',
+      price: mc.price || 'Free',
+      thumbnailIcon: mc.thumbnailIcon || 'BookOpen',
+    }));
+  }, [dashboardData?.activeCourses]);
 
   const activeCourses = React.useMemo(() => {
     return allDashboardCourses.filter((course) => {
@@ -425,7 +409,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 border-t border-border/50 text-xs">
                   {/* Level Filter */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-semibold text-muted-foreground text-[11px]">Level:</span>
+                    <span className="font-semibold text-muted-foreground text-[11px]">Track Level:</span>
                     {(['All Levels', 'beginner', 'intermediate', 'advanced', 'expert'] as const).map((lvl) => (
                       <button
                         key={lvl}
