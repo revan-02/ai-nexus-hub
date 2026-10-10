@@ -4,7 +4,7 @@ import pg from 'pg';
 
 const connectionString =
   process.env.DATABASE_URL ||
-  'postgresql://amithks@localhost:5432/ai_nexus_db?schema=public';
+  'postgresql://amithks:amithks@localhost:5432/ai_nexus_db?schema=public';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

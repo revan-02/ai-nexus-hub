@@ -1,42 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/auth';
 import { ProjectService } from '@/services';
-import prisma from '@/lib/db/prisma';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// GET /api/projects/[id]/comments — Fetch project reviews / feedback
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
     const { id: projectId } = await params;
-    const body = await request.json();
-    const { text, rating } = body;
-
-    if (!text || !text.trim()) {
-      return NextResponse.json({ error: 'Comment text is required' }, { status: 400 });
-    }
-
-    let userId = session?.user?.id;
-    if (!userId) {
-      const firstUser = await prisma.user.findFirst();
-      if (!firstUser) {
-        return NextResponse.json({ error: 'User authentication required' }, { status: 401 });
-      }
-      userId = firstUser.id;
-    }
-
-    const comment = await ProjectService.createProjectComment(
-      projectId,
-      userId,
-      text.trim(),
-      Number(rating) || 5
+    const project = await ProjectService.getProjectById(projectId);
+    return NextResponse.json({
+      data: project.comments || [],
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: 'Failed to fetch project reviews', details: error?.message || 'Unknown error' },
+      { status: 500 }
     );
+  }
+}
+
+// POST /api/projects/[id]/comments — Submit project review / rating
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: projectId } = await params;
+    const session = await auth();
+    const body = await request.json();
+    const { text, rating = 5 } = body;
+
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return NextResponse.json({ error: 'Review text cannot be empty.' }, { status: 400 });
+    }
+
+    const userId = session?.user?.id || 'usr-1';
+    const comment = await ProjectService.createProjectComment(projectId, userId, text.trim(), Number(rating) || 5);
 
     return NextResponse.json({ data: comment }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Failed to post comment', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to submit review', details: error?.message || 'Unknown error' },
       { status: 500 }
     );
   }

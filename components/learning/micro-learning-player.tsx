@@ -359,7 +359,9 @@ export function MicroLearningPlayer({
   // Speech Audio Narration (Web Speech API)
   const speakCurrentChapter = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+    } catch {}
     if (isMuted) return;
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -372,17 +374,30 @@ export function MicroLearningPlayer({
             v.name.includes('Google') ||
             v.name.includes('Samantha') ||
             v.name.includes('Daniel') ||
-            v.name.includes('Premium'))
+            v.name.includes('Premium') ||
+            v.name.includes('Online'))
       ) || voices.find((v) => v.lang.startsWith('en'));
 
     if (naturalVoice) utterance.voice = naturalVoice;
-    utterance.rate = playbackSpeed * 0.95;
+    utterance.rate = Math.min(1.4, Math.max(0.85, playbackSpeed * 0.95));
     utterance.pitch = 1.0;
     utterance.lang = 'en-US';
     utterance.onstart = () => setSpeechActive(true);
     utterance.onend = () => setSpeechActive(false);
-    utterance.onerror = () => setSpeechActive(false);
-    window.speechSynthesis.speak(utterance);
+    utterance.onerror = (e) => {
+      if (e.error !== 'canceled' && e.error !== 'interrupted') {
+        console.warn('Speech synthesis playback error:', e.error);
+      }
+      setSpeechActive(false);
+    };
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('Audio narration error:', err);
+    }
   };
 
   // Trigger speech when chapter changes or play state toggles

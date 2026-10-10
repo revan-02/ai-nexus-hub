@@ -717,13 +717,16 @@ function RoadmapPageInner() {
                       </span>
                       <div className="space-y-2">
                         {p.projects.map((proj: string) => (
-                          <div
+                          <Link
                             key={proj}
-                            className="p-3 bg-secondary/50 hover:bg-secondary border border-border hover:border-purple-500/30 rounded-2xl font-semibold text-foreground flex items-center justify-between text-xs transition-all group"
+                            href={`/projects?search=${encodeURIComponent(proj)}`}
+                            className="block"
                           >
-                            <span className="group-hover:text-purple-400 transition-colors leading-snug">{proj}</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform" />
-                          </div>
+                            <div className="p-3 bg-secondary/50 hover:bg-secondary border border-border hover:border-purple-500/50 rounded-2xl font-semibold text-foreground flex items-center justify-between text-xs transition-all group cursor-pointer shadow-sm">
+                              <span className="group-hover:text-purple-400 transition-colors leading-snug">{proj}</span>
+                              <ArrowRight className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </Link>
                         ))}
                       </div>
                     </div>

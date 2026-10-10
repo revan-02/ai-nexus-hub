@@ -103,7 +103,7 @@ export function CourseAnimatedVideoModal({
   const [currentTimeSec, setCurrentTimeSec] = useState(15);
   const [durationSec] = useState(240); // 4 minutes video
   const [isMuted, setIsMuted] = useState(false);
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isVoiceActive, setIsVoiceActive] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'simulator' | 'code' | 'telemetry' | 'blueprint'>('simulator');
   const [copiedCode, setCopiedCode] = useState(false);
@@ -174,8 +174,21 @@ export function CourseAnimatedVideoModal({
         try {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(`${activeChapter.title}. ${activeChapter.subtitle}`);
-          utterance.rate = Math.min(1.5, Math.max(0.8, playbackSpeed || 1));
+          const voices = window.speechSynthesis.getVoices();
+          const selectedVoice =
+            voices.find(
+              (v) =>
+                v.lang.startsWith('en') &&
+                (v.name.includes('Natural') ||
+                  v.name.includes('Google') ||
+                  v.name.includes('Samantha') ||
+                  v.name.includes('Daniel') ||
+                  v.name.includes('Online'))
+            ) || voices.find((v) => v.lang.startsWith('en'));
+          if (selectedVoice) utterance.voice = selectedVoice;
+          utterance.rate = Math.min(1.4, Math.max(0.85, (playbackSpeed || 1) * 0.95));
           utterance.pitch = 1.0;
+          utterance.volume = isMuted ? 0 : 1;
           utterance.onerror = (e) => {
             if (e.error !== 'canceled' && e.error !== 'interrupted') {
               console.warn('Speech synthesis notice:', e.error);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { NexusShell } from '@/components/nexus/nexus-shell';
 import { Card } from '@/components/ui/card';
@@ -43,27 +43,28 @@ interface LeaderboardEntry {
 
 // ─── Static Data ──────────────────────────────────────────────────────────────
 
-const TODAYS_CHALLENGE: DailyChallenge = {
-  id: 'dc-2026-09-02',
-  date: 'Sep 02, 2026',
-  title: 'Transformer Self-Attention Complexity',
-  category: 'Deep Learning',
-  difficulty: 'Hard',
-  xpReward: 150,
-  streakBonus: 50,
-  timeLimit: 90,
-  questionPrompt:
-    "In a standard Transformer's self-attention mechanism with sequence length n and model dimension d, what is the time AND memory complexity of computing the full attention matrix?",
-  options: [
-    'O(n·d) time, O(n) memory — linear in sequence length',
-    'O(n²·d) time, O(n²) memory — quadratic bottleneck',
-    'O(n·d²) time, O(d²) memory — quadratic in dimension',
-    'O(n log n·d) time, O(n log n) memory — log-linear',
-  ],
-  correctIndex: 1,
-  explanation:
-    'Self-attention computes QKᵀ where Q, K ∈ ℝⁿˣᵈ, producing an n×n attention matrix. This requires O(n²·d) multiply-accumulate operations and O(n²) memory to store all pairwise attention scores. This quadratic bottleneck is exactly why Flash Attention and Longformer were invented — to reduce memory from O(n²) to O(n) using kernel tiling and sparse patterns respectively.',
-  codeSnippet: `# Standard Self-Attention — O(n²·d) time, O(n²) memory
+const ALL_DAILY_CHALLENGES: DailyChallenge[] = [
+  {
+    id: 'dc-2026-09-02',
+    date: 'Sep 02, 2026',
+    title: 'Transformer Self-Attention Complexity',
+    category: 'Deep Learning',
+    difficulty: 'Hard',
+    xpReward: 150,
+    streakBonus: 50,
+    timeLimit: 90,
+    questionPrompt:
+      "In a standard Transformer's self-attention mechanism with sequence length n and model dimension d, what is the time AND memory complexity of computing the full attention matrix?",
+    options: [
+      'O(n·d) time, O(n) memory — linear in sequence length',
+      'O(n²·d) time, O(n²) memory — quadratic bottleneck',
+      'O(n·d²) time, O(d²) memory — quadratic in dimension',
+      'O(n log n·d) time, O(n log n) memory — log-linear',
+    ],
+    correctIndex: 1,
+    explanation:
+      'Self-attention computes QKᵀ where Q, K ∈ ℝⁿˣᵈ, producing an n×n attention matrix. This requires O(n²·d) multiply-accumulate operations and O(n²) memory to store all pairwise attention scores. This quadratic bottleneck is exactly why Flash Attention and Longformer were invented — to reduce memory from O(n²) to O(n) using kernel tiling and sparse patterns respectively.',
+    codeSnippet: `# Standard Self-Attention — O(n²·d) time, O(n²) memory
 import torch, math
 
 def self_attention(Q, K, V):
@@ -72,17 +73,70 @@ def self_attention(Q, K, V):
     scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(d_k)
     attn   = torch.softmax(scores, dim=-1)   # O(n²) memory
     return torch.matmul(attn, V)             # (n, d) output`,
-  tags: ['Transformers', 'Attention', 'Complexity', 'NLP'],
-};
+    tags: ['Transformers', 'Attention', 'Complexity', 'NLP'],
+  },
+  {
+    id: 'dc-2026-09-01',
+    date: 'Sep 01, 2026',
+    title: 'Backpropagation Vector Matrix Chain Rule',
+    category: 'Mathematics & Neural Nets',
+    difficulty: 'Medium',
+    xpReward: 120,
+    streakBonus: 40,
+    timeLimit: 75,
+    questionPrompt:
+      'Given an affine layer z = Wx + b and scalar loss L, what is the exact gradient of the loss with respect to weight matrix W?',
+    options: [
+      '∂L/∂W = (∂L/∂z)ᵀ x',
+      '∂L/∂W = (∂L/∂z) xᵀ',
+      '∂L/∂W = x (∂L/∂z)ᵀ',
+      '∂L/∂W = (∂L/∂z) ⊙ x',
+    ],
+    correctIndex: 1,
+    explanation:
+      'By the multivariable chain rule, ∂L/∂W_ij = (∂L/∂z_i) * (∂z_i/∂W_ij) = (∂L/∂z_i) * x_j. In matrix notation across all entries, this is the outer product (∂L/∂z) xᵀ.',
+    codeSnippet: `# Matrix Calculus in PyTorch
+import torch
 
-const LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, name: 'Priya Sharma',  avatar: 'PS', score: 200, timeMs: 12340, streak: 47 },
-  { rank: 2, name: 'Arjun Mehta',   avatar: 'AM', score: 200, timeMs: 15890, streak: 31 },
-  { rank: 3, name: 'You',           avatar: 'ME', score: 200, timeMs: 18500, streak: 12, isYou: true },
-  { rank: 4, name: 'Divya Nair',    avatar: 'DN', score: 150, timeMs: 22100, streak: 8  },
-  { rank: 5, name: 'Rahul Gupta',   avatar: 'RG', score: 150, timeMs: 28400, streak: 5  },
-  { rank: 6, name: 'Sneha Iyer',    avatar: 'SI', score: 100, timeMs: 35600, streak: 22 },
-  { rank: 7, name: 'Karan Patel',   avatar: 'KP', score: 100, timeMs: 41200, streak: 3  },
+x = torch.randn(4, requires_grad=True)
+W = torch.randn(3, 4, requires_grad=True)
+z = W @ x
+loss = z.sum()
+loss.backward()
+# W.grad equals torch.outer(torch.ones(3), x)`,
+    tags: ['Backprop', 'Chain Rule', 'Linear Algebra', 'PyTorch'],
+  },
+  {
+    id: 'dc-2026-08-31',
+    date: 'Aug 31, 2026',
+    title: 'LoRA Rank Decomposition Weight Initialization',
+    category: 'LLM Fine-Tuning',
+    difficulty: 'Hard',
+    xpReward: 160,
+    streakBonus: 50,
+    timeLimit: 90,
+    questionPrompt:
+      'In Low-Rank Adaptation (LoRA), why is matrix B initialized to zero while matrix A is initialized with Gaussian random noise N(0, σ²)?',
+    options: [
+      'To ensure gradients do not explode during the first forward pass',
+      'To make ΔW = (α/r)·B·A equal to 0 at the start of fine-tuning so model outputs match pre-trained base model exactly',
+      'Because matrix B cannot have non-zero eigenvalues in low rank spaces',
+      'To avoid allocating GPU VRAM until the second epoch',
+    ],
+    correctIndex: 1,
+    explanation:
+      'Initializing B to 0 guarantees that ΔW = B·A = 0 at step 0. This ensures the fine-tuned model starts with the exact behavior and accuracy of the frozen base model W_0 without any initial degradation.',
+    tags: ['LoRA', 'PEFT', 'Weights', 'LLMs'],
+  },
+];
+
+const BASE_LEADERBOARD: Omit<LeaderboardEntry, 'rank'>[] = [
+  { name: 'Priya Sharma',  avatar: 'PS', score: 200, timeMs: 12340, streak: 47 },
+  { name: 'Arjun Mehta',   avatar: 'AM', score: 195, timeMs: 15890, streak: 31 },
+  { name: 'Divya Nair',    avatar: 'DN', score: 180, timeMs: 22100, streak: 8  },
+  { name: 'Rahul Gupta',   avatar: 'RG', score: 150, timeMs: 28400, streak: 5  },
+  { name: 'Sneha Iyer',    avatar: 'SI', score: 130, timeMs: 35600, streak: 22 },
+  { name: 'Karan Patel',   avatar: 'KP', score: 100, timeMs: 41200, streak: 3  },
 ];
 
 const HISTORY = [
@@ -147,7 +201,8 @@ function NextChallengeClock() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DailyChallengePage() {
-  const ch = TODAYS_CHALLENGE;
+  const [activeChallengeIdx, setActiveChallengeIdx] = useState(0);
+  const ch = ALL_DAILY_CHALLENGES[activeChallengeIdx] || ALL_DAILY_CHALLENGES[0];
   const [phase, setPhase]     = useState<'landing' | 'active' | 'result'>('landing');
   const [picked, setPicked]   = useState<number | null>(null);
   const [submitted, setSubmit] = useState(false);
@@ -164,6 +219,8 @@ export default function DailyChallengePage() {
   const beginChallenge = useCallback(() => {
     setPhase('active');
     setTimeLeft(ch.timeLimit);
+    setPicked(null);
+    setSubmit(false);
     startRef.current = Date.now();
     ivRef.current = setInterval(() => {
       setTimeLeft(prev => {
@@ -193,6 +250,30 @@ export default function DailyChallengePage() {
   const tClr  = pct > 50 ? '#10b981' : pct > 20 ? '#f59e0b' : '#ef4444';
   const bonus = correct ? Math.floor((timeLeft / ch.timeLimit) * ch.streakBonus) : 0;
   const xpEarned = correct ? ch.xpReward + bonus : 0;
+
+  // Calculate dynamic leaderboard ranking
+  const dynamicLeaderboard = useMemo(() => {
+    const list: LeaderboardEntry[] = [
+      ...BASE_LEADERBOARD.map((item, idx) => ({ ...item, rank: idx + 1 })),
+      {
+        rank: 999,
+        name: 'You',
+        avatar: 'ME',
+        score: xpEarned,
+        timeMs: elapsedMs || 25000,
+        streak: 12 + (correct ? 1 : 0),
+        isYou: true,
+      },
+    ];
+    // Sort by score descending, then by timeMs ascending
+    list.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.timeMs - b.timeMs;
+    });
+    return list.map((item, idx) => ({ ...item, rank: idx + 1 }));
+  }, [xpEarned, elapsedMs, correct]);
+
+  const userRank = dynamicLeaderboard.find((e) => e.isYou)?.rank || 4;
 
   const share = () => {
     const txt = [
@@ -243,12 +324,34 @@ export default function DailyChallengePage() {
                 <span className="flex items-center gap-1.5 text-emerald-300"><Timer className="w-4 h-4" /> {ch.timeLimit}s limit</span>
               </div>
 
+              <div className="space-y-2 pt-2">
+                <span className="text-xs font-bold text-zinc-400 block font-mono">Select Available Challenge:</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {ALL_DAILY_CHALLENGES.map((challenge, idx) => (
+                    <button
+                      key={challenge.id}
+                      onClick={() => {
+                        setActiveChallengeIdx(idx);
+                        setTimeLeft(challenge.timeLimit);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        activeChallengeIdx === idx
+                          ? 'bg-amber-500 text-zinc-900 border-amber-400 shadow-md shadow-amber-900/30'
+                          : 'bg-secondary/60 text-muted-foreground border-border hover:bg-secondary'
+                      }`}
+                    >
+                      {challenge.title} ({challenge.difficulty})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <Button
                 id="start-daily-challenge-btn"
                 onClick={beginChallenge}
                 className="w-fit bg-amber-500 hover:bg-amber-400 text-zinc-900 font-extrabold text-base px-8 h-12 rounded-2xl shadow-lg shadow-amber-900/40 gap-2 transition-all hover:scale-105 cursor-pointer"
               >
-                <Swords className="w-5 h-5" /> Start Today&apos;s Challenge
+                <Swords className="w-5 h-5" /> Start &quot;{ch.title}&quot;
               </Button>
             </div>
 
@@ -256,7 +359,7 @@ export default function DailyChallengePage() {
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 flex-shrink-0 w-full lg:w-auto">
               {[
                 { label: 'Current Streak', val: '12 🔥', c: 'text-amber-400'   },
-                { label: 'Global Rank',    val: '#3',    c: 'text-purple-400'  },
+                { label: 'Your Rank',      val: `#${userRank}`, c: 'text-purple-400'  },
                 { label: 'Completed',      val: '47',    c: 'text-emerald-400' },
                 { label: 'Accuracy',       val: '78%',   c: 'text-blue-400'    },
               ].map(s => (
@@ -326,7 +429,7 @@ export default function DailyChallengePage() {
 
           {tab === 'board' && (
             <Card className="p-4 bg-card border-border rounded-3xl divide-y divide-border/50">
-              {LEADERBOARD.map(e => (
+              {dynamicLeaderboard.map(e => (
                 <div key={e.rank} id={`lb-${e.rank}`} className={`flex items-center gap-3 py-3 first:pt-0 last:pb-0 rounded-xl px-2 transition-all ${e.isYou ? 'bg-amber-500/8' : ''}`}>
                   <span className="text-base w-8 text-center font-bold">{medal(e.rank)}</span>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-[10px] font-extrabold text-white flex-shrink-0">{e.avatar}</div>
@@ -501,7 +604,7 @@ export default function DailyChallengePage() {
             {[
               { label: 'XP Earned',  val: `+${xpEarned}`, c: 'text-amber-400'  },
               { label: 'New Streak', val: `${12 + (correct ? 1 : 0)} 🔥`, c: 'text-orange-400' },
-              { label: 'Your Rank',  val: correct ? '#3' : '—', c: 'text-purple-400' },
+              { label: 'Your Rank',  val: `#${userRank}`, c: 'text-purple-400' },
             ].map(s => (
               <div key={s.label} className="p-3 rounded-2xl bg-card/80 border border-border">
                 <div className={`text-xl font-extrabold font-mono ${s.c}`}>{s.val}</div>
@@ -560,7 +663,7 @@ export default function DailyChallengePage() {
             <Trophy className="w-4 h-4 text-amber-400" /> Today&apos;s Leaderboard
           </h3>
           <div className="divide-y divide-border/50">
-            {LEADERBOARD.map(e => (
+            {dynamicLeaderboard.map(e => (
               <div key={e.rank} className={`flex items-center gap-3 py-3 first:pt-0 last:pb-0 px-2 rounded-xl ${e.isYou ? 'bg-amber-500/8' : ''}`}>
                 <span className="text-base w-8 text-center font-bold">{medal(e.rank)}</span>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-[10px] font-extrabold text-white flex-shrink-0">{e.avatar}</div>

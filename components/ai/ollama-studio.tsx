@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useSafeNexus } from '@/context/nexus-context';
 import { FREE_OLLAMA_MODELS, FreeOllamaModel } from '@/lib/ai/ollama-client';
 import { MarkdownRenderer } from '@/components/ai/markdown-renderer';
@@ -104,14 +105,24 @@ const PRESET_TRAINING_DATASETS: Record<string, { name: string; system: string; s
 
 export function OllamaStudio() {
   const nexus = useSafeNexus();
+  const searchParams = useSearchParams();
+  const modelQuery = searchParams?.get('model');
   const isAiBotEnabled = nexus?.isAiBotEnabled ?? true;
   const [activeTab, setActiveTab] = useState<'chat' | 'trainer' | 'models' | 'installation'>('chat');
 
   // --- Chatbot State ---
-  const [selectedModel, setSelectedModel] = useState<FreeOllamaModel>(FREE_OLLAMA_MODELS[0]);
+  const [selectedModel, setSelectedModel] = useState<FreeOllamaModel>(() => {
+    if (modelQuery) {
+      const match = FREE_OLLAMA_MODELS.find(
+        (m) => m.id.toLowerCase() === modelQuery.toLowerCase() || modelQuery.toLowerCase().includes(m.id.toLowerCase())
+      );
+      if (match) return match;
+    }
+    return FREE_OLLAMA_MODELS[0];
+  });
   const [inputMessage, setInputMessage] = useState<string>('');
   const [systemPrompt, setSystemPrompt] = useState<string>(
-    'You are a high-speed AI assistant and expert computer science tutor. Provide accurate, structured, and insightful answers with markdown formulas and code blocks.'
+    'You are RevBodh & AI Nexus Tutor, a student-friendly, clear, and comprehensive AI educator. Always explain complex AI, math, and engineering concepts step-by-step using simple analogies, real-world practical examples, clear mathematical derivations ($...$ and $$...$$), and clean commented code. Avoid abrupt one-sentence answers; guide the student from intuition to technical mastery.'
   );
   const [temperature, setTemperature] = useState<number>(0.7);
   const [topP, setTopP] = useState<number>(0.9);

@@ -373,15 +373,25 @@ export default function ModelComparisonPage() {
                       <Button
                         variant="outline"
                         onClick={() => setActiveDetailModel(model)}
-                        className="w-full text-xs h-8 rounded-xl border-border hover:bg-secondary cursor-pointer"
+                        className="flex-1 text-xs h-8 rounded-xl border-border hover:bg-secondary cursor-pointer"
                       >
-                        View Full Specs
+                        Specs
                       </Button>
+                      <Link
+                        href={`/ollama?model=${model.id}`}
+                        className="flex-1"
+                      >
+                        <Button
+                          className="w-full text-xs h-8 rounded-xl bg-purple-600 hover:bg-purple-500 text-white cursor-pointer"
+                        >
+                          Chat Model
+                        </Button>
+                      </Link>
                       {model.ollamaCommand && (
                         <Button
                           variant="ghost"
                           onClick={() => handleCopyCode(model.id, model.ollamaCommand!)}
-                          className="h-8 px-2.5 rounded-xl border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer"
+                          className="h-8 px-2.5 rounded-xl border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer shrink-0"
                           title="Copy Ollama CLI command"
                         >
                           {copiedId === model.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

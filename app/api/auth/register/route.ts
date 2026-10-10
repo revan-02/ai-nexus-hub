@@ -84,9 +84,17 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ data: user }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('[Registration Error]:', error);
+    if (error?.code === 'P2002') {
+      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(', ') : 'field';
+      return NextResponse.json(
+        { error: `An account with this ${target} already exists. Please log in or use a different value.` },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Registration failed', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: error?.message || 'Registration failed. Please check the provided information and try again.' },
       { status: 500 }
     );
   }

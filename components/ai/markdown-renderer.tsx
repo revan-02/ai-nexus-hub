@@ -37,7 +37,11 @@ function preprocessMath(raw: string): string {
         // Normalize single-line $$ ... $$ to display math block with newlines
         .replace(/\$\$([\s\S]*?)\$\$/g, (_, formula) => `\n\n$$\n${formula.trim()}\n$$\n\n`)
         // Normalize LaTeX inline math \( ... \) to $ ... $
-        .replace(/\\\(([\s\S]*?)\\\)/g, (_, formula) => `$${formula.trim()}$`);
+        .replace(/\\\(([\s\S]*?)\\\)/g, (_, formula) => `$${formula.trim()}$`)
+        // Ensure inline math has no space right inside dollar signs, e.g. $ W $ -> $W$
+        .replace(/\$\s+([^$\n]+?)\s+\$/g, '$$$1$$')
+        .replace(/\$\s+([^$\n]+?)\$/g, '$$$1$$')
+        .replace(/\$([^$\n]+?)\s+\$/g, '$$$1$$');
     })
     .join('');
 }
@@ -102,7 +106,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
     <div className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed [&_.katex-display]:overflow-x-auto [&_.katex-display]:py-2 [&_.katex-display]:my-2 [&_.katex-display]:scrollbar-none">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: true }]]}
         rehypePlugins={[
           [rehypeKatex, { output: 'htmlAndMathml', strict: false, throwOnError: false }]
         ]}
