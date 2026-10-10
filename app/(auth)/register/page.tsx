@@ -180,9 +180,12 @@ export default function RegisterPage() {
           window.location.href = '/login?registered=true';
         }, 600);
       }
-    } catch {
+    } catch (err: any) {
+      console.error('[Registration Catch]:', err);
       setIsLoading(false);
-      setErrorMessage('Registration could not be completed. Please verify your details and try again.');
+      setErrorMessage(
+        err?.message || 'Registration could not be completed. Please verify your details or sign in directly.'
+      );
     }
   };
 

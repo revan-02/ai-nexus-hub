@@ -11,11 +11,21 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
+  const isSsl =
+    connectionString.includes('sslmode=require') ||
+    connectionString.includes('ssl=true') ||
+    connectionString.includes('neon.tech') ||
+    connectionString.includes('supabase.co') ||
+    (process.env.NODE_ENV === 'production' &&
+      !connectionString.includes('localhost') &&
+      !connectionString.includes('127.0.0.1'));
+
   const pool = new pg.Pool({
     connectionString,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 15000,
+    ssl: isSsl ? { rejectUnauthorized: false } : undefined,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
