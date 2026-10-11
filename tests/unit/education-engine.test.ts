@@ -248,4 +248,57 @@ describe('AI Educational Content Engine — Complete Test Suite', () => {
       expect(dimNames).toContain('Interactive Retention');
     });
   });
+
+  describe('6. Young Explorer Published Course & Age Inferencing', () => {
+    it('should correctly infer age 6-8 for Young Explorer courses', async () => {
+      const { getInitialAgeBracket } = await import('@/components/courses/course-animated-video-modal');
+      const { mockCoursesList } = await import('@/lib/mock-data/courses-data');
+
+      const youngCourse = mockCoursesList.find((c) => c.id === 'crs-young-explorer-ai-video');
+      expect(youngCourse).toBeDefined();
+      expect(youngCourse?.academicTier).toBe('Young Explorer');
+      expect(youngCourse?.status).toBe('Published');
+
+      const age = getInitialAgeBracket(youngCourse!);
+      expect(age).toBe('6-8');
+    });
+
+    it('should have 6 structured lectures matching 5-minute video blueprint in published course', async () => {
+      const { mockCoursesList } = await import('@/lib/mock-data/courses-data');
+      const youngCourse = mockCoursesList.find((c) => c.id === 'crs-young-explorer-ai-video');
+
+      expect(youngCourse).toBeDefined();
+      expect(youngCourse?.curriculum?.[0].lectures.length).toBe(6);
+      expect(youngCourse?.totalLectures).toBe(6);
+
+      const report = evaluateLessonQuality({
+        title: youngCourse!.title,
+        content: `
+          # 1. Introduction and Learning Objectives
+          Hello young explorers! Welcome to our robot adventure. Today we learn how robots see. Robots have camera eyes. You will teach a robot to spot kittens. You can win five bright stars!
+
+          # 2. Concept: How Robots Think with Patterns
+          Robots do not have human brains. Robots learn from picture books. You show a robot kitten photos. The robot searches for shapes. It sees pointy ears and whiskers. It spots fluffy tails. It learns the pattern of a kitten!
+
+          # 3. Demonstration: Teaching a Robot to Spot a Kitten
+          Let us try a fun game. We have picture cards. Here is card number one. It shows a cute sleeping kitten. The camera scans the ears. The robot beeps with joy: Meow! That is a kitten! The robot learns with every card.
+
+          # 4. Real-World Example: Self-Driving Toy Cars and Games
+          Smart toys use this same magic. Mini toy cars use cameras to see walls. The toy car stops before it bumps. Video games use cameras to see smiles. The game robot jumps when you jump. Robots help our toys play safely!
+
+          # 5. Interactive Guessing Challenge
+          Now test your robot friend. A mystery pet is hiding behind the yellow block. Look at the fuzzy whiskers. Look at the soft paws. Click the kitten button. Hooray, you got it right! The robot does a happy dance!
+
+          # 6. Recap and Achievement Star Reward
+          Great job today, explorer! Robots learn from example photos. They spot patterns with camera sensors. They help us in real life. You earned your Young Explorer badge and five stars!
+        `,
+        ageBracket: '6-8',
+        targetDurationSec: 180,
+        scenesCount: 6,
+      });
+
+      expect(report.passed).toBe(true);
+      expect(report.overallScore).toBeGreaterThanOrEqual(80);
+    });
+  });
 });

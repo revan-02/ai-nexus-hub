@@ -199,6 +199,14 @@ export class VoiceSyncEngine {
     this.setState('playing');
   }
 
+  public handlePlaybackError(e?: any): void {
+    if (e && e.error !== 'canceled' && e.error !== 'interrupted') {
+      console.warn('[VoiceSyncEngine] Speech notice:', e.error);
+    }
+    this.setState('error');
+    this.currentUtterance = null;
+  }
+
   public cancelPlayback(): void {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {

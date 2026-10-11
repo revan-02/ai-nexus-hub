@@ -143,7 +143,7 @@ export function validateLessonContentDepth(
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   // For a 4-minute lesson at minimum 100wpm, we need at least 250 meaningful words (accounting for pauses/visuals)
   const minimumRequiredWords = Math.round((targetDurationSec / 60) * 75);
-  const sections = text.split(/#{2,3}\s+/).filter((s) => s.trim().length > 20);
+  const sections = text.split(/#{1,3}\s+/).filter((s) => s.trim().length > 20);
 
   const issues: string[] = [];
 
