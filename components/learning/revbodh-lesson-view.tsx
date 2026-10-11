@@ -30,7 +30,6 @@ import { RevBodhCourse, RevBodhModule, RevBodhLesson } from '@/types/revbodh-cou
 import { RevBodhCourseService, UserCourseProgressData } from '@/services/revbodh-course-service';
 import { RevBodhCodeSandbox } from '@/components/learning/revbodh-code-sandbox';
 import { RevBodhLessonQuiz } from '@/components/learning/revbodh-lesson-quiz';
-import { RevBodhAITutor } from '@/components/learning/revbodh-ai-tutor';
 import { MarkdownRenderer } from '@/components/ai/markdown-renderer';
 import { LessonAudioPlayer } from '@/components/learning/lesson-audio-player';
 
@@ -682,9 +681,6 @@ export function RevBodhLessonView({ course, initialLessonId }: RevBodhLessonView
             </div>
           </Card>
         )}
-
-        {/* ── SECTION I: ASK REVBODH AI TUTOR ── */}
-        <RevBodhAITutor lesson={currentLesson} moduleTitle={activeModule.title} />
 
         {/* ── BOTTOM ACTION BAR: COMPLETION & NAVIGATION ── */}
         <div className="p-6 bg-gradient-to-r from-card via-secondary/40 to-card border border-border rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">

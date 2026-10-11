@@ -71,6 +71,21 @@ const nextConfig: NextConfig = {
         destination: '/admin',
         permanent: false,
       },
+      {
+        source: '/revbodh',
+        destination: '/dashboard',
+        permanent: false,
+      },
+      {
+        source: '/revbodh-tutor',
+        destination: '/dashboard',
+        permanent: false,
+      },
+      {
+        source: '/tutor',
+        destination: '/dashboard',
+        permanent: false,
+      },
     ];
   },
 };

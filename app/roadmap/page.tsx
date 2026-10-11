@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useNexus, AcademicTier } from '@/context/nexus-context';
 import { NexusShell } from '@/components/nexus/nexus-shell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -83,7 +84,19 @@ function RoadmapPageInner() {
   };
 
   // --- Tier-specific Learning Roadmaps ---
-  const [selectedRoadmapTier, setSelectedRoadmapTier] = useState('undergraduate');
+  const { academicTier, setAcademicTier } = useNexus();
+  const [selectedRoadmapTier, setSelectedRoadmapTier] = useState<string>(academicTier || 'undergraduate');
+
+  useEffect(() => {
+    if (academicTier) {
+      setSelectedRoadmapTier(academicTier);
+    }
+  }, [academicTier]);
+
+  const handleSelectTier = (tierKey: string) => {
+    setSelectedRoadmapTier(tierKey);
+    setAcademicTier(tierKey as AcademicTier);
+  };
 
   const tierRoadmaps: Record<string, any[]> = {
     'young-explorer': [
@@ -640,7 +653,7 @@ function RoadmapPageInner() {
               {Object.entries(tierLabels).map(([key, tier]) => (
                 <button
                   key={key}
-                  onClick={() => setSelectedRoadmapTier(key)}
+                  onClick={() => handleSelectTier(key)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                     selectedRoadmapTier === key
                       ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-900/30'
