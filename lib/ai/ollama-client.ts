@@ -7,7 +7,7 @@ export interface FreeOllamaModel {
   quantization: string;
   description: string;
   license: string;
-  family: 'DeepSeek' | 'Llama' | 'Qwen' | 'Phi' | 'Mistral' | 'Gemma';
+  family: 'DeepSeek' | 'Llama' | 'Qwen' | 'Phi' | 'Mistral' | 'Gemma' | 'Nemotron';
   isInstalled?: boolean;
   pullCommand: string;
 }
@@ -97,6 +97,18 @@ export const FREE_OLLAMA_MODELS: FreeOllamaModel[] = [
     license: 'Gemma Open Terms (Free)',
     family: 'Gemma',
     pullCommand: 'ollama run gemma2:9b',
+  },
+  {
+    id: 'nemotron-mini',
+    name: 'NVIDIA Nemotron-Mini (4B Edge AI)',
+    tag: 'nemotron-mini:4b',
+    parameterSize: '4B (Compact SLM)',
+    contextWindow: '4K / 128K tokens',
+    quantization: 'Q4_K_M',
+    description: 'NVIDIA custom compact model optimized for low memory footprints, on-device agentic tool use, and efficient RAG inference.',
+    license: 'NVIDIA Open Model License (Free)',
+    family: 'Nemotron',
+    pullCommand: 'ollama run nemotron-mini:4b',
   },
 ];
 
