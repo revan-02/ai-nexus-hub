@@ -8,6 +8,7 @@ export interface CourseLecture {
   duration: string;
   type: 'video' | 'quiz' | 'coding_lab' | 'reading';
   isPreview?: boolean;
+  videoUrl?: string;
 }
 
 export interface CourseSection {
@@ -42,6 +43,7 @@ export interface CourseItem {
   expectedOutcomes?: string[];
   prerequisites?: string[];
   includes?: CourseIncludes;
+  videoUrl?: string;
   curriculum?: CourseSection[];
   instructor: {
     id?: string;
@@ -293,7 +295,7 @@ export const mockCoursesList: CourseItem[] = [
         title: '5-Minute Interactive Animated Video Lesson',
         totalTime: '5.0 mins',
         lectures: [
-          { id: 'lec-1', title: '1. Introduction: How Robots See & Learn', duration: '0:20', type: 'video', isPreview: true },
+          { id: 'lec-1', title: '1. Introduction: How Robots See & Learn', duration: '0:20', type: 'video', isPreview: true, videoUrl: '/videos/young-explorer-gemini-ai.mp4' },
           { id: 'lec-2', title: '2. Concept: How Computers Think with Patterns', duration: '1:00', type: 'video' },
           { id: 'lec-3', title: '3. Demonstration: Teaching a Robot to Spot a Kitten', duration: '1:30', type: 'video' },
           { id: 'lec-4', title: '4. Real-World Fun: Self-Driving Toy Cars & Games', duration: '1:10', type: 'video' },
@@ -302,6 +304,7 @@ export const mockCoursesList: CourseItem[] = [
         ],
       },
     ],
+    videoUrl: '/videos/young-explorer-gemini-ai.mp4',
     instructor: {
       id: 'inst-priya-sharma',
       name: 'Ms. Priya Sharma (Child Learning Specialist)',

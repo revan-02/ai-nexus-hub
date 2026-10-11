@@ -47,7 +47,11 @@ import {
   Layers3,
   ExternalLink,
   Tv,
-  Save
+  Save,
+  Share2,
+  Download,
+  Subtitles,
+  Film
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -142,8 +146,22 @@ export function CourseAnimatedVideoModal({
   const [activeTab, setActiveTab] = useState<'simulator' | 'code' | 'telemetry' | 'scenes' | 'pedagogy'>('simulator');
   const [copiedCode, setCopiedCode] = useState(false);
 
+  // Video URL detection (Gemini Generated Video)
+  const activeVideoUrl =
+    course?.videoUrl ||
+    (course?.id === 'crs-young-explorer-ai-video' || (course?.academicTier || '').toLowerCase().includes('young explorer')
+      ? '/videos/young-explorer-gemini-ai.mp4'
+      : undefined);
+
   // Video Mode: Interactive Animated Simulation Canvas vs Curated HD Masterclass Video
-  const [videoStageMode, setVideoStageMode] = useState<'animated_canvas' | 'hd_masterclass'>('animated_canvas');
+  const [videoStageMode, setVideoStageMode] = useState<'animated_canvas' | 'hd_masterclass'>(() =>
+    activeVideoUrl ? 'hd_masterclass' : 'animated_canvas'
+  );
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [showCaptions, setShowCaptions] = useState(true);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [embedFallback, setEmbedFallback] = useState(false);
 
   // Video AI Generation state
@@ -203,10 +221,10 @@ export function CourseAnimatedVideoModal({
     }
   }, [course]);
 
-  // Sync animation step with video time
+  // Sync animation step with video time (when in canvas mode)
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isPlaying && isOpen && !isGeneratingVideo) {
+    if (isPlaying && isOpen && !isGeneratingVideo && videoStageMode === 'animated_canvas') {
       const speed = Math.max(0.5, Math.min(3, playbackSpeed || 1));
       interval = setInterval(() => {
         setCurrentTimeSec((prev) => {
@@ -220,11 +238,38 @@ export function CourseAnimatedVideoModal({
       }, 1000 / speed);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, isOpen, durationSec, playbackSpeed, isGeneratingVideo]);
+  }, [isPlaying, isOpen, durationSec, playbackSpeed, isGeneratingVideo, videoStageMode]);
 
-  // Voice narration speech synthesis (speaks ONLY when transitioning to a new chapter with loop prevention)
+  // Autoplay video when modal opens in video mode
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && videoStageMode === 'hd_masterclass' && videoRef.current) {
+      videoRef.current.play().catch(() => {
+        setIsPlaying(false);
+      });
+    }
+  }, [isOpen, videoStageMode]);
+
+  // HTML5 Video Event Handlers for Gemini Player
+  const handleVideoTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTimeSec(Math.floor(videoRef.current.currentTime));
+      setAnimStep((prev) => (prev + 1) % 4);
+    }
+  };
+
+  const handleVideoLoadedMetadata = () => {
+    if (videoRef.current && videoRef.current.duration) {
+      setDurationSec(Math.floor(videoRef.current.duration));
+    }
+  };
+
+  const handleVideoPlay = () => setIsPlaying(true);
+  const handleVideoPause = () => setIsPlaying(false);
+  const handleVideoEnded = () => setIsPlaying(false);
+
+  // Voice narration speech synthesis (speaks ONLY when transitioning to a new chapter with loop prevention in canvas mode)
+  useEffect(() => {
+    if (!isOpen || videoStageMode === 'hd_masterclass') {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         try {
           window.speechSynthesis.cancel();
@@ -390,16 +435,83 @@ export function CourseAnimatedVideoModal({
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSec = Number(e.target.value);
     setCurrentTimeSec(newSec);
+    if (videoRef.current && videoStageMode === 'hd_masterclass') {
+      videoRef.current.currentTime = newSec;
+    }
     lastSpokenChapterTitleRef.current = null;
   };
 
   const handleTogglePlay = () => {
-    if (currentTimeSec >= durationSec) {
-      setCurrentTimeSec(0);
-      lastSpokenChapterTitleRef.current = null;
-      setIsPlaying(true);
+    if (videoStageMode === 'hd_masterclass' && videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        if (currentTimeSec >= durationSec) {
+          videoRef.current.currentTime = 0;
+          setCurrentTimeSec(0);
+        }
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
     } else {
-      setIsPlaying((prev) => !prev);
+      if (currentTimeSec >= durationSec) {
+        setCurrentTimeSec(0);
+        lastSpokenChapterTitleRef.current = null;
+        setIsPlaying(true);
+      } else {
+        setIsPlaying((prev) => !prev);
+      }
+    }
+  };
+
+  const handleToggleMute = () => {
+    const next = !isMuted;
+    setIsMuted(next);
+    if (videoRef.current) {
+      videoRef.current.muted = next;
+    }
+  };
+
+  const handleSetSpeed = (spd: number) => {
+    setPlaybackSpeed(spd);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = spd;
+    }
+  };
+
+  const handleShareVideo = async () => {
+    const shareUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/courses?courseId=${course?.id}&video=1`
+      : 'https://share.gemini.google/uXQj8GK63Q8A';
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    }
+  };
+
+  const handleDownloadVideo = () => {
+    const downloadUrl = activeVideoUrl || '/videos/young-explorer-gemini-ai.mp4';
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `${(course?.title || 'gemini-video').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.mp4`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleToggleFullscreen = () => {
+    if (!videoContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      videoContainerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
     }
   };
 
@@ -455,8 +567,13 @@ export function CourseAnimatedVideoModal({
       setGenerationProgress(100);
       setGenerationStage('HD Animated Video Ready & Published!');
       setIsGeneratingVideo(false);
+      setVideoStageMode('hd_masterclass');
       setCurrentTimeSec(0);
       setIsPlaying(true);
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
     }, 1200);
   };
 
@@ -545,38 +662,101 @@ export function CourseAnimatedVideoModal({
         <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto">
           {/* LEFT 7 COLS: Animated Video Stage */}
           <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#23232f] bg-[#09090d] space-y-4">
-            {/* Interactive Visualizer Header */}
+            {/* Interactive Visualizer & Gemini Video Mode Switcher Header */}
             <div className="flex items-center justify-between gap-2 pb-1 flex-wrap">
               <div className="flex items-center gap-1.5 p-1 bg-[#13131c] border border-[#232332] rounded-xl text-xs">
-                <span className="px-3 py-1.5 rounded-lg font-bold bg-purple-600 text-white shadow-md flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoStageMode('hd_masterclass');
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(() => {});
+                      setIsPlaying(true);
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    videoStageMode === 'hd_masterclass'
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Film className="w-3.5 h-3.5" />
+                  <span>Gemini AI Video (1080p)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoStageMode('animated_canvas');
+                    if (videoRef.current) {
+                      videoRef.current.pause();
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    videoStageMode === 'animated_canvas'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Interactive 60fps Algorithmic Simulator</span>
-                </span>
+                  <span>Interactive 60fps Lab</span>
+                </button>
               </div>
               <span className="text-[11px] text-zinc-400 font-mono">
-                Real-Time Architecture Visualization
+                {videoStageMode === 'hd_masterclass'
+                  ? 'Gemini Generated Video Player'
+                  : 'Real-Time Architecture Visualization'}
               </span>
             </div>
 
-            {/* Cinematic Video Container */}
-            <div className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group">
-                {/* Dynamic Animated Canvas / Visualizer Synced with Video */}
+            {/* Cinematic Video Container (Matching Gemini <generated-video> Architecture) */}
+            <div
+              ref={videoContainerRef}
+              className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group select-none"
+            >
+              {/* Video Surface: Real MP4 Video vs Interactive Algorithmic Canvas */}
+              {videoStageMode === 'hd_masterclass' ? (
+                <div className="absolute inset-0 z-0 bg-black flex items-center justify-center overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    src={activeVideoUrl}
+                    className="w-full h-full object-contain cursor-pointer"
+                    playsInline
+                    loop
+                    onClick={handleTogglePlay}
+                    onTimeUpdate={handleVideoTimeUpdate}
+                    onLoadedMetadata={handleVideoLoadedMetadata}
+                    onPlay={handleVideoPlay}
+                    onPause={handleVideoPause}
+                    onEnded={handleVideoEnded}
+                  />
+
+                  {/* Gemini Live Subtitles / Closed Captions Overlay */}
+                  {showCaptions && (
+                    <div className="absolute bottom-16 inset-x-4 sm:inset-x-8 z-10 text-center pointer-events-none transition-all">
+                      <span className="inline-block px-3.5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md text-white text-xs sm:text-sm font-medium border border-white/10 shadow-2xl leading-relaxed max-w-xl">
+                        {currentChapter.subtitle || currentChapter.title}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <div className="absolute top-11 bottom-[64px] inset-x-0 z-0 overflow-hidden flex items-center justify-center p-2">
                   {renderCourseAnimation(config.animationType, animStep, param1, param2)}
                 </div>
+              )}
 
-                {/* Play / Pause Toggle Center Click Target when paused */}
-                {!isPlaying && (
-                  <div
-                    onClick={handleTogglePlay}
-                    className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
-                    title="Click to Resume Video"
-                  >
-                    <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
-                      <Play className="w-8 h-8 fill-white ml-1" />
-                    </div>
+              {/* Play / Pause Toggle Center Click Target when paused */}
+              {!isPlaying && (
+                <div
+                  onClick={handleTogglePlay}
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
+                  title="Click to Resume Video"
+                >
+                  <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+                    <Play className="w-8 h-8 fill-white ml-1" />
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Top Video Overlay Bar */}
               <div className="relative z-10 px-4 py-2.5 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
@@ -590,28 +770,30 @@ export function CourseAnimatedVideoModal({
                   <div className="text-[11px] text-zinc-300 font-mono bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm">
                     {formatTime(currentTimeSec)} / {formatTime(durationSec)}
                   </div>
-                  <button
-                    onClick={() => {
-                      const next = !isVoiceActive;
-                      setIsVoiceActive(next);
-                      if (next) {
-                        lastSpokenChapterTitleRef.current = null;
-                      }
-                    }}
-                    title={isVoiceActive ? 'Disable Audio Narration' : 'Enable Neural Voice Narration'}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                      isVoiceActive
-                        ? 'bg-purple-600 border-purple-400 text-white shadow-md'
-                        : 'bg-black/60 border-white/10 text-zinc-400 hover:text-white'
-                    }`}
-                  >
-                    <Volume2 className="w-3 h-3" />
-                    <span>{isVoiceActive ? 'Voice ON' : 'Voice OFF'}</span>
-                  </button>
+                  {videoStageMode === 'animated_canvas' && (
+                    <button
+                      onClick={() => {
+                        const next = !isVoiceActive;
+                        setIsVoiceActive(next);
+                        if (next) {
+                          lastSpokenChapterTitleRef.current = null;
+                        }
+                      }}
+                      title={isVoiceActive ? 'Disable Audio Narration' : 'Enable Neural Voice Narration'}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                        isVoiceActive
+                          ? 'bg-purple-600 border-purple-400 text-white shadow-md'
+                          : 'bg-black/60 border-white/10 text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>{isVoiceActive ? 'Voice ON' : 'Voice OFF'}</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Video Player Bottom Controls Overlay */}
+              {/* Video Player Bottom Controls Overlay (Matching Gemini Scrim & Controls) */}
               <div className="relative z-10 px-4 py-2.5 bg-[#0a0a0f]/95 border-t border-[#1e1e2c] space-y-1.5">
                 {/* Timeline Scrubber */}
                 <div className="flex items-center gap-3">
@@ -622,6 +804,7 @@ export function CourseAnimatedVideoModal({
                     max={durationSec}
                     value={currentTimeSec}
                     onChange={handleSeek}
+                    aria-label="Seek slider"
                     className="flex-1 h-1.5 bg-[#252535] accent-purple-500 rounded-lg cursor-pointer hover:h-2 transition-all"
                   />
                   <span className="text-[10px] font-mono text-zinc-400 w-10 text-right">{formatTime(durationSec)}</span>
@@ -634,6 +817,7 @@ export function CourseAnimatedVideoModal({
                       size="sm"
                       variant="ghost"
                       onClick={handleTogglePlay}
+                      aria-label={isPlaying ? 'Pause video' : 'Play video'}
                       className="w-8 h-8 p-0 rounded-lg text-white hover:bg-purple-600/30 hover:text-purple-300 cursor-pointer"
                     >
                       {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
@@ -641,7 +825,13 @@ export function CourseAnimatedVideoModal({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setCurrentTimeSec(0)}
+                      onClick={() => {
+                        setCurrentTimeSec(0);
+                        if (videoRef.current && videoStageMode === 'hd_masterclass') {
+                          videoRef.current.currentTime = 0;
+                        }
+                      }}
+                      title="Replay from start"
                       className="w-8 h-8 p-0 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -649,20 +839,32 @@ export function CourseAnimatedVideoModal({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => setIsMuted(!isMuted)}
+                      onClick={handleToggleMute}
+                      aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                       className="w-8 h-8 p-0 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
                     >
                       {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowCaptions((prev) => !prev)}
+                      title={showCaptions ? 'Hide Subtitles' : 'Show Subtitles'}
+                      className={`w-8 h-8 p-0 rounded-lg transition-colors cursor-pointer ${
+                        showCaptions ? 'text-purple-400 bg-purple-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-[#1a1a25]'
+                      }`}
+                    >
+                      <Subtitles className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
 
-                  {/* Playback Speed Toggles */}
+                  {/* Playback Speed Toggles and Fullscreen */}
                   <div className="flex items-center gap-1.5">
-                    {[1, 1.25, 1.5, 2].map((spd) => (
+                    {[0.75, 1, 1.25, 1.5, 2].map((spd) => (
                       <button
                         key={spd}
-                        onClick={() => setPlaybackSpeed(spd)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all ${
+                        onClick={() => handleSetSpeed(spd)}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                           playbackSpeed === spd
                             ? 'bg-purple-600 text-white shadow-sm shadow-purple-900/40'
                             : 'text-zinc-400 hover:text-zinc-200 bg-[#161622]'
@@ -671,8 +873,56 @@ export function CourseAnimatedVideoModal({
                         {spd}x
                       </button>
                     ))}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleToggleFullscreen}
+                      title="Toggle Fullscreen"
+                      className="w-7 h-7 p-0 ml-1 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
+                    >
+                      {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                    </Button>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Gemini Media Actions Bar (Share & Download MP4) */}
+            <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                  <Film className="w-3 h-3 text-purple-400" />
+                  <span>Gemini Video AI Masterclass</span>
+                </span>
+                <span className="text-[11px] font-mono text-zinc-400">
+                  {formatTime(currentTimeSec)} / {formatTime(durationSec)} • 1080p MP4
+                </span>
+              </div>
+
+              {/* Share & Download Buttons (Matching Gemini data-test-id schema) */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShareVideo}
+                  data-test-id="share-video-button"
+                  className="bg-[#14141e] hover:bg-[#1e1e2c] border-[#29293d] text-zinc-300 hover:text-white text-xs font-semibold h-8 rounded-xl gap-1.5 cursor-pointer"
+                  title="Share Video Link"
+                >
+                  {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-purple-400" />}
+                  <span>{shareCopied ? 'Link Copied!' : 'Share Video'}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadVideo}
+                  data-test-id="download-video-button"
+                  className="bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/40 text-purple-300 hover:text-white text-xs font-semibold h-8 rounded-xl gap-1.5 cursor-pointer shadow-sm shadow-purple-900/20"
+                  title="Download MP4 Video"
+                >
+                  <Download className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Download MP4</span>
+                </Button>
               </div>
             </div>
 
