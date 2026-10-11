@@ -26,7 +26,6 @@ import {
   Building2,
   Layers,
   FlaskConical,
-  Target,
   Trophy,
   Scale,
   Shield,
@@ -109,14 +108,6 @@ export function NexusSidebar() {
       ]
     },
     {
-      id: 'career',
-      title: 'Career',
-      icon: Target,
-      items: [
-        { label: 'Career Hub', href: '/career', icon: Target },
-      ]
-    },
-    {
       id: 'settings',
       title: 'Settings',
       icon: Settings,
@@ -132,7 +123,6 @@ export function NexusSidebar() {
     practice: false,
     build: true,
     explore: false,
-    career: false,
     settings: false,
   });
 

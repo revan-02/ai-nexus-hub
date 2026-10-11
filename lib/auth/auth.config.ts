@@ -44,7 +44,6 @@ const AUTH_REQUIRED_PATHS = [
   '/ollama',
   '/create-ai',
   '/academic',
-  '/career',
   '/profile',
   '/progress',
   '/certificates',

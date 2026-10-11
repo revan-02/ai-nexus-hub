@@ -958,19 +958,19 @@ export default function ContentLearningResearchPage() {
           })()}
         </div>
 
-        {/* Action Callout: Transition to Career Hub */}
+        {/* Action Callout: Transition to Comprehensive Courses */}
         <div className="p-8 rounded-3xl bg-gradient-to-r from-primary/10 via-purple-500/10 to-indigo-500/10 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center sm:text-left">
             <h3 className="text-xl font-bold text-foreground">
-              Ready to turn these research papers into a high-paying AI Career?
+              Ready to dive deeper into practical AI implementations?
             </h3>
             <p className="text-sm text-muted-foreground max-w-2xl">
-              Visit Dr. Maya Sharma in the AI Career Hub for role roadmaps, salary benchmarks (₹6 LPA to ₹95 LPA), and mock technical interview simulations.
+              Explore our comprehensive curriculum of interactive courses covering deep learning, transformer mathematics, and agentic systems.
             </p>
           </div>
-          <Link href="/career" className="shrink-0">
+          <Link href="/courses" className="shrink-0">
             <Button size="lg" className="rounded-xl gap-2 shadow-lg">
-              Visit Career Hub <ArrowRight className="w-4 h-4" />
+              Explore All Courses <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>

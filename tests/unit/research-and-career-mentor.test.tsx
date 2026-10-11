@@ -13,6 +13,7 @@ vi.mock('next/navigation', () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
   }),
+  redirect: vi.fn(),
 }));
 
 // Mock next-auth/react
@@ -95,44 +96,11 @@ describe('Research & Career Hub with Dr. Maya Sharma AI Mentor', () => {
     });
   });
 
-  describe('Career Hub (/career)', () => {
-    it('renders career paths, INR/USD salary benchmarks, and Dr. Maya Sharma', () => {
-      render(
-        <NexusProvider>
-          <CareerHubPage />
-        </NexusProvider>
-      );
-
-      expect(screen.getByText(/From Campus Fresher to Senior AI Architect/i)).toBeInTheDocument();
-      expect(screen.getAllByText(/AI Prompt & LLM Application Engineer/i).length).toBeGreaterThan(0);
-      expect(screen.getByText(/Frontier AI Research Scientist/i)).toBeInTheDocument();
-      expect(screen.getByText(/₹50 - 95 LPA/i)).toBeInTheDocument();
-    });
-
-    it('renders technical interview simulator and reveals answers', () => {
-      render(
-        <NexusProvider>
-          <CareerHubPage />
-        </NexusProvider>
-      );
-
-      expect(screen.getByText(/Technical Interview Simulator: Crack the Hard Questions/i)).toBeInTheDocument();
-      expect(screen.getByText(/The Rookie Trap to Avoid:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dr\. Maya's 10\/10 Ideal Answer:/i)).toBeInTheDocument();
-    });
-
-    it('toggles placement readiness audit checklist items', () => {
-      render(
-        <NexusProvider>
-          <CareerHubPage />
-        </NexusProvider>
-      );
-
-      const mathCheckbox = screen.getByText('Calculus & Linear Algebra');
-      expect(mathCheckbox).toBeInTheDocument();
-
-      // Click to toggle
-      fireEvent.click(mathCheckbox);
+  describe('Career Hub (/career) Decommissioned', () => {
+    it('redirects to /dashboard when accessed', async () => {
+      const { redirect } = await import('next/navigation');
+      CareerHubPage();
+      expect(redirect).toHaveBeenCalledWith('/dashboard');
     });
   });
 });

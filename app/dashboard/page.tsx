@@ -10,7 +10,7 @@ import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield, Search, X, Filter, Briefcase } from 'lucide-react';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield, Search, X, Filter } from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -254,12 +254,6 @@ export default function DashboardPage() {
               <Button variant="outline" className="bg-purple-600/10 border-purple-500/30 text-purple-300 hover:text-white hover:bg-purple-600 text-xs font-semibold rounded-xl h-9 cursor-pointer gap-1.5 shadow-sm">
                 <GraduationCap className="w-3.5 h-3.5" />
                 <span>Academic</span>
-              </Button>
-            </Link>
-            <Link href="/career">
-              <Button variant="outline" className="bg-secondary border-border text-foreground hover:bg-secondary/80 text-xs font-semibold rounded-xl h-9 cursor-pointer gap-1.5 shadow-sm">
-                <Briefcase className="w-3.5 h-3.5 text-blue-400" />
-                <span>Career</span>
               </Button>
             </Link>
             <Link href="/courses">

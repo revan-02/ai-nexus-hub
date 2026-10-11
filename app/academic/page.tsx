@@ -64,15 +64,9 @@ export default function AcademicContinuumPage() {
 
           <div className="flex items-center gap-2.5">
             <Link href="/courses">
-              <Button variant="outline" className="text-xs h-9 rounded-xl border-border bg-secondary font-semibold cursor-pointer">
+              <Button className="text-xs h-9 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md shadow-purple-900/30 cursor-pointer">
                 <BookOpen className="w-3.5 h-3.5 mr-1.5" />
                 All Courses
-              </Button>
-            </Link>
-            <Link href="/career">
-              <Button className="text-xs h-9 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md shadow-purple-900/30 cursor-pointer">
-                <Target className="w-3.5 h-3.5 mr-1.5" />
-                Career Hub
               </Button>
             </Link>
           </div>
@@ -266,20 +260,6 @@ export default function AcademicContinuumPage() {
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   Linear algebra, multivariate calculus, probability theory, and discrete math.
-                </p>
-              </Card>
-            </Link>
-
-            <Link href="/career" className="block group">
-              <Card className="p-5 bg-card border-border hover:border-purple-500/50 rounded-2xl space-y-2 transition-all cursor-pointer h-full">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Target className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-sm text-foreground group-hover:text-emerald-400 transition-colors">
-                  Placement & Career Hub
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Bridge academic theory to high-paying industry placements and internships.
                 </p>
               </Card>
             </Link>
