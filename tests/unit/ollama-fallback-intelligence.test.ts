@@ -63,6 +63,29 @@ describe('Intelligent Ollama Knowledge Engine & Fallback Tests', () => {
     expect(res).toContain('Technical Analysis & Solution');
     expect(res).toContain('Core Principles & Architecture');
     expect(res).toContain('Production-ready implementation pattern');
-    expect(res).toContain('Real-World Enterprise Considerations');
+    expect(res).toContain('Real-World Engineering Considerations');
+  });
+
+  it('should explain Artificial Intelligence comprehensively and pedagogically when asked "explain about ai"', () => {
+    const res = getFallbackOllamaResponse('nexus-tutor', 'explain about ai');
+    expect(res).toContain('Artificial Intelligence (AI) Explained');
+    expect(res).toContain('Intuitive Analogy: How AI Learns');
+    expect(res).toContain('The Core 4-Stage Learning Loop');
+    expect(res).toContain('Artificial Narrow AI (ANI)');
+    expect(res).toContain('Artificial General Intelligence (AGI)');
+    expect(res).toContain('Real-World Applications Transforming the World');
+    expect(res).not.toContain('def execute_pipeline(data: np.ndarray');
+
+    const resDeepSeek = getFallbackOllamaResponse('deepseek-r1', 'What is AI?');
+    expect(resDeepSeek).toContain('<think>');
+    expect(resDeepSeek).toContain('Artificial Intelligence (AI) Explained');
+  });
+
+  it('should synthesize A* pathfinding Python code when asked', () => {
+    const res = getFallbackOllamaResponse('nexus-tutor', 'Implement A* Pathfinding in Python');
+    expect(res).toContain('A* Pathfinding Algorithm in Python');
+    expect(res).toContain('f(n) = g(n) + h(n)');
+    expect(res).toContain('def a_star_search');
+    expect(res).toContain('heapq');
   });
 });

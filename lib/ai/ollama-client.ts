@@ -202,7 +202,174 @@ Feel free to ask me anything! For example:
     return isDeepSeek ? `<think>\nUser greeted the assistant. Identify role as AI Nexus intelligence tutor. Outline technical domains and offer relevant starter queries for deep learning and university curriculum.\n</think>\n\n${greeting}` : greeting;
   }
 
-  // 2. Self-Attention & Transformers
+  // 2. Comprehensive AI Explanation (What is AI / Explain About AI / Fundamentals)
+  const isExplainAI =
+    /\b(explain\s+about\s+ai|what\s+is\s+ai|artificial\s+intelligence|explain\s+ai|tell\s+me\s+about\s+ai|intro\s+to\s+ai|how\s+does\s+ai\s+work|types\s+of\s+ai|understand\s+ai|basics?\s+of\s+ai)\b/i.test(p) ||
+    p === 'ai' ||
+    p === 'explain about ai' ||
+    p === 'what is ai' ||
+    p === 'what is artificial intelligence';
+
+  if (isExplainAI) {
+    const body = `### Comprehensive Guide: Artificial Intelligence (AI) Explained
+
+**Artificial Intelligence (AI)** is the branch of computer science dedicated to building systems capable of performing tasks that traditionally require human cognitive intelligence — such as **pattern recognition, reasoning, problem-solving, sensory perception, and autonomous decision-making**.
+
+Unlike traditional software where programmers write strict, static "if/then" rules for every single situation, modern AI systems **learn from empirical data**, continuously updating their internal mathematical parameters to discover intricate patterns on their own.
+
+---
+
+#### 1. Intuitive Analogy: How AI Learns
+Think of teaching a child to recognize a cat:
+- **Traditional Coding:** You would try to write code describing whiskers, triangular ears, tail length, and fur texture — which quickly breaks when seeing a hairless cat or a cartoon drawing.
+- **Artificial Intelligence:** You show the computer 50,000 photos of cats and non-cats. An optimization algorithm adjusts millions of internal numeric weights until the network can reliably identify feline features, even in new photos it has never seen before!
+
+---
+
+#### 2. The Core 4-Stage Learning Loop
+Every modern machine learning and AI system operates on a fundamental loop:
+$$\\text{Raw Data } \\longrightarrow \\text{ Representation Learning } \\longrightarrow \\text{ Prediction / Inference } \\longrightarrow \\text{ Loss Feedback}$$
+
+1. **Data Ingestion & Feature Encoding:** Converting text, images, or sensor feeds into numerical vectors (tensors).
+2. **Forward Propagation:** Passing inputs through layers of interconnected mathematical neurons ($y = \\sigma(W x + b)$).
+3. **Loss / Error Calculation:** Measuring how far the model's guess is from the true answer (e.g., Mean Squared Error or Cross-Entropy).
+4. **Optimization (Backpropagation):** Computing calculus gradients to nudge weights in the direction that minimizes error!
+
+---
+
+#### 3. The 3 Primary Levels of AI
+| Tier | Definition | Current Status | Examples |
+| :--- | :--- | :--- | :--- |
+| **Artificial Narrow AI (ANI)** | Highly skilled at a single specific task, but cannot generalize outside its domain. | **Everyday Reality** | ChatGPT, AlphaFold, Tesla Autopilot, Google Search, Siri, Spotify Recommendations |
+| **Artificial General Intelligence (AGI)** | Systems possessing human-level cognitive flexibility across all intellectual domains. | **Active Global Research Frontier** | Frontier reasoning models (DeepSeek-R1, OpenAI o3), multimodal agentic architectures |
+| **Artificial Superintelligence (ASI)** | Theoretical intelligence vastly exceeding human capability in every discipline. | **Theoretical Future** | Self-improving planetary scientific discovery systems |
+
+---
+
+#### 4. The Hierarchy of AI Technologies
+\`\`\`text
+┌────────────────────────────────────────────────────────┐
+│  ARTIFICIAL INTELLIGENCE (Broad Field)                │
+│  Systems mimicking human cognitive decision-making    │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  MACHINE LEARNING (Statistical Learning)         │  │
+│  │  Algorithms that improve from experience         │  │
+│  │  ┌────────────────────────────────────────────┐  │  │
+│  │  │  DEEP LEARNING (Multi-Layer Neural Nets)   │  │  │
+│  │  │  Deep representations (CNNs, RNNs)         │  │  │
+│  │  │  ┌──────────────────────────────────────┐  │  │  │
+│  │  │  │  GENERATIVE AI & LLMs (Transformers) │  │  │  │
+│  │  │  │  Creativity, text, code, audio synthesis│  │  │
+│  │  │  └──────────────────────────────────────┘  │  │  │
+│  │  └────────────────────────────────────────────┘  │  │
+│  └──────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────┘
+\`\`\`
+
+---
+
+#### 5. Real-World Applications Transforming the World
+- 🏥 **Healthcare & Medicine:** AlphaFold predicting 3D protein structures in minutes, revolutionizing cancer oncology and drug discovery.
+- 🚗 **Autonomous Systems:** Computer vision networks processing 8 surround cameras simultaneously to navigate complex road environments safely.
+- 💻 **Software Engineering:** AI pair programmers writing boilerplate, catching security vulnerabilities, and synthesizing full-stack applications.
+- 🌍 **Climate Science:** High-resolution neural weather models predicting extreme climate events 10 days ahead with unprecedented precision.
+
+---
+
+#### 6. How to Start Learning AI on AI Nexus
+1. **Foundations:** Python syntax, vectors, matrices, and basic calculus.
+2. **Applied ML:** Scikit-Learn regression, decision trees, and data preprocessing.
+3. **Deep Learning:** PyTorch neural networks, loss functions, and backpropagation.
+4. **Frontier AI:** Transformers, LLM fine-tuning with LoRA, and agentic systems!`;
+
+    if (isDeepSeek) {
+      return `<think>\nQuery asks to explain Artificial Intelligence. Provide a crystal-clear, pedagogically rigorous explanation: intuitive analogies, 4-stage mathematical learning loop, 3 levels of AI (ANI, AGI, ASI), technology hierarchy, real-world applications, and practical learning roadmap.\n</think>\n\n${body}`;
+    }
+    return body;
+  }
+
+  // 3. A* Pathfinding in Python (Interactive Quick Ask)
+  if (p.includes('a*') || p.includes('pathfinding') || p.includes('astar') || p.includes('dijkstra')) {
+    const body = `### A* Pathfinding Algorithm in Python
+
+The **A* Search Algorithm** is an informed best-first search algorithm that finds the shortest path between a starting node and a goal in a weighted graph.
+
+#### 1. Mathematical Evaluation Function
+At each node $n$, A* evaluates:
+$$f(n) = g(n) + h(n)$$
+- $g(n)$: Exact cost of the path from the starting node to $n$.
+- $h(n)$: Admissible heuristic estimating the cost from $n$ to the goal (e.g., Manhattan or Euclidean distance).
+- *Admissibility condition:* $h(n) \\le h^*(n)$ (the heuristic must never overestimate the true remaining distance).
+
+#### 2. Complete Production Implementation
+\`\`\`python
+import heapq
+
+def a_star_search(grid, start, goal):
+    """
+    Finds the shortest path on a 2D grid using A* search.
+    0 = walkable, 1 = obstacle.
+    """
+    rows, cols = len(grid), len(grid[0])
+    
+    # Manhattan distance heuristic
+    def heuristic(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    
+    # Priority queue stores (f_score, g_score, current_node)
+    open_set = []
+    heapq.heappush(open_set, (heuristic(start, goal), 0, start))
+    
+    came_from = {}
+    g_score = {start: 0}
+    
+    while open_set:
+        _, current_g, current = heapq.heappop(open_set)
+        
+        if current == goal:
+            # Reconstruct optimal path
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            return path[::-1]
+            
+        r, c = current
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            neighbor = (r + dr, c + dc)
+            nr, nc = neighbor
+            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 0:
+                tentative_g = current_g + 1
+                if tentative_g < g_score.get(neighbor, float('inf')):
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g
+                    f_score = tentative_g + heuristic(neighbor, goal)
+                    heapq.heappush(open_set, (f_score, tentative_g, neighbor))
+                    
+    return None # No valid path found
+
+# Example Usage:
+grid = [
+    [0, 0, 0, 0],
+    [0, 1, 1, 0],
+    [0, 0, 0, 0],
+]
+path = a_star_search(grid, start=(0, 0), goal=(2, 3))
+print("Optimal A* Path:", path)
+\`\`\`
+
+#### 3. Complexity & Performance Analysis
+- **Time Complexity:** $O(b^d)$ worst-case, where $b$ is the branching factor and $d$ is solution depth. With a tight heuristic, search is near-linear $O(d)$.
+- **Space Complexity:** $O(b^d)$ because all explored states are retained in the priority queue and closed set.`;
+
+    if (isDeepSeek) {
+      return `<think>\nQuery asks for A* Pathfinding algorithm in Python. Formulate evaluation function f(n) = g(n) + h(n), admissibility condition, complete executable Python implementation using heapq, and complexity analysis.\n</think>\n\n${body}`;
+    }
+    return body;
+  }
+
+  // 4. Self-Attention & Transformers
   if (p.includes('attention') || p.includes('transformer') || p.includes('self-attention') || p.includes('scaled dot') || p.includes('qkv')) {
     const body = `### Scaled Dot-Product & Multi-Head Self-Attention
 
@@ -452,42 +619,89 @@ Where $\\alpha$ is learning rate, and $\\gamma \\in [0, 1)$ is discount factor.`
     return body;
   }
 
-  // 8. General / Fallback Technical Synthesis Engine
+  // 9. General Technical & Educational Synthesis Engine
   const title = rawPrompt.length > 60 ? rawPrompt.slice(0, 57) + '...' : rawPrompt;
+
+  const isDataOrML = p.includes('data') || p.includes('learn') || p.includes('model') || p.includes('vector') || p.includes('tensor') || p.includes('weight') || p.includes('metric');
+  const isWebOrBackend = p.includes('api') || p.includes('web') || p.includes('server') || p.includes('route') || p.includes('database') || p.includes('sql') || p.includes('auth');
+
+  let codeSnippet = '';
+  if (isDataOrML) {
+    codeSnippet = `\`\`\`python
+# Production-ready implementation pattern (Vectorized Model Pipeline)
+import numpy as np
+
+def evaluate_features(features: np.ndarray, weights: np.ndarray) -> dict:
+    """
+    Computes normalized activations and metric distribution.
+    """
+    scores = np.dot(features, weights)
+    probabilities = 1.0 / (1.0 + np.exp(-scores))
+    return {
+        "sample_count": int(features.shape[0]),
+        "mean_probability": float(np.mean(probabilities)),
+        "confident_predictions": int(np.sum(probabilities > 0.8))
+    }
+\`\`\``;
+  } else if (isWebOrBackend) {
+    codeSnippet = `\`\`\`typescript
+// Production-ready implementation pattern (Resilient Async Service Architecture)
+export async function executeServiceTask<T>(
+  taskId: string,
+  handler: () => Promise<T>,
+  maxRetries = 3
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await handler();
+    } catch (err: any) {
+      attempt++;
+      if (attempt >= maxRetries) throw new Error(\`Task \${taskId} failed after \${maxRetries} attempts: \${err.message}\`);
+      await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 100));
+    }
+  }
+  throw new Error(\`Unexpected failure for \${taskId}\`);
+}
+\`\`\``;
+  } else {
+    codeSnippet = `\`\`\`python
+# Production-ready implementation pattern (Modular Algorithmic Pipeline)
+def solve_problem(input_data):
+    """
+    Step 1: Validate input boundaries.
+    Step 2: Apply optimal transform O(N).
+    Step 3: Return structured result.
+    """
+    if not input_data:
+        return {"status": "empty", "result": None}
+    
+    transformed = [item for item in input_data if item is not None]
+    return {
+        "status": "success",
+        "processed_count": len(transformed),
+        "data": transformed
+    }
+\`\`\``;
+  }
+
   const generalResponse = `### Technical Analysis & Solution: ${title}
 
 #### 1. Core Principles & Architecture
-When addressing **"${rawPrompt}"**, modern engineering best practices require understanding both the mathematical underpinnings and scalable implementation patterns.
+When addressing **"${rawPrompt}"**, modern engineering and educational best practices prioritize conceptual clarity, mathematical rigor, and maintainable implementation patterns.
 
 Key architectural dimensions:
-- **Computational Complexity:** Minimizing memory overhead and asymptotic time complexity ($O(N)$ vs $O(N^2)$).
-- **Latency & Throughput:** Parallelizing vector operations, minimizing cache misses, and leveraging hardware acceleration.
-- **Robustness & Edge Cases:** Proper error propagation, input validation, and numerical stability.
+- **Conceptual Clarity:** Decomposing the problem into first-principles components with explicit boundary conditions.
+- **Complexity & Scalability:** Minimizing time and memory complexity while maintaining numerical stability and readability.
+- **Robustness & Edge Cases:** Incorporating strict input validation, graceful degradation, and structured error handling.
 
-#### 2. Production Code / Algorithmic Pattern
-\`\`\`python
-# Production-ready implementation pattern
-import numpy as np
+#### 2. Implementation Pattern
+${codeSnippet}
 
-def execute_pipeline(data: np.ndarray, threshold: float = 0.5) -> dict:
-    """
-    Executes high-efficiency vectorized processing.
-    """
-    normalized = (data - np.mean(data)) / (np.std(data) + 1e-8)
-    activated = 1.0 / (1.0 + np.exp(-normalized))
-    predictions = (activated >= threshold).astype(int)
-    
-    return {
-        "sample_count": len(data),
-        "mean_activation": float(np.mean(activated)),
-        "predictions": predictions.tolist()
-    }
-\`\`\`
-
-#### 3. Real-World Enterprise Considerations
-1. **Scalability:** In distributed cloud systems, decouple compute and state using message brokers and asynchronous workers.
-2. **Monitoring & Telemetry:** Instrument performance tracking (latency p99, error rates, resource saturation).
-3. **Continuous Evaluation:** Regularly evaluate on real-world test sets to prevent model and concept drift.`;
+#### 3. Real-World Engineering Considerations
+1. **Modularity:** Decouple algorithmic logic from I/O and external dependencies for testability and portability.
+2. **Monitoring & Observability:** Track execution latency, error rates, and resource utilization across production runs.
+3. **Continuous Verification:** Write deterministic unit tests and property-based regression suites to guarantee behavioral invariants.`;
 
   if (isDeepSeek) {
     return `<think>\nAnalyzing prompt: "${rawPrompt}".\nFormulate a rigorous technical solution covering theoretical principles, structured algorithmic schema, and enterprise production best practices.\n</think>\n\n${generalResponse}`;

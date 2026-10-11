@@ -26,7 +26,8 @@ export function LessonAudioPlayer({
   isPlayingRef.current = isPlaying;
 
   // Clean markdown and code formatting so speech sounds like a human teacher
-  const sanitizeTextForSpeech = (raw: string): string => {
+  const sanitizeTextForSpeech = (raw?: string): string => {
+    if (!raw || typeof raw !== 'string') return '';
     return raw
       .replace(/```[\s\S]*?```/g, ' [Code sample omitted for audio] ') // Skip raw code blocks
       .replace(/`([^`]+)`/g, '$1') // Inline code
@@ -48,18 +49,22 @@ export function LessonAudioPlayer({
     }
 
     const checkVoices = () => {
-      const available = window.speechSynthesis.getVoices();
-      if (available.length > 0) {
-        setVoicesLoaded(true);
-      }
+      try {
+        const available = window.speechSynthesis.getVoices();
+        if (available && available.length > 0) {
+          setVoicesLoaded(true);
+        }
+      } catch {}
     };
 
     checkVoices();
     window.speechSynthesis.onvoiceschanged = checkVoices;
 
     return () => {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {}
       }
     };
   }, []);
@@ -67,7 +72,9 @@ export function LessonAudioPlayer({
   // When lesson changes, STOP any active speech immediately
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
     }
     setIsPlaying(false);
     setIsPaused(false);
@@ -75,20 +82,26 @@ export function LessonAudioPlayer({
   }, [lessonId]);
 
   const handlePlay = () => {
-    if (!supported || typeof window === 'undefined') return;
+    if (!supported || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     // If currently paused, resume
     if (isPaused) {
-      window.speechSynthesis.resume();
+      try {
+        window.speechSynthesis.resume();
+      } catch {}
       setIsPaused(false);
       setIsPlaying(true);
       return;
     }
 
     // Cancel any previous utterance to prevent overlapping audio
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+      // Ensure engine is unpaused
+      window.speechSynthesis.resume();
+    } catch {}
 
-    const cleanScript = `Lesson: ${lessonTitle}. ${sanitizeTextForSpeech(contentToRead)}`;
+    const cleanScript = `Lesson: ${lessonTitle || 'Topic Overview'}. ${sanitizeTextForSpeech(contentToRead)}`;
     // Truncate to reasonable narration length to avoid browser speech timeout
     const narrationSlice = cleanScript.slice(0, 3500);
 

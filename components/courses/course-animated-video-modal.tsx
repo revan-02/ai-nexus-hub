@@ -46,7 +46,8 @@ import {
   Lock,
   Layers3,
   ExternalLink,
-  Tv
+  Tv,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -60,6 +61,15 @@ import {
   Tooltip,
   CartesianGrid
 } from 'recharts';
+import {
+  LearnerAgeBracket,
+  AGE_PEDAGOGY_PROFILES,
+  validateContentForAge,
+  simplifyForAgeGroup,
+} from '@/lib/education/age-adaptive-engine';
+import { generateDurationLessonPlan } from '@/lib/education/duration-lesson-planner';
+import { SceneEngine, EditableScene } from '@/lib/education/scene-engine';
+import { evaluateLessonQuality, LessonQualityReport } from '@/lib/education/quality-evaluator';
 
 interface CourseAnimatedVideoModalProps {
   course: CourseItem | null;
@@ -105,7 +115,7 @@ export function CourseAnimatedVideoModal({
   const [isMuted, setIsMuted] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'simulator' | 'code' | 'telemetry' | 'blueprint'>('simulator');
+  const [activeTab, setActiveTab] = useState<'simulator' | 'code' | 'telemetry' | 'scenes' | 'pedagogy'>('simulator');
   const [copiedCode, setCopiedCode] = useState(false);
 
   // Video Mode: Interactive Animated Simulation Canvas vs Curated HD Masterclass Video
@@ -127,8 +137,49 @@ export function CourseAnimatedVideoModal({
   const [animStep, setAnimStep] = useState(0);
   const lastSpokenChapterTitleRef = useRef<string | null>(null);
 
+  // Age-Adaptive Learning & Scene-Level Editing State
+  const [selectedAgeBracket, setSelectedAgeBracket] = useState<LearnerAgeBracket>('16-18');
+  const [scenes, setScenes] = useState<EditableScene[]>([]);
+  const [selectedSceneId, setSelectedSceneId] = useState<string>('');
+  const [editSceneTitle, setEditSceneTitle] = useState('');
+  const [editSceneNarration, setEditSceneNarration] = useState('');
+  const [editSuccessMsg, setEditSuccessMsg] = useState<string | null>(null);
+  const sceneEngineRef = useRef<SceneEngine | null>(null);
+
   // Get course-specific interactive configuration
   const config = getCoursePayload(course);
+
+  // Initialize Scene Engine with Course Chapters
+  useEffect(() => {
+    if (course) {
+      const cfg = getCoursePayload(course);
+      const initialScenes: EditableScene[] = cfg.chapters.map((ch, idx) => ({
+        sceneId: `scene-${idx + 1}`,
+        order: idx + 1,
+        phase: (idx === 0 ? 'intro' : idx === 1 ? 'concept' : idx === 2 ? 'demo' : 'real_world') as any,
+        title: ch.title,
+        narrationText: ch.subtitle,
+        audioAssetId: `audio-scene-${idx + 1}-v1`,
+        audioDurationSec: Math.max(20, Math.round((ch.timestampSec || 60) / (idx || 1))),
+        visualKey: cfg.animationType,
+        captions: ch.subtitle,
+        startTimeSec: ch.timestampSec,
+        endTimeSec: ch.timestampSec + 60,
+        version: 1,
+        renderStatus: 'ready',
+        lastModifiedAt: new Date().toISOString(),
+      }));
+
+      const engine = new SceneEngine(course.id || 'default-course', initialScenes);
+      sceneEngineRef.current = engine;
+      setScenes(engine.getScenes());
+      if (initialScenes.length > 0) {
+        setSelectedSceneId(initialScenes[0].sceneId);
+        setEditSceneTitle(initialScenes[0].title);
+        setEditSceneNarration(initialScenes[0].narrationText);
+      }
+    }
+  }, [course]);
 
   // Sync animation step with video time
   useEffect(() => {
@@ -173,6 +224,7 @@ export function CourseAnimatedVideoModal({
         lastSpokenChapterTitleRef.current = activeChapter.title;
         try {
           window.speechSynthesis.cancel();
+          window.speechSynthesis.resume(); // Unfreeze stalled speech engine
           const utterance = new SpeechSynthesisUtterance(`${activeChapter.title}. ${activeChapter.subtitle}`);
           const voices = window.speechSynthesis.getVoices();
           const selectedVoice =
@@ -226,6 +278,69 @@ export function CourseAnimatedVideoModal({
       setGenerationStage('HD Animated Video Ready');
     }
   }, [course]);
+
+  const handleSelectScene = (sceneId: string) => {
+    setSelectedSceneId(sceneId);
+    const target = scenes.find((s) => s.sceneId === sceneId);
+    if (target) {
+      setEditSceneTitle(target.title);
+      setEditSceneNarration(target.narrationText);
+      setCurrentTimeSec(target.startTimeSec ?? 0);
+      lastSpokenChapterTitleRef.current = null;
+    }
+  };
+
+  const handleUpdateScene = () => {
+    if (!sceneEngineRef.current || !selectedSceneId) return;
+    const res = sceneEngineRef.current.updateScene(selectedSceneId, {
+      title: editSceneTitle,
+      narrationText: editSceneNarration,
+    });
+    if (res.success) {
+      setScenes(sceneEngineRef.current.getScenes());
+      setEditSuccessMsg(`Scene updated! Only Scene ${selectedSceneId} version bumped to v${res.updatedScene?.version}.`);
+      lastSpokenChapterTitleRef.current = null;
+      setTimeout(() => setEditSuccessMsg(null), 3000);
+    }
+  };
+
+  const handleRegenerateScene = () => {
+    if (!sceneEngineRef.current || !selectedSceneId) return;
+    const res = sceneEngineRef.current.regenerateSceneContent(selectedSceneId, editSceneNarration);
+    if (res.success) {
+      setScenes(sceneEngineRef.current.getScenes());
+      setEditSuccessMsg(`Regenerated Scene audio & timeline! Dependent scenes preserved.`);
+      lastSpokenChapterTitleRef.current = null;
+      setTimeout(() => setEditSuccessMsg(null), 3000);
+    }
+  };
+
+  const handleRollback = () => {
+    if (!sceneEngineRef.current) return;
+    const res = sceneEngineRef.current.rollback();
+    if (res.success) {
+      setScenes(sceneEngineRef.current.getScenes());
+      setEditSuccessMsg(`Rolled back to previous valid version successfully.`);
+      lastSpokenChapterTitleRef.current = null;
+      setTimeout(() => setEditSuccessMsg(null), 3000);
+    }
+  };
+
+  const handleAutoSimplifyForAge = () => {
+    const simplified = simplifyForAgeGroup(editSceneNarration, selectedAgeBracket);
+    setEditSceneNarration(simplified);
+    setEditSuccessMsg(`Auto-simplified vocabulary for ${selectedAgeBracket}.`);
+    setTimeout(() => setEditSuccessMsg(null), 3000);
+  };
+
+  const ageValidation = validateContentForAge(editSceneNarration || '', selectedAgeBracket);
+  const qualityReport = evaluateLessonQuality({
+    title: course?.title || 'Lesson',
+    content: editSceneNarration || 'Lesson overview',
+    ageBracket: selectedAgeBracket,
+    targetDurationSec: durationSec,
+    scenesCount: scenes.length,
+  });
 
   if (!isOpen || !course) return null;
 
@@ -570,10 +685,10 @@ export function CourseAnimatedVideoModal({
           {/* RIGHT 5 COLS: Real-Time Interactive Application & Sandbox */}
           <div className="lg:col-span-5 p-4 sm:p-6 flex flex-col justify-between bg-[#0e0e14] space-y-4">
             {/* Tab Selectors */}
-            <div className="flex items-center gap-1.5 p-1 bg-[#151520] border border-[#232332] rounded-xl text-xs">
+            <div className="flex items-center gap-1 p-1 bg-[#151520] border border-[#232332] rounded-xl text-xs flex-wrap">
               <button
                 onClick={() => setActiveTab('simulator')}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`flex-1 py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center text-[11px] ${
                   activeTab === 'simulator'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -583,7 +698,7 @@ export function CourseAnimatedVideoModal({
               </button>
               <button
                 onClick={() => setActiveTab('code')}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`flex-1 py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center text-[11px] ${
                   activeTab === 'code'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -593,13 +708,33 @@ export function CourseAnimatedVideoModal({
               </button>
               <button
                 onClick={() => setActiveTab('telemetry')}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`flex-1 py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center text-[11px] ${
                   activeTab === 'telemetry'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 Telemetry
+              </button>
+              <button
+                onClick={() => setActiveTab('scenes')}
+                className={`flex-1 py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center text-[11px] ${
+                  activeTab === 'scenes'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Scenes ({scenes.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('pedagogy')}
+                className={`flex-1 py-1 px-1.5 rounded-lg font-bold transition-all cursor-pointer text-center text-[11px] ${
+                  activeTab === 'pedagogy'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Pedagogy & QA
               </button>
             </div>
 
@@ -751,6 +886,199 @@ export function CourseAnimatedVideoModal({
                         <Line type="monotone" dataKey="throughput" stroke="#3b82f6" strokeWidth={2.5} dot={{ fill: '#3b82f6' }} />
                       </LineChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: Scene Studio & Delta Editor */}
+            {activeTab === 'scenes' && (
+              <div className="space-y-4 flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-emerald-400" />
+                      Scene Studio & Delta Editor
+                    </h3>
+                    <p className="text-xs text-zinc-400">
+                      Isolated scene mutation engine — editing a scene preserves all other scenes without full rebuild.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRollback}
+                    className="border-amber-500/30 text-amber-300 hover:bg-amber-950/30 text-[11px] h-7 gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Rollback Snapshot
+                  </Button>
+                </div>
+
+                {editSuccessMsg && (
+                  <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{editSuccessMsg}</span>
+                  </div>
+                )}
+
+                {/* Scene Selector Strip */}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                  {scenes.map((scene, idx) => (
+                    <button
+                      key={scene.sceneId}
+                      onClick={() => handleSelectScene(scene.sceneId)}
+                      className={`px-3 py-2 rounded-xl text-left border shrink-0 transition-all text-xs ${
+                        selectedSceneId === scene.sceneId
+                          ? 'bg-purple-600/20 border-purple-500 text-white shadow-sm'
+                          : 'bg-[#111119] border-[#222232] text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      <div className="font-semibold flex items-center gap-1.5">
+                        <span>Scene {idx + 1}</span>
+                        <span className="text-[10px] bg-purple-900/50 text-purple-300 px-1 rounded font-mono">v{scene.version}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-400 truncate max-w-[120px]">{scene.title}</div>
+                      <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{scene.durationSec}s · {scene.status}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Selected Scene Editor */}
+                {selectedSceneId && (
+                  <div className="p-3 bg-[#111119] border border-[#222232] rounded-2xl space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-zinc-300">Scene Title</label>
+                      <input
+                        type="text"
+                        value={editSceneTitle}
+                        onChange={(e) => setEditSceneTitle(e.target.value)}
+                        className="w-full bg-[#181824] border border-[#2c2c40] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-zinc-300">Narration Script & Dialogue</label>
+                        <span className="text-[10px] text-zinc-500">{editSceneNarration.length} characters</span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={editSceneNarration}
+                        onChange={(e) => setEditSceneNarration(e.target.value)}
+                        className="w-full bg-[#181824] border border-[#2c2c40] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-purple-500 resize-none font-mono"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        onClick={handleUpdateScene}
+                        className="bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs h-8 cursor-pointer flex-1"
+                      >
+                        <Save className="w-3.5 h-3.5 mr-1.5" /> Save Scene Delta
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={handleRegenerateScene}
+                        className="bg-[#20202e] hover:bg-[#2b2b3d] text-zinc-200 text-xs h-8 cursor-pointer gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Regenerate Audio
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 5: Pedagogy & Quality Audit */}
+            {activeTab === 'pedagogy' && (
+              <div className="space-y-4 flex-1">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    Adaptive Pedagogy & 10-Dimension QA
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Automated educational evaluation ensuring vocabulary suitability, pacing, and learning loop integrity.
+                  </p>
+                </div>
+
+                {/* Target Age Bracket Selector */}
+                <div className="p-3 bg-[#111119] border border-[#222232] rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-zinc-200">Target Learner Age Bracket</label>
+                    <span className="text-[11px] text-purple-400 font-mono">Current: Ages {selectedAgeBracket}</span>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {(['3-5', '6-8', '9-12', '13-15', '16-18', '18+'] as const).map((bracket) => (
+                      <button
+                        key={bracket}
+                        onClick={() => setSelectedAgeBracket(bracket)}
+                        className={`py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all ${
+                          selectedAgeBracket === bracket
+                            ? 'bg-purple-600 border-purple-500 text-white'
+                            : 'bg-[#181824] border-[#28283a] text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        {bracket}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Vocabulary suitability check */}
+                  <div className="mt-2 pt-2 border-t border-[#232332] flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${ageValidation.isSuitable ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                      <span className="text-zinc-300">
+                        Vocabulary: <strong className={ageValidation.isSuitable ? 'text-emerald-300' : 'text-amber-300'}>
+                          {ageValidation.isSuitable ? 'Age-Appropriate' : 'High Cognitive Load'}
+                        </strong>
+                      </span>
+                    </div>
+                    {!ageValidation.isSuitable && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleAutoSimplifyForAge}
+                        className="text-amber-300 hover:bg-amber-950/40 text-[11px] h-6 px-2"
+                      >
+                        Auto-Simplify For Age
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 10-Dimension Quality Evaluator */}
+                <div className="p-3 bg-[#111119] border border-[#222232] rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white">Quality Audit Score</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-900/50 text-purple-300 font-mono">
+                      {qualityReport.overallScore}/100 · Grade {qualityReport.grade}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
+                    {qualityReport.dimensions.map((dim) => (
+                      <div
+                        key={dim.name}
+                        className="flex items-center justify-between p-1.5 rounded-lg bg-[#181824] text-[11px]"
+                      >
+                        <span className="text-zinc-300">{dim.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-500">{dim.score}/{dim.maxScore}</span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              dim.status === 'optimal'
+                                ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/30'
+                                : dim.status === 'warning'
+                                ? 'bg-amber-950/50 text-amber-400 border border-amber-500/30'
+                                : 'bg-rose-950/50 text-rose-400 border border-rose-500/30'
+                            }`}
+                          >
+                            {dim.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
