@@ -137,6 +137,36 @@ export function OllamaStudio() {
     },
   ]);
 
+  const [installedModelTags, setInstalledModelTags] = useState<string[]>([]);
+  const [isOllamaOnline, setIsOllamaOnline] = useState<boolean>(true);
+
+  // Fetch live local Ollama status & installed models
+  useEffect(() => {
+    fetch('/api/ai/ollama/status')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setIsOllamaOnline(!!json.data.online);
+          if (Array.isArray(json.data.installedModels)) {
+            setInstalledModelTags(json.data.installedModels);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const isModelInstalled = (model: FreeOllamaModel) => {
+    if (installedModelTags.length > 0) {
+      return installedModelTags.some(
+        (t) =>
+          t.toLowerCase().includes(model.id.toLowerCase()) ||
+          t.toLowerCase().includes(model.tag.toLowerCase()) ||
+          (model.id === 'nemotron-mini' && t.toLowerCase().includes('nemotron'))
+      );
+    }
+    return !!model.isInstalled;
+  };
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // --- Training & Fine-Tuning State ---
@@ -337,11 +367,17 @@ export function OllamaStudio() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="px-4 py-2.5 bg-slate-900/90 border border-emerald-500/40 rounded-2xl flex items-center gap-2.5 text-xs">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className={`px-4 py-2.5 bg-slate-900/90 border rounded-2xl flex items-center gap-2.5 text-xs ${
+              isOllamaOnline ? 'border-emerald-500/40' : 'border-amber-500/40'
+            }`}>
+              <span className={`w-2.5 h-2.5 rounded-full ${isOllamaOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
               <div>
                 <span className="text-[10px] text-zinc-400 block font-sans">Engine Status:</span>
-                <span className="font-mono font-bold text-emerald-300">100% Ready (Free & Open)</span>
+                <span className={`font-mono font-bold ${isOllamaOnline ? 'text-emerald-300' : 'text-amber-300'}`}>
+                  {isOllamaOnline
+                    ? `Online (${installedModelTags.length > 0 ? installedModelTags.length : 5} Models Ready)`
+                    : 'Ollama Daemon Offline'}
+                </span>
               </div>
             </div>
           </div>
@@ -401,10 +437,21 @@ export function OllamaStudio() {
           <div className="order-2 lg:order-1 lg:col-span-1 space-y-4">
             <Card className="p-4 bg-card border-border rounded-2xl space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Select Active AI Model:</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Select Active AI Model:</span>
+                  </label>
+                  {isModelInstalled(selectedModel) ? (
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Installed
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-amber-400 bg-amber-950/50 border border-amber-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <Download className="w-2.5 h-2.5" /> Needs Pull
+                    </span>
+                  )}
+                </div>
                 <select
                   value={selectedModel.id}
                   onChange={(e) => {
@@ -413,11 +460,14 @@ export function OllamaStudio() {
                   }}
                   className="w-full bg-secondary border border-border rounded-xl px-3 py-2 text-xs font-medium text-foreground focus:outline-none focus:border-purple-500"
                 >
-                  {FREE_OLLAMA_MODELS.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.parameterSize}, {m.quantization})
-                    </option>
-                  ))}
+                  {FREE_OLLAMA_MODELS.map((m) => {
+                    const installed = isModelInstalled(m);
+                    return (
+                      <option key={m.id} value={m.id}>
+                        {installed ? '✓ ' : ''}{m.name} ({m.parameterSize}){installed ? ' — [Installed]' : ''}
+                      </option>
+                    );
+                  })}
                   {generatedModelfile && (
                     <option value={`custom-${customModelName}`}>
                       ★ {customModelName} (Custom LoRA Fine-Tuned)
@@ -881,8 +931,21 @@ export function OllamaStudio() {
                     <span className="text-[10px] text-zinc-400">{m.family} Family • {m.license}</span>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold rounded-md">
-                  Free & Open
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md border flex items-center gap-1 ${
+                    isModelInstalled(m)
+                      ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-900/30'
+                      : 'bg-secondary text-zinc-400 border-border'
+                  }`}
+                >
+                  {isModelInstalled(m) ? (
+                    <>
+                      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                      <span>Installed Locally</span>
+                    </>
+                  ) : (
+                    <span>Free & Open</span>
+                  )}
                 </span>
               </div>
 

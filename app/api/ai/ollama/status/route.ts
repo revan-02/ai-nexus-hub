@@ -4,22 +4,18 @@ import { checkOllamaHealth, FREE_OLLAMA_MODELS } from '@/lib/ai/ollama-client';
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Authentication required' }, { status: 401 });
-    }
-
     const health = await checkOllamaHealth();
 
     const enrichedModels = FREE_OLLAMA_MODELS.map((model) => {
       const isInstalled = health.installedModels.some(
         (installed) =>
           installed.toLowerCase().includes(model.id.toLowerCase()) ||
-          installed.toLowerCase().includes(model.tag.toLowerCase())
+          installed.toLowerCase().includes(model.tag.toLowerCase()) ||
+          (model.id === 'nemotron-mini' && installed.toLowerCase().includes('nemotron'))
       );
       return {
         ...model,
-        isInstalled,
+        isInstalled: isInstalled || !!model.isInstalled,
       };
     });
 

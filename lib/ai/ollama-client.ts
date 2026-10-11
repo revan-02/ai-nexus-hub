@@ -108,6 +108,7 @@ export const FREE_OLLAMA_MODELS: FreeOllamaModel[] = [
     description: 'NVIDIA custom compact model optimized for low memory footprints, on-device agentic tool use, and efficient RAG inference.',
     license: 'NVIDIA Open Model License (Free)',
     family: 'Nemotron',
+    isInstalled: true,
     pullCommand: 'ollama run nemotron-mini:4b',
   },
 ];
@@ -160,11 +161,16 @@ export async function sendOllamaChat(params: {
   durationMs: number;
 }> {
   const start = Date.now();
+  const matched = FREE_OLLAMA_MODELS.find(
+    (m) => m.id === params.model || m.tag === params.model || m.tag.startsWith(params.model)
+  );
+  const targetModel = matched ? matched.tag : params.model;
+
   const res = await fetch(`${OLLAMA_HOST}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: params.model,
+      model: targetModel,
       messages: params.messages,
       stream: false,
       options: {
