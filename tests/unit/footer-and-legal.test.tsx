@@ -31,7 +31,7 @@ describe('Footer, Privacy Policy, Terms & Conditions and Corporate Attribution',
     // Check Copyright and Corporate Attribution
     expect(screen.getAllByText(/AI Nexus Platform/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Manyathy Business Solutions/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Managed by/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Managed.*by/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/All rights reserved/i)).toBeInTheDocument();
 
     // Check Legal Links

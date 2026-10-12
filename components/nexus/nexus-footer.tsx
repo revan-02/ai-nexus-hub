@@ -43,13 +43,13 @@ export function NexusFooter() {
             <div className="p-3.5 bg-secondary/60 border border-purple-500/20 rounded-2xl space-y-1.5 max-w-sm">
               <div className="flex items-center gap-2 text-purple-300 font-bold text-xs">
                 <Building2 className="w-4 h-4 text-purple-400" />
-                <span>Managed by</span>
+                <span>Managed and Maintained by</span>
               </div>
               <div className="font-mono text-xs font-bold text-foreground tracking-wide">
                 Manyathy Business Solutions
               </div>
               <p className="text-[11px] text-zinc-400 leading-normal">
-                Enterprise AI Engineering, Quantitative Learning & Business Solutions.
+                Enterprise AI Engineering, Quantitative Research & Intelligent Systems.
               </p>
             </div>
 
@@ -177,7 +177,7 @@ export function NexusFooter() {
             </span>
             <span className="hidden sm:inline text-zinc-600">•</span>
             <span className="text-purple-300 font-semibold">
-              Managed by <strong className="text-foreground">Manyathy Business Solutions</strong>
+              Managed and Maintained by <strong className="text-foreground">Manyathy Business Solutions</strong>
             </span>
           </div>
 
