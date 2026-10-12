@@ -17,6 +17,7 @@ import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card'
 import { CompactRoadmap } from '@/components/dashboard/compact-roadmap';
 import { useLearnerDashboard } from '@/hooks/api/use-dashboard';
 import { CourseAnimatedVideoModal } from '@/components/courses/course-animated-video-modal';
+import { RealClassroomVideoStage } from '@/components/courses/real-classroom-video-stage';
 import { mockCoursesList, type CourseItem } from '@/lib/mock-data/courses-data';
 
 const TIER_PEDAGOGY_GUIDES: Record<string, { mentorTip: string; focusAreas: string[]; practicalLab: string }> = {
@@ -133,9 +134,34 @@ export default function DashboardPage() {
   const userRoleStr = String((session?.user as { role?: string })?.role || (userProfile as any)?.role || '').toLowerCase();
   const isAdminUser = userRoleStr === 'admin' || userRoleStr === 'super admin' || userRoleStr === 'manager';
 
+  // Inline Video Player State (Directly visible and playable under the course card on dashboard)
+  const [inlineVideoCourseId, setInlineVideoCourseId] = useState<string | null>('crs-chapter-1-real-classroom-ai');
+  const [inlineCurrentTimeSec, setInlineCurrentTimeSec] = useState(0);
+  const [inlineIsPlaying, setInlineIsPlaying] = useState(false);
+  const [inlinePlaybackSpeed, setInlinePlaybackSpeed] = useState(1);
+  const [inlineIsMuted, setInlineIsMuted] = useState(false);
+  const [inlineShowCaptions, setInlineShowCaptions] = useState(true);
+  const [inlineShareCopied, setInlineShareCopied] = useState(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (inlineIsPlaying && inlineVideoCourseId === 'crs-chapter-1-real-classroom-ai') {
+      interval = setInterval(() => {
+        setInlineCurrentTimeSec((prev) => {
+          if (prev >= 630) {
+            setInlineIsPlaying(false);
+            return 630;
+          }
+          return prev + 1;
+        });
+      }, 1000 / inlinePlaybackSpeed);
+    }
+    return () => clearInterval(interval);
+  }, [inlineIsPlaying, inlineVideoCourseId, inlinePlaybackSpeed]);
+
   const allDashboardCourses = React.useMemo(() => {
     if (dashboardData?.activeCourses && dashboardData.activeCourses.length > 0) {
-      return dashboardData.activeCourses.map((c: any) => ({
+      const dbList = dashboardData.activeCourses.map((c: any) => ({
         id: c.id,
         title: c.title,
         desc: c.desc || c.description || '',
@@ -156,9 +182,30 @@ export default function DashboardPage() {
         price: c.price || 'Free',
         thumbnailIcon: c.thumbnailIcon || 'BookOpen',
       }));
+
+      const hasChapter1 = dbList.some((c: any) => c.id === 'crs-chapter-1-real-classroom-ai');
+      const ch1Mock = mockCoursesList.find((mc) => mc.id === 'crs-chapter-1-real-classroom-ai');
+      if (!hasChapter1 && ch1Mock && dbList.length > 5) {
+        dbList.unshift({
+          id: ch1Mock.id,
+          title: ch1Mock.title,
+          desc: ch1Mock.description,
+          level: ch1Mock.level,
+          category: ch1Mock.category,
+          academicTier: ch1Mock.academicTier,
+          duration: ch1Mock.totalHours || '10.5 mins',
+          difficulty: 'Easy',
+          progress: 12,
+          status: 'in_progress',
+          action: 'Start Lesson',
+          price: 'Free',
+          thumbnailIcon: 'School',
+        });
+      }
+      return dbList;
     }
 
-    return mockCoursesList.map((mc) => ({
+    const list = mockCoursesList.map((mc, idx) => ({
       id: mc.id,
       title: mc.title,
       desc: mc.description,
@@ -172,12 +219,16 @@ export default function DashboardPage() {
           : mc.level === 'Intermediate'
           ? 'Medium'
           : 'Hard',
-      progress: 0,
-      status: 'available',
+      progress: mc.id === 'crs-chapter-1-real-classroom-ai' ? 12 : 0,
+      status: idx === 0 ? 'in_progress' : 'available',
       action: 'Start Lesson',
       price: mc.price || 'Free',
       thumbnailIcon: mc.thumbnailIcon || 'BookOpen',
     }));
+
+    const chapter1 = list.find((c) => c.id === 'crs-chapter-1-real-classroom-ai');
+    const rest = list.filter((c) => c.id !== 'crs-chapter-1-real-classroom-ai');
+    return chapter1 ? [chapter1, ...rest] : list;
   }, [dashboardData?.activeCourses]);
 
   const activeCourses = React.useMemo(() => {
@@ -491,79 +542,209 @@ export default function DashboardPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3.5">
-                  {activeCourses.map((course) => (
-                    <Card key={course.id} className="w-full p-4 sm:p-5 bg-card border border-border rounded-2xl hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-950/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
-                      <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                        <div className="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                          <BookOpen className="w-5 h-5" />
-                        </div>
-                        <div className="space-y-1.5 flex-1 min-w-0 text-left">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-1 text-left">{course.title}</h3>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 uppercase tracking-wide">
-                              {course.difficulty}
-                            </span>
-                            {course.academicTier && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                                {course.academicTier}
-                              </span>
-                            )}
-                            {course.category && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-muted-foreground border border-border">
-                                {course.category}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-2 text-left">{course.desc}</p>
-                          <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground pt-0.5 flex-wrap">
-                            <span className="flex items-center gap-1 font-mono">
-                              <Clock className="w-3 h-3 text-purple-400" />
-                              {course.duration}
-                            </span>
-                            <span>•</span>
-                            <span className={course.price === 'Free' ? 'text-emerald-400 font-semibold' : 'text-purple-300 font-semibold font-mono'}>
-                              {course.price === 'Free' ? 'Free Track' : course.price}
-                            </span>
-                            {course.progress > 0 && (
-                              <>
-                                <span>•</span>
-                                <span className="text-purple-400 font-semibold">{course.progress}% completed</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                <div className="flex flex-col gap-4">
+                  {activeCourses.map((course) => {
+                    const isVideoOpen = inlineVideoCourseId === course.id;
+                    const isClassroomCourse = course.id === 'crs-chapter-1-real-classroom-ai' || (course.title || '').toLowerCase().includes('real classroom');
+                    const isYoungExplorerVideo = course.id === 'crs-young-explorer-ai-video' || (course.academicTier || '').toLowerCase().includes('young explorer');
 
-                      <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border">
-                        {course.id === 'crs-chapter-1-real-classroom-ai' || (course.title || '').toLowerCase().includes('real classroom') ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedVideoCourse(course)}
-                            className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 hover:text-white border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-amber-950/20"
-                          >
-                            <School className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Watch Real Classroom Video</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedVideoCourse(course)}
-                            className="py-2 px-3.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
-                          >
-                            <Play className="w-3.5 h-3.5 fill-purple-300" />
-                            <span>Watch Video & Lab</span>
-                          </button>
+                    return (
+                      <Card
+                        key={course.id}
+                        className={`w-full p-4 sm:p-5 bg-card border rounded-2xl transition-all flex flex-col gap-4 group ${
+                          isVideoOpen
+                            ? 'border-purple-500/60 shadow-xl shadow-purple-950/25 ring-1 ring-purple-500/20'
+                            : 'border-border hover:border-purple-500/40 hover:shadow-lg'
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                            <div className="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                              {isClassroomCourse ? <School className="w-5 h-5 text-amber-400" /> : <BookOpen className="w-5 h-5" />}
+                            </div>
+                            <div className="space-y-1.5 flex-1 min-w-0 text-left">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-bold text-sm sm:text-base text-foreground line-clamp-1 text-left">{course.title}</h3>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 uppercase tracking-wide">
+                                  {course.difficulty}
+                                </span>
+                                {course.academicTier && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                                    {course.academicTier}
+                                  </span>
+                                )}
+                                {isClassroomCourse && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                                    Live Classroom Masterclass
+                                  </span>
+                                )}
+                                {course.category && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-muted-foreground border border-border">
+                                    {course.category}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-2 text-left">{course.desc}</p>
+                              <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground pt-0.5 flex-wrap">
+                                <span className="flex items-center gap-1 font-mono">
+                                  <Clock className="w-3 h-3 text-purple-400" />
+                                  {course.duration}
+                                </span>
+                                <span>•</span>
+                                <span className={course.price === 'Free' ? 'text-emerald-400 font-semibold' : 'text-purple-300 font-semibold font-mono'}>
+                                  {course.price === 'Free' ? 'Free Track' : course.price}
+                                </span>
+                                {course.progress > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-purple-400 font-semibold">{course.progress}% completed</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border">
+                            {/* Toggle Video Under Course button */}
+                            {isClassroomCourse ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = !isVideoOpen;
+                                  setInlineVideoCourseId(next ? course.id : null);
+                                  if (next) {
+                                    setInlineIsPlaying(true);
+                                  }
+                                }}
+                                className={`py-2 px-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                                  isVideoOpen
+                                    ? 'bg-amber-500 text-black border-amber-400 shadow-amber-500/30 font-extrabold'
+                                    : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 hover:text-white border-amber-500/40 shadow-amber-950/20'
+                                }`}
+                              >
+                                <School className="w-3.5 h-3.5" />
+                                <span>{isVideoOpen ? 'Hide Video ▲' : 'Watch Real Classroom Video ▼'}</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = !isVideoOpen;
+                                  setInlineVideoCourseId(next ? course.id : null);
+                                }}
+                                className={`py-2 px-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                                  isVideoOpen
+                                    ? 'bg-purple-600 text-white border-purple-400 shadow-purple-900/30'
+                                    : 'bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border-purple-500/30 shadow-purple-950/20'
+                                }`}
+                              >
+                                <Play className="w-3.5 h-3.5 fill-current" />
+                                <span>{isVideoOpen ? 'Hide Video ▲' : 'Watch Video Under Course ▼'}</span>
+                              </button>
+                            )}
+
+                            <Link
+                              href={`/learn/${course.id}`}
+                              className="py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 hover:shadow-purple-900/50"
+                            >
+                              <span>{course.progress > 0 ? 'Continue' : 'Start'}</span>
+                            </Link>
+                          </div>
+                        </div>
+
+                        {/* ── INLINE VIDEO SECTION DIRECTLY UNDER THE COURSE ── */}
+                        {isVideoOpen && (
+                          <div className="w-full pt-4 border-t border-border/80 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-center justify-between flex-wrap gap-2 px-1">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-xs font-bold text-foreground">
+                                  {isClassroomCourse
+                                    ? 'Ms. Ananya Rao — Live Classroom Masterclass (8 Scenes)'
+                                    : `${course.title} — Video Stage`}
+                                </span>
+                                <span className="text-[11px] font-mono text-zinc-400 hidden sm:inline-block">
+                                  {isClassroomCourse ? '1080p Interactive Real Classroom' : 'HD Video Lab'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedVideoCourse(course)}
+                                  className="text-[11px] font-semibold text-purple-400 hover:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2.5 py-1 rounded-lg border border-purple-500/20 transition-all cursor-pointer flex items-center gap-1"
+                                >
+                                  <Sparkles className="w-3 h-3" />
+                                  <span>Open Theater Mode ⛶</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setInlineVideoCourseId(null)}
+                                  className="text-[11px] font-semibold text-zinc-400 hover:text-white bg-secondary/80 hover:bg-secondary px-2.5 py-1 rounded-lg border border-border transition-all cursor-pointer"
+                                >
+                                  ✕ Close
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Actual Video Player Surface */}
+                            {isClassroomCourse ? (
+                              <RealClassroomVideoStage
+                                currentTimeSec={inlineCurrentTimeSec}
+                                durationSec={630}
+                                isPlaying={inlineIsPlaying}
+                                onTogglePlay={() => setInlineIsPlaying(!inlineIsPlaying)}
+                                onSeek={(e) => setInlineCurrentTimeSec(Number(e.target.value))}
+                                playbackSpeed={inlinePlaybackSpeed}
+                                onSetSpeed={setInlinePlaybackSpeed}
+                                isMuted={inlineIsMuted}
+                                onToggleMute={() => setInlineIsMuted(!inlineIsMuted)}
+                                showCaptions={inlineShowCaptions}
+                                onToggleCaptions={() => setInlineShowCaptions(!inlineShowCaptions)}
+                                onShareVideo={() => {
+                                  if (typeof window !== 'undefined') {
+                                    navigator.clipboard?.writeText?.(window.location.origin + '/courses?video=crs-chapter-1-real-classroom-ai');
+                                  }
+                                  setInlineShareCopied(true);
+                                  setTimeout(() => setInlineShareCopied(false), 2000);
+                                }}
+                                onDownloadVideo={() => {
+                                  const a = document.createElement('a');
+                                  a.href = '/videos/young-explorer-gemini-ai.mp4';
+                                  a.download = 'chapter-1-real-classroom-masterclass.mp4';
+                                  a.click();
+                                }}
+                                shareCopied={inlineShareCopied}
+                                onJumpToScene={(sec) => setInlineCurrentTimeSec(sec)}
+                              />
+                            ) : isYoungExplorerVideo ? (
+                              <div className="relative aspect-video rounded-2xl bg-black border border-[#232332] overflow-hidden flex items-center justify-center">
+                                <video
+                                  src="/videos/young-explorer-gemini-ai.mp4"
+                                  controls
+                                  autoPlay
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="p-6 rounded-2xl bg-[#0f0f18] border border-[#232335] text-center space-y-3">
+                                <p className="text-xs text-zinc-300">
+                                  Interactive algorithmic video & 60fps simulation available in the full theater view.
+                                </p>
+                                <Button
+                                  size="sm"
+                                  onClick={() => setSelectedVideoCourse(course)}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl"
+                                >
+                                  Open Interactive Lab Theater
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         )}
-                        <Link
-                          href={`/learn/${course.id}`}
-                          className="py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 hover:shadow-purple-900/50"
-                        >
-                          <span>{course.progress > 0 ? 'Continue' : 'Start'}</span>
-                        </Link>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </section>
