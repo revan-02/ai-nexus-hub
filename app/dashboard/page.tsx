@@ -10,7 +10,7 @@ import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield, Search, X, Filter } from 'lucide-react';
+import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield, Search, X, Filter, School } from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -97,7 +97,7 @@ export default function DashboardPage() {
   const [selectedVideoCourse, setSelectedVideoCourse] = useState<any | null>(null);
 
   const modalCourse: CourseItem | null = selectedVideoCourse
-    ? {
+    ? mockCoursesList.find((mc) => mc.id === String(selectedVideoCourse.id)) || {
         id: String(selectedVideoCourse.id),
         title: selectedVideoCourse.title,
         description: selectedVideoCourse.desc || selectedVideoCourse.description || '',
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         updatedAt: 'Recently',
         thumbnailIcon: selectedVideoCourse.thumbnailIcon || 'Brain',
         instructor: {
-          name: 'RevBodh Academic Faculty',
+          name: 'Nexus Academic Faculty',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         },
       }
@@ -536,14 +536,25 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-border">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedVideoCourse(course)}
-                          className="py-2 px-3.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-purple-300" />
-                          <span>Watch Video & Lab</span>
-                        </button>
+                        {course.id === 'crs-chapter-1-real-classroom-ai' || (course.title || '').toLowerCase().includes('real classroom') ? (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVideoCourse(course)}
+                            className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 hover:text-white border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-amber-950/20"
+                          >
+                            <School className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Watch Real Classroom Video</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVideoCourse(course)}
+                            className="py-2 px-3.5 rounded-xl bg-purple-600/15 hover:bg-purple-600/30 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm shadow-purple-950/20"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-purple-300" />
+                            <span>Watch Video & Lab</span>
+                          </button>
+                        )}
                         <Link
                           href={`/learn/${course.id}`}
                           className="py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-900/30 hover:shadow-purple-900/50"

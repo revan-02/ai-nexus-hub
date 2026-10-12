@@ -158,17 +158,24 @@ function LearnerCourseCatalog() {
   const filterTabs = ['All', 'With Videos & Labs', 'Beginner', 'Intermediate', 'Advanced'];
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && publishedCourses.length > 0 && !selectedDetailCourse) {
+    if (typeof window !== 'undefined' && publishedCourses.length > 0) {
       const params = new URLSearchParams(window.location.search);
       const courseId = params.get('id');
-      if (courseId) {
+      if (courseId && !selectedDetailCourse) {
         const found = publishedCourses.find((c) => c.id === courseId) || courses.find((c) => c.id === courseId);
         if (found) {
           setSelectedDetailCourse(found);
         }
       }
+      const videoId = params.get('video');
+      if (videoId && !animatedVideoCourse) {
+        const found = publishedCourses.find((c) => c.id === videoId) || courses.find((c) => c.id === videoId);
+        if (found) {
+          setAnimatedVideoCourse(found);
+        }
+      }
     }
-  }, [publishedCourses, courses, selectedDetailCourse]);
+  }, [publishedCourses, courses, selectedDetailCourse, animatedVideoCourse]);
 
   const filteredCourses = useMemo(() => {
     return publishedCourses.filter((c) => {
