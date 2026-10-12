@@ -42,6 +42,7 @@ import {
   Zap,
   Briefcase,
   Lock,
+  School,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -461,15 +462,26 @@ function LearnerCourseCatalog() {
 
                       {/* Right: Actions Column (Balanced, evenly spaced buttons) */}
                       <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 lg:w-72 flex-shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#272730]">
-                        {/* Watch Animated Video & Launch Realtime Lab Trigger */}
-                        <Button
-                          variant="outline"
-                          onClick={() => setAnimatedVideoCourse(course)}
-                          className="w-full bg-purple-600/15 hover:bg-purple-600/25 border-purple-500/35 text-purple-300 hover:text-white text-xs font-bold h-10 rounded-xl gap-2 transition-all shadow-sm shadow-purple-900/20 cursor-pointer justify-center"
-                        >
-                          <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
-                          <span>Watch Animated Video & Lab</span>
-                        </Button>
+                        {/* Watch Real Classroom Video / Animated Video & Launch Realtime Lab Trigger */}
+                        {course.id === 'crs-chapter-1-real-classroom-ai' || (course.title || '').toLowerCase().includes('real classroom') ? (
+                          <Button
+                            variant="outline"
+                            onClick={() => setAnimatedVideoCourse(course)}
+                            className="w-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border-amber-500/40 text-amber-300 hover:text-white text-xs font-bold h-10 rounded-xl gap-2 transition-all shadow-md shadow-amber-950/30 cursor-pointer justify-center"
+                          >
+                            <School className="w-4 h-4 text-amber-400 animate-pulse" />
+                            <span>Watch Real Classroom Video</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            onClick={() => setAnimatedVideoCourse(course)}
+                            className="w-full bg-purple-600/15 hover:bg-purple-600/25 border-purple-500/35 text-purple-300 hover:text-white text-xs font-bold h-10 rounded-xl gap-2 transition-all shadow-sm shadow-purple-900/20 cursor-pointer justify-center"
+                          >
+                            <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                            <span>Watch Animated Video & Lab</span>
+                          </Button>
+                        )}
 
                         {/* Action Buttons: Syllabus Modal + Start/Unlock Course */}
                         <div className="grid grid-cols-2 gap-2.5 w-full">

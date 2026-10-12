@@ -51,11 +51,14 @@ import {
   Share2,
   Download,
   Subtitles,
-  Film
+  Film,
+  Video,
+  School
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CourseItem } from '@/lib/mock-data/courses-data';
+import { RealClassroomVideoStage } from './real-classroom-video-stage';
 import {
   ResponsiveContainer,
   LineChart,
@@ -137,9 +140,20 @@ export function CourseAnimatedVideoModal({
   // Get course-specific interactive configuration
   const config = getCoursePayload(course);
 
+  // Check if this course is the Real Classroom Chapter 1 Masterclass
+  const isRealClassroomCourse =
+    course?.id === 'crs-chapter-1-real-classroom-ai' ||
+    (course?.title || '').toLowerCase().includes('real classroom') ||
+    (course?.title || '').toLowerCase().includes('chapter 1');
+
   const [isPlaying, setIsPlaying] = useState(true);
-  const [currentTimeSec, setCurrentTimeSec] = useState(15);
-  const [durationSec, setDurationSec] = useState<number>(() => (config.chapters.length >= 6 ? 300 : 240));
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
+  const [durationSec, setDurationSec] = useState<number>(() => {
+    if (isRealClassroomCourse) {
+      return 630;
+    }
+    return config.chapters.length >= 6 ? 300 : 240;
+  });
   const [isMuted, setIsMuted] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
@@ -153,10 +167,12 @@ export function CourseAnimatedVideoModal({
       ? '/videos/young-explorer-gemini-ai.mp4'
       : undefined);
 
-  // Video Mode: Interactive Animated Simulation Canvas vs Curated HD Masterclass Video
-  const [videoStageMode, setVideoStageMode] = useState<'animated_canvas' | 'hd_masterclass'>(() =>
-    activeVideoUrl ? 'hd_masterclass' : 'animated_canvas'
-  );
+  // Video Mode: Real Classroom Live Video vs Curated HD Masterclass Video vs Interactive Animated Canvas
+  const [videoStageMode, setVideoStageMode] = useState<'real_classroom' | 'animated_canvas' | 'hd_masterclass'>(() => {
+    if (isRealClassroomCourse) return 'real_classroom';
+    if (activeVideoUrl) return 'hd_masterclass';
+    return 'animated_canvas';
+  });
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [showCaptions, setShowCaptions] = useState(true);
@@ -221,10 +237,10 @@ export function CourseAnimatedVideoModal({
     }
   }, [course]);
 
-  // Sync animation step with video time (when in canvas mode)
+  // Sync animation step with video time (when in canvas mode or real classroom mode)
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isPlaying && isOpen && !isGeneratingVideo && videoStageMode === 'animated_canvas') {
+    if (isPlaying && isOpen && !isGeneratingVideo && (videoStageMode === 'animated_canvas' || videoStageMode === 'real_classroom')) {
       const speed = Math.max(0.5, Math.min(3, playbackSpeed || 1));
       interval = setInterval(() => {
         setCurrentTimeSec((prev) => {
@@ -267,7 +283,7 @@ export function CourseAnimatedVideoModal({
   const handleVideoPause = () => setIsPlaying(false);
   const handleVideoEnded = () => setIsPlaying(false);
 
-  // Voice narration speech synthesis (speaks ONLY when transitioning to a new chapter with loop prevention in canvas mode)
+  // Voice narration speech synthesis (speaks in real_classroom and animated_canvas modes)
   useEffect(() => {
     if (!isOpen || videoStageMode === 'hd_masterclass') {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -299,15 +315,19 @@ export function CourseAnimatedVideoModal({
             const utterance = new SpeechSynthesisUtterance(narrationText);
             const voices = window.speechSynthesis.getVoices();
             const selectedVoice =
-              voices.find(
-                (v) =>
-                  v.lang.startsWith('en') &&
-                  (v.name.includes('Natural') ||
-                    v.name.includes('Google') ||
-                    v.name.includes('Samantha') ||
-                    v.name.includes('Daniel') ||
-                    v.name.includes('Online'))
-              ) || voices.find((v) => v.lang.startsWith('en'));
+              videoStageMode === 'real_classroom'
+                ? voices.find((v) => v.lang === 'en-IN' || v.lang === 'hi-IN' || v.name.includes('India') || v.name.includes('Neerja') || v.name.includes('Heera')) ||
+                  voices.find((v) => v.name.includes('Samantha') || v.name.includes('Natural')) ||
+                  voices.find((v) => v.lang.startsWith('en'))
+                : voices.find(
+                    (v) =>
+                      v.lang.startsWith('en') &&
+                      (v.name.includes('Natural') ||
+                        v.name.includes('Google') ||
+                        v.name.includes('Samantha') ||
+                        v.name.includes('Daniel') ||
+                        v.name.includes('Online'))
+                  ) || voices.find((v) => v.lang.startsWith('en'));
             if (selectedVoice) utterance.voice = selectedVoice;
             utterance.rate = Math.min(1.4, Math.max(0.85, (playbackSpeed || 1) * 0.95));
             utterance.pitch = selectedAgeBracket === '6-8' || selectedAgeBracket === '3-5' ? 1.15 : 1.0;
@@ -662,9 +682,26 @@ export function CourseAnimatedVideoModal({
         <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto">
           {/* LEFT 7 COLS: Animated Video Stage */}
           <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#23232f] bg-[#09090d] space-y-4">
-            {/* Interactive Visualizer & Gemini Video Mode Switcher Header */}
+            {/* Interactive Visualizer & Video Mode Switcher Header */}
             <div className="flex items-center justify-between gap-2 pb-1 flex-wrap">
               <div className="flex items-center gap-1.5 p-1 bg-[#13131c] border border-[#232332] rounded-xl text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoStageMode('real_classroom');
+                    if (videoRef.current) {
+                      videoRef.current.pause();
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    videoStageMode === 'real_classroom'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <School className="w-3.5 h-3.5" />
+                  <span>Real Classroom Video</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -702,229 +739,259 @@ export function CourseAnimatedVideoModal({
                 </button>
               </div>
               <span className="text-[11px] text-zinc-400 font-mono">
-                {videoStageMode === 'hd_masterclass'
+                {videoStageMode === 'real_classroom'
+                  ? 'Ms. Ananya Rao • Live Smartboard Masterclass'
+                  : videoStageMode === 'hd_masterclass'
                   ? 'Gemini Generated Video Player'
                   : 'Real-Time Architecture Visualization'}
               </span>
             </div>
 
-            {/* Cinematic Video Container (Matching Gemini <generated-video> Architecture) */}
-            <div
-              ref={videoContainerRef}
-              className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group select-none"
-            >
-              {/* Video Surface: Real MP4 Video vs Interactive Algorithmic Canvas */}
-              {videoStageMode === 'hd_masterclass' ? (
-                <div className="absolute inset-0 z-0 bg-black flex items-center justify-center overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    src={activeVideoUrl}
-                    className="w-full h-full object-contain cursor-pointer"
-                    playsInline
-                    loop
-                    onClick={handleTogglePlay}
-                    onTimeUpdate={handleVideoTimeUpdate}
-                    onLoadedMetadata={handleVideoLoadedMetadata}
-                    onPlay={handleVideoPlay}
-                    onPause={handleVideoPause}
-                    onEnded={handleVideoEnded}
-                  />
+            {/* Video Stage: Real Classroom Video vs Gemini HD Video vs Algorithmic Canvas */}
+            {videoStageMode === 'real_classroom' ? (
+              <RealClassroomVideoStage
+                currentTimeSec={currentTimeSec}
+                durationSec={durationSec}
+                isPlaying={isPlaying}
+                onTogglePlay={handleTogglePlay}
+                onSeek={handleSeek}
+                playbackSpeed={playbackSpeed}
+                onSetSpeed={handleSetSpeed}
+                isMuted={isMuted}
+                onToggleMute={handleToggleMute}
+                showCaptions={showCaptions}
+                onToggleCaptions={() => setShowCaptions((prev) => !prev)}
+                onShareVideo={handleShareVideo}
+                onDownloadVideo={handleDownloadVideo}
+                shareCopied={shareCopied}
+                onJumpToScene={(sec) => {
+                  setCurrentTimeSec(sec);
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = sec;
+                  }
+                }}
+              />
+            ) : (
+              <>
+                {/* Cinematic Video Container (Matching Gemini <generated-video> Architecture) */}
+                <div
+                  ref={videoContainerRef}
+                  className="relative aspect-video rounded-2xl bg-[#0e0e16] border border-[#232332] overflow-hidden flex flex-col justify-between shadow-2xl group select-none"
+                >
+                  {/* Video Surface: Real MP4 Video vs Interactive Algorithmic Canvas */}
+                  {videoStageMode === 'hd_masterclass' ? (
+                    <div className="absolute inset-0 z-0 bg-black flex items-center justify-center overflow-hidden">
+                      <video
+                        ref={videoRef}
+                        src={activeVideoUrl}
+                        className="w-full h-full object-contain cursor-pointer"
+                        playsInline
+                        loop
+                        onClick={handleTogglePlay}
+                        onTimeUpdate={handleVideoTimeUpdate}
+                        onLoadedMetadata={handleVideoLoadedMetadata}
+                        onPlay={handleVideoPlay}
+                        onPause={handleVideoPause}
+                        onEnded={handleVideoEnded}
+                      />
 
-                  {/* Gemini Live Subtitles / Closed Captions Overlay */}
-                  {showCaptions && (
-                    <div className="absolute bottom-16 inset-x-4 sm:inset-x-8 z-10 text-center pointer-events-none transition-all">
-                      <span className="inline-block px-3.5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md text-white text-xs sm:text-sm font-medium border border-white/10 shadow-2xl leading-relaxed max-w-xl">
-                        {currentChapter.subtitle || currentChapter.title}
-                      </span>
+                      {/* Gemini Live Subtitles / Closed Captions Overlay */}
+                      {showCaptions && (
+                        <div className="absolute bottom-16 inset-x-4 sm:inset-x-8 z-10 text-center pointer-events-none transition-all">
+                          <span className="inline-block px-3.5 py-1.5 rounded-xl bg-black/85 backdrop-blur-md text-white text-xs sm:text-sm font-medium border border-white/10 shadow-2xl leading-relaxed max-w-xl">
+                            {currentChapter.subtitle || currentChapter.title}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="absolute top-11 bottom-[64px] inset-x-0 z-0 overflow-hidden flex items-center justify-center p-2">
+                      {renderCourseAnimation(config.animationType, animStep, param1, param2)}
                     </div>
                   )}
-                </div>
-              ) : (
-                <div className="absolute top-11 bottom-[64px] inset-x-0 z-0 overflow-hidden flex items-center justify-center p-2">
-                  {renderCourseAnimation(config.animationType, animStep, param1, param2)}
-                </div>
-              )}
 
-              {/* Play / Pause Toggle Center Click Target when paused */}
-              {!isPlaying && (
-                <div
-                  onClick={handleTogglePlay}
-                  className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
-                  title="Click to Resume Video"
-                >
-                  <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
-                    <Play className="w-8 h-8 fill-white ml-1" />
-                  </div>
-                </div>
-              )}
-
-              {/* Top Video Overlay Bar */}
-              <div className="relative z-10 px-4 py-2.5 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                  <span className="text-xs font-bold text-white tracking-wider uppercase drop-shadow truncate max-w-[200px] sm:max-w-xs">
-                    {initialLectureTitle || currentChapter.title}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-[11px] text-zinc-300 font-mono bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm">
-                    {formatTime(currentTimeSec)} / {formatTime(durationSec)}
-                  </div>
-                  {videoStageMode === 'animated_canvas' && (
-                    <button
-                      onClick={() => {
-                        const next = !isVoiceActive;
-                        setIsVoiceActive(next);
-                        if (next) {
-                          lastSpokenChapterTitleRef.current = null;
-                        }
-                      }}
-                      title={isVoiceActive ? 'Disable Audio Narration' : 'Enable Neural Voice Narration'}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                        isVoiceActive
-                          ? 'bg-purple-600 border-purple-400 text-white shadow-md'
-                          : 'bg-black/60 border-white/10 text-zinc-400 hover:text-white'
-                      }`}
+                  {/* Play / Pause Toggle Center Click Target when paused */}
+                  {!isPlaying && (
+                    <div
+                      onClick={handleTogglePlay}
+                      className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer backdrop-blur-[2px] transition-all hover:bg-black/30"
+                      title="Click to Resume Video"
                     >
-                      <Volume2 className="w-3 h-3" />
-                      <span>{isVoiceActive ? 'Voice ON' : 'Voice OFF'}</span>
-                    </button>
+                      <div className="w-16 h-16 rounded-full bg-purple-600/90 hover:bg-purple-600 text-white flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+                        <Play className="w-8 h-8 fill-white ml-1" />
+                      </div>
+                    </div>
                   )}
-                </div>
-              </div>
 
-              {/* Video Player Bottom Controls Overlay (Matching Gemini Scrim & Controls) */}
-              <div className="relative z-10 px-4 py-2.5 bg-[#0a0a0f]/95 border-t border-[#1e1e2c] space-y-1.5">
-                {/* Timeline Scrubber */}
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-mono text-zinc-400 w-10">{formatTime(currentTimeSec)}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={durationSec}
-                    value={currentTimeSec}
-                    onChange={handleSeek}
-                    aria-label="Seek slider"
-                    className="flex-1 h-1.5 bg-[#252535] accent-purple-500 rounded-lg cursor-pointer hover:h-2 transition-all"
-                  />
-                  <span className="text-[10px] font-mono text-zinc-400 w-10 text-right">{formatTime(durationSec)}</span>
+                  {/* Top Video Overlay Bar */}
+                  <div className="relative z-10 px-4 py-2.5 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                      <span className="text-xs font-bold text-white tracking-wider uppercase drop-shadow truncate max-w-[200px] sm:max-w-xs">
+                        {initialLectureTitle || currentChapter.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-[11px] text-zinc-300 font-mono bg-black/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm">
+                        {formatTime(currentTimeSec)} / {formatTime(durationSec)}
+                      </div>
+                      {videoStageMode === 'animated_canvas' && (
+                        <button
+                          onClick={() => {
+                            const next = !isVoiceActive;
+                            setIsVoiceActive(next);
+                            if (next) {
+                              lastSpokenChapterTitleRef.current = null;
+                            }
+                          }}
+                          title={isVoiceActive ? 'Disable Audio Narration' : 'Enable Neural Voice Narration'}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                            isVoiceActive
+                              ? 'bg-purple-600 border-purple-400 text-white shadow-md'
+                              : 'bg-black/60 border-white/10 text-zinc-400 hover:text-white'
+                          }`}
+                        >
+                          <Volume2 className="w-3 h-3" />
+                          <span>{isVoiceActive ? 'Voice ON' : 'Voice OFF'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Video Player Bottom Controls Overlay (Matching Gemini Scrim & Controls) */}
+                  <div className="relative z-10 px-4 py-2.5 bg-[#0a0a0f]/95 border-t border-[#1e1e2c] space-y-1.5">
+                    {/* Timeline Scrubber */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-zinc-400 w-10">{formatTime(currentTimeSec)}</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={durationSec}
+                        value={currentTimeSec}
+                        onChange={handleSeek}
+                        aria-label="Seek slider"
+                        className="flex-1 h-1.5 bg-[#252535] accent-purple-500 rounded-lg cursor-pointer hover:h-2 transition-all"
+                      />
+                      <span className="text-[10px] font-mono text-zinc-400 w-10 text-right">{formatTime(durationSec)}</span>
+                    </div>
+
+                    {/* Control Action Buttons */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleTogglePlay}
+                          aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                          className="w-8 h-8 p-0 rounded-lg text-white hover:bg-purple-600/30 hover:text-purple-300 cursor-pointer"
+                        >
+                          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setCurrentTimeSec(0);
+                            if (videoRef.current && videoStageMode === 'hd_masterclass') {
+                              videoRef.current.currentTime = 0;
+                            }
+                          }}
+                          title="Replay from start"
+                          className="w-8 h-8 p-0 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleToggleMute}
+                          aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                          className="w-8 h-8 p-0 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
+                        >
+                          {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setShowCaptions((prev) => !prev)}
+                          title={showCaptions ? 'Hide Subtitles' : 'Show Subtitles'}
+                          className={`w-8 h-8 p-0 rounded-lg transition-colors cursor-pointer ${
+                            showCaptions ? 'text-purple-400 bg-purple-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-[#1a1a25]'
+                          }`}
+                        >
+                          <Subtitles className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+
+                      {/* Playback Speed Toggles and Fullscreen */}
+                      <div className="flex items-center gap-1.5">
+                        {[0.75, 1, 1.25, 1.5, 2].map((spd) => (
+                          <button
+                            key={spd}
+                            onClick={() => handleSetSpeed(spd)}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                              playbackSpeed === spd
+                                ? 'bg-purple-600 text-white shadow-sm shadow-purple-900/40'
+                                : 'text-zinc-400 hover:text-zinc-200 bg-[#161622]'
+                            }`}
+                          >
+                            {spd}x
+                          </button>
+                        ))}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleToggleFullscreen}
+                          title="Toggle Fullscreen"
+                          className="w-7 h-7 p-0 ml-1 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
+                        >
+                          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Control Action Buttons */}
-                <div className="flex items-center justify-between pt-1">
+                {/* Gemini Media Actions Bar (Share & Download MP4) */}
+                <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                      <Film className="w-3 h-3 text-purple-400" />
+                      <span>Gemini Video AI Masterclass</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-zinc-400">
+                      {formatTime(currentTimeSec)} / {formatTime(durationSec)} • 1080p MP4
+                    </span>
+                  </div>
+
+                  {/* Share & Download Buttons (Matching Gemini data-test-id schema) */}
                   <div className="flex items-center gap-2">
                     <Button
+                      variant="outline"
                       size="sm"
-                      variant="ghost"
-                      onClick={handleTogglePlay}
-                      aria-label={isPlaying ? 'Pause video' : 'Play video'}
-                      className="w-8 h-8 p-0 rounded-lg text-white hover:bg-purple-600/30 hover:text-purple-300 cursor-pointer"
+                      onClick={handleShareVideo}
+                      data-test-id="share-video-button"
+                      className="bg-[#14141e] hover:bg-[#1e1e2c] border-[#29293d] text-zinc-300 hover:text-white text-xs font-semibold h-8 rounded-xl gap-1.5 cursor-pointer"
+                      title="Share Video Link"
                     >
-                      {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
+                      {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-purple-400" />}
+                      <span>{shareCopied ? 'Link Copied!' : 'Share Video'}</span>
                     </Button>
                     <Button
+                      variant="outline"
                       size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setCurrentTimeSec(0);
-                        if (videoRef.current && videoStageMode === 'hd_masterclass') {
-                          videoRef.current.currentTime = 0;
-                        }
-                      }}
-                      title="Replay from start"
-                      className="w-8 h-8 p-0 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
+                      onClick={handleDownloadVideo}
+                      data-test-id="download-video-button"
+                      className="bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/40 text-purple-300 hover:text-white text-xs font-semibold h-8 rounded-xl gap-1.5 cursor-pointer shadow-sm shadow-purple-900/20"
+                      title="Download MP4 Video"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleToggleMute}
-                      aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-                      className="w-8 h-8 p-0 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
-                    >
-                      {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowCaptions((prev) => !prev)}
-                      title={showCaptions ? 'Hide Subtitles' : 'Show Subtitles'}
-                      className={`w-8 h-8 p-0 rounded-lg transition-colors cursor-pointer ${
-                        showCaptions ? 'text-purple-400 bg-purple-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-[#1a1a25]'
-                      }`}
-                    >
-                      <Subtitles className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-
-                  {/* Playback Speed Toggles and Fullscreen */}
-                  <div className="flex items-center gap-1.5">
-                    {[0.75, 1, 1.25, 1.5, 2].map((spd) => (
-                      <button
-                        key={spd}
-                        onClick={() => handleSetSpeed(spd)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
-                          playbackSpeed === spd
-                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-900/40'
-                            : 'text-zinc-400 hover:text-zinc-200 bg-[#161622]'
-                        }`}
-                      >
-                        {spd}x
-                      </button>
-                    ))}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleToggleFullscreen}
-                      title="Toggle Fullscreen"
-                      className="w-7 h-7 p-0 ml-1 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1a1a25]"
-                    >
-                      {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                      <Download className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Download MP4</span>
                     </Button>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Gemini Media Actions Bar (Share & Download MP4) */}
-            <div className="flex items-center justify-between gap-3 pt-1 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  <Film className="w-3 h-3 text-purple-400" />
-                  <span>Gemini Video AI Masterclass</span>
-                </span>
-                <span className="text-[11px] font-mono text-zinc-400">
-                  {formatTime(currentTimeSec)} / {formatTime(durationSec)} • 1080p MP4
-                </span>
-              </div>
-
-              {/* Share & Download Buttons (Matching Gemini data-test-id schema) */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleShareVideo}
-                  data-test-id="share-video-button"
-                  className="bg-[#14141e] hover:bg-[#1e1e2c] border-[#29293d] text-zinc-300 hover:text-white text-xs font-semibold h-8 rounded-xl gap-1.5 cursor-pointer"
-                  title="Share Video Link"
-                >
-                  {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5 text-purple-400" />}
-                  <span>{shareCopied ? 'Link Copied!' : 'Share Video'}</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadVideo}
-                  data-test-id="download-video-button"
-                  className="bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/40 text-purple-300 hover:text-white text-xs font-semibold h-8 rounded-xl gap-1.5 cursor-pointer shadow-sm shadow-purple-900/20"
-                  title="Download MP4 Video"
-                >
-                  <Download className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Download MP4</span>
-                </Button>
-              </div>
-            </div>
+              </>
+            )}
 
             {/* Live Narration Teleprompter & Closed Captions Card */}
             <div className="rounded-xl border border-purple-500/30 bg-[#101018] p-3 px-4 shadow-lg flex items-center gap-3">
@@ -2094,6 +2161,56 @@ function getCoursePayload(course: CourseItem | null): CourseInteractivePayload {
   const cat = (course.category || '').toLowerCase();
   const title = (course.title || '').toLowerCase();
   const tier = (course.academicTier || '').toLowerCase();
+
+  // 0. Chapter 1: Introduction to Artificial Intelligence (Real Classroom Masterclass)
+  if (course.id === 'crs-chapter-1-real-classroom-ai' || title.includes('real classroom') || title.includes('chapter 1')) {
+    return {
+      animationType: 'REAL_CLASSROOM_AI',
+      badge: 'Real Classroom Masterclass • Ms. Ananya Rao',
+      chapters: [
+        { time: '00:00', timestampSec: 0, title: 'Scene 1: Welcome to the World of AI', subtitle: 'Good morning, everyone! Today we learn about AI that you already use every single day in smartphones and YouTube.' },
+        { time: '01:00', timestampSec: 60, title: 'Scene 2: What is Artificial Intelligence?', subtitle: 'Artificial means made by people. Intelligence is the ability to learn and decide. AI helps computers perform human tasks.' },
+        { time: '02:15', timestampSec: 135, title: 'Scene 3: AI Around Us (Everyday Situations)', subtitle: 'Face recognition, YouTube cricket recommendations, voice assistants, and Bengaluru to Mysuru traffic maps.' },
+        { time: '03:40', timestampSec: 220, title: 'Scene 4: How Does AI Learn? (Apples & Oranges)', subtitle: 'How ML learns: Examples, Training, Testing, and Improvement! Watch the green apple challenge test.' },
+        { time: '05:20', timestampSec: 320, title: 'Scene 5: Ordinary Programs vs AI (Calculator)', subtitle: 'A calculator 5 + 3 = 8 follows fixed programmer rules. An AI image model learns patterns from data.' },
+        { time: '06:35', timestampSec: 395, title: 'Scene 6: How AI Helps People (Real World Impact)', subtitle: 'Education quizzes, farm crop leaf disease detection, healthcare scans, and Kannada translation (Good morning -> ಶುಭೋದಯ).' },
+        { time: '07:45', timestampSec: 465, title: 'Scene 7: Can We Trust Every AI Answer?', subtitle: 'AI can make mistakes! Remember the golden safety rule: THINK — CHECK — PROTECT. Never share passwords.' },
+        { time: '08:45', timestampSec: 525, title: 'Scene 8: Quick Quiz and Recap Challenge', subtitle: '3-question interactive quiz with Ms. Ananya Rao and homework assignment: spot 3 AI examples in your daily life.' },
+      ],
+      defaultCode: `# Python Machine Learning Example: Apples vs Oranges Classifier
+# Trained on shape, weight, and texture features
+fruits = [
+    {"name": "Apple", "weight_g": 180, "texture": "smooth", "color": "red_or_green"},
+    {"name": "Orange", "weight_g": 200, "texture": "bumpy", "color": "orange_or_green"},
+]
+
+def predict_fruit(weight, texture):
+    # Model learned decision boundary from classroom examples
+    if texture == "smooth":
+        return "Prediction: Apple 🍎 (Confidence: 96%)"
+    else:
+        return "Prediction: Orange 🍊 (Confidence: 94%)"
+
+print(predict_fruit(175, "smooth"))`,
+      defaultOutput: 'Prediction: Apple 🍎 (Confidence: 96%)\nClassroom Model Test Passed! Four Key Steps: Examples -> Training -> Testing -> Improvement.',
+      simulatorConfig: {
+        param1Name: 'Training Examples Count',
+        param1Default: 1000,
+        param1Min: 100,
+        param1Max: 5000,
+        param1Step: 100,
+        param1Unit: 'photos',
+        param2Name: 'Model Accuracy',
+        param2Default: 96,
+        param2Min: 50,
+        param2Max: 99,
+        param2Step: 1,
+        param2Unit: '%',
+        metricLabel1: 'Pattern Confidence',
+        metricLabel2: 'Prediction Time',
+      },
+    };
+  }
 
   // 1. Kids / Scratch / Visual Robotics
   if (cat.includes('kids') || cat.includes('school') || cat.includes('k-12') || title.includes('scratch') || title.includes('robotics') || title.includes('what is a computer brain') || tier.includes('young explorer')) {
