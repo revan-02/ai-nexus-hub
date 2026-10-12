@@ -211,6 +211,31 @@ export async function syncGoogleUserWithBackend(params: {
 }
 
 /**
+ * Clean up existing phone reCAPTCHA instances and DOM elements
+ */
+export function cleanupPhoneRecaptcha(containerId = 'firebase-recaptcha-container'): void {
+  if (typeof window === 'undefined') return;
+  const win = window as any;
+  if (win.recaptchaVerifier) {
+    try {
+      win.recaptchaVerifier.clear();
+    } catch {}
+    delete win.recaptchaVerifier;
+  }
+  try {
+    if (win.grecaptcha && typeof win.grecaptcha.reset === 'function') {
+      win.grecaptcha.reset();
+    }
+  } catch {}
+  if (containerId) {
+    const el = document.getElementById(containerId);
+    if (el) {
+      el.innerHTML = '';
+    }
+  }
+}
+
+/**
  * Initialize Invisible reCAPTCHA verifier for Phone Auth
  */
 export function initPhoneRecaptcha(containerId: string): RecaptchaVerifier {
@@ -218,26 +243,35 @@ export function initPhoneRecaptcha(containerId: string): RecaptchaVerifier {
     throw new Error('reCAPTCHA can only be initialized on the client side.');
   }
 
-  // Clear existing verifier if any
-  const existingVerifier = (window as unknown as { recaptchaVerifier?: RecaptchaVerifier }).recaptchaVerifier;
-  if (existingVerifier) {
-    try {
-      existingVerifier.clear();
-    } catch {}
+  // Clear existing verifier & container DOM
+  cleanupPhoneRecaptcha(containerId);
+
+  const container = document.getElementById(containerId);
+  if (!container) {
+    const fallbackDiv = document.createElement('div');
+    fallbackDiv.id = containerId;
+    document.body.appendChild(fallbackDiv);
+  } else {
+    container.innerHTML = '';
   }
 
-  const verifier = new RecaptchaVerifier(auth, containerId, {
-    size: 'invisible',
-    callback: () => {
-      // reCAPTCHA solved, allow signInWithPhoneNumber.
-    },
-    'expired-callback': () => {
-      console.warn('[Firebase Auth] reCAPTCHA expired, please retry.');
-    },
-  });
+  try {
+    const verifier = new RecaptchaVerifier(auth, containerId, {
+      size: 'invisible',
+      callback: () => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+      },
+      'expired-callback': () => {
+        console.warn('[Firebase Auth] reCAPTCHA expired, please retry.');
+      },
+    });
 
-  (window as unknown as { recaptchaVerifier: RecaptchaVerifier }).recaptchaVerifier = verifier;
-  return verifier;
+    (window as any).recaptchaVerifier = verifier;
+    return verifier;
+  } catch (err: any) {
+    console.error('[Firebase Auth] RecaptchaVerifier init error:', err);
+    throw new Error('Security verification could not be loaded. Please refresh the page and try again.');
+  }
 }
 
 /**

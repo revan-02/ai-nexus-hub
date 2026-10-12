@@ -43,13 +43,13 @@ export function NexusFooter() {
             <div className="p-3.5 bg-secondary/60 border border-purple-500/20 rounded-2xl space-y-1.5 max-w-sm">
               <div className="flex items-center gap-2 text-purple-300 font-bold text-xs">
                 <Building2 className="w-4 h-4 text-purple-400" />
-                <span>Managed and Maintained by</span>
+                <span>Managed by</span>
               </div>
               <div className="font-mono text-xs font-bold text-foreground tracking-wide">
-                AalgoLabs (OPC) PVT.LTD.
+                Manyathy Business Solutions
               </div>
               <p className="text-[11px] text-zinc-400 leading-normal">
-                Enterprise AI Engineering, Quantitative Research & Intelligent Systems.
+                Enterprise AI Engineering, Quantitative Learning & Business Solutions.
               </p>
             </div>
 
@@ -133,6 +133,12 @@ export function NexusFooter() {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
+                <Link href="/about" className="hover:text-purple-300 transition-colors font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <Brain className="w-3 h-3 text-purple-400" />
+                  <span>About AI Nexus</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy-policy" className="hover:text-emerald-300 transition-colors font-semibold text-zinc-300 flex items-center gap-1.5">
                   <Lock className="w-3 h-3 text-emerald-400" />
                   <span>Privacy Policy</span>
@@ -150,7 +156,7 @@ export function NexusFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/certificates/cert-1" className="hover:text-emerald-300 transition-colors">
+                <Link href="/certificates" className="hover:text-emerald-300 transition-colors">
                   ISO 17024 Credentialing
                 </Link>
               </li>
@@ -171,11 +177,15 @@ export function NexusFooter() {
             </span>
             <span className="hidden sm:inline text-zinc-600">•</span>
             <span className="text-purple-300 font-semibold">
-              Managed and Maintained by <strong className="text-foreground">AalgoLabs (OPC) PVT.LTD.</strong>
+              Managed by <strong className="text-foreground">Manyathy Business Solutions</strong>
             </span>
           </div>
 
           <div className="flex items-center gap-4 text-xs">
+            <Link href="/about" className="hover:text-foreground text-zinc-400 font-medium transition-colors">
+              About
+            </Link>
+            <span className="text-zinc-600">•</span>
             <Link href="/privacy-policy" className="hover:text-foreground text-zinc-400 font-medium transition-colors">
               Privacy Policy
             </Link>

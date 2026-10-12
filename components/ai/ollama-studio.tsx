@@ -139,9 +139,10 @@ export function OllamaStudio() {
 
   const [installedModelTags, setInstalledModelTags] = useState<string[]>([]);
   const [isOllamaOnline, setIsOllamaOnline] = useState<boolean>(true);
+  const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
 
-  // Fetch live local Ollama status & installed models
-  useEffect(() => {
+  const checkOllamaStatus = () => {
+    setIsCheckingStatus(true);
     fetch('/api/ai/ollama/status')
       .then((res) => res.json())
       .then((json) => {
@@ -150,9 +151,21 @@ export function OllamaStudio() {
           if (Array.isArray(json.data.installedModels)) {
             setInstalledModelTags(json.data.installedModels);
           }
+        } else {
+          setIsOllamaOnline(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setIsOllamaOnline(false);
+      })
+      .finally(() => {
+        setIsCheckingStatus(false);
+      });
+  };
+
+  // Fetch live local Ollama status & installed models
+  useEffect(() => {
+    checkOllamaStatus();
   }, []);
 
   const isModelInstalled = (model: FreeOllamaModel) => {
@@ -376,13 +389,56 @@ export function OllamaStudio() {
                 <span className={`font-mono font-bold ${isOllamaOnline ? 'text-emerald-300' : 'text-amber-300'}`}>
                   {isOllamaOnline
                     ? `Online (${installedModelTags.length > 0 ? installedModelTags.length : 5} Models Ready)`
-                    : 'Ollama Daemon Offline'}
+                    : 'Ollama is offline. Start Ollama to use local AI models.'}
                 </span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Offline Alert Banner */}
+      {!isOllamaOnline && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-bold text-sm text-amber-300">
+                Ollama is offline. Start Ollama to use local AI models.
+              </h4>
+              <p className="text-zinc-300 text-xs">
+                To run local open-source models privately with zero API costs, launch Ollama on your machine:
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px] text-zinc-300">
+                <span>1. Install: <a href="https://ollama.com" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline font-semibold">ollama.com</a></span>
+                <span>•</span>
+                <span>2. Start service: <code className="bg-black/50 px-1.5 py-0.5 rounded text-amber-300 border border-amber-500/20">ollama serve</code></span>
+                <span>•</span>
+                <span>3. Download model: <code className="bg-black/50 px-1.5 py-0.5 rounded text-amber-300 border border-amber-500/20">ollama pull llama3.2</code></span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              onClick={checkOllamaStatus}
+              disabled={isCheckingStatus}
+              className="bg-amber-600 hover:bg-amber-500 text-black font-bold text-xs rounded-xl h-8 px-3 gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+              <span>Check Status</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab('installation')}
+              className="border-amber-500/30 hover:bg-amber-500/10 text-amber-300 text-xs rounded-xl h-8 px-3 cursor-pointer"
+            >
+              CLI Guide
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* AI Bot Disabled Administrator Banner */}
       {!isAiBotEnabled && (

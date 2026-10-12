@@ -98,7 +98,7 @@ export default function AdminLoginPage() {
             <div>
               <h1 className="text-2xl font-bold text-white tracking-tight">Admin Portal</h1>
               <p className="text-xs text-zinc-400 mt-1">
-                Restricted access — AalgoLabs administrators only
+                Restricted access — Manyathy Business Solutions administrators only
               </p>
             </div>
           </div>
@@ -189,14 +189,14 @@ export default function AdminLoginPage() {
           </Card>
 
           <p className="text-center text-[11px] text-zinc-600">
-            Session is encrypted and monitored by AalgoLabs security systems.
+            Session is encrypted and monitored by Manyathy Business Solutions security systems.
           </p>
         </div>
       </div>
 
       {/* Footer */}
       <footer className="p-4 text-center text-xs text-zinc-600 border-t border-[#1e293b]/40">
-        © 2026 AI Nexus Platform · Managed and Maintained by AalgoLabs (OPC) PVT.LTD.
+        © 2026 AI Nexus Platform · Managed by Manyathy Business Solutions
       </footer>
     </div>
   );

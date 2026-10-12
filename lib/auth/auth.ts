@@ -41,7 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ) {
             return {
               id: 'admin-master-01',
-              name: 'AalgoLabs Admin',
+              name: 'Manyathy Admin',
               email: 'admin@ainexus.hub',
               role: 'Admin',
             };
@@ -182,7 +182,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ) {
             return {
               id: 'admin-master-01',
-              name: 'AalgoLabs Admin',
+              name: 'Manyathy Admin',
               email: 'admin@ainexus.hub',
               role: 'Admin',
             };

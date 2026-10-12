@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { signIn } from 'next-auth/react';
 import {
   initPhoneRecaptcha,
+  cleanupPhoneRecaptcha,
   sendPhoneOtp,
   verifyPhoneOtp,
   loginWithEmail,
@@ -99,7 +100,7 @@ export default function LoginPage() {
       setIsLoading(false);
 
       if (res?.error) {
-        setErrorMessage('Invalid credentials. Please verify your email, username, or phone number and password.');
+        setErrorMessage('Login failed. Please check your email/username and password and try again.');
       } else {
         if (storedName) {
           try {
@@ -249,7 +250,10 @@ export default function LoginPage() {
       const errCode = error.code || '';
       const errMsg = error.message || '';
 
-      if (errCode === 'auth/configuration-not-found' || errMsg.includes('configuration-not-found')) {
+      if (errMsg.includes('already been rendered') || errMsg.includes('Security verification could not be loaded') || errCode === 'auth/captcha-check-failed' || errMsg.includes('captcha-check-failed')) {
+        cleanupPhoneRecaptcha('firebase-recaptcha-container');
+        setErrorMessage('Security verification could not be loaded. Please refresh the page and try again.');
+      } else if (errCode === 'auth/configuration-not-found' || errMsg.includes('configuration-not-found')) {
         setErrorMessage(
           'Phone Authentication is not enabled in the Firebase Console for project "revbodh". Please go to Firebase Console > Authentication > Sign-in method, click "Phone", and enable it.'
         );
@@ -261,8 +265,6 @@ export default function LoginPage() {
         setErrorMessage(
           'Daily SMS quota exceeded for Firebase project. You can add test numbers in Firebase Console > Authentication > Sign-in method > Phone to test without SMS quota.'
         );
-      } else if (errCode === 'auth/captcha-check-failed' || errMsg.includes('captcha-check-failed')) {
-        setErrorMessage('reCAPTCHA verification failed. Please refresh the page and try again.');
       } else {
         setErrorMessage(
           error.message || 'Failed to send SMS code. Please verify phone number format (e.g. +91 98765 43210).'
@@ -438,6 +440,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
+                  cleanupPhoneRecaptcha('firebase-recaptcha-container');
                   setAuthMethod('password');
                   setErrorMessage(null);
                 }}
@@ -453,6 +456,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
+                  cleanupPhoneRecaptcha('firebase-recaptcha-container');
                   setAuthMethod('phone');
                   setErrorMessage(null);
                 }}
@@ -623,7 +627,7 @@ export default function LoginPage() {
       <footer className="p-4 sm:p-6 text-center text-xs text-zinc-400 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
         <span>© 2026 AI Nexus Platform. All rights reserved.</span>
         <span className="hidden sm:inline">•</span>
-        <span className="text-zinc-300 font-medium">Managed and Maintained by AalgoLabs (OPC) PVT.LTD.</span>
+        <span className="text-zinc-300 font-medium">Managed by Manyathy Business Solutions</span>
       </footer>
     </div>
   );

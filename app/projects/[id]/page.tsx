@@ -36,6 +36,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useProject, useAddProjectComment } from '@/hooks/api/use-projects';
 import { useSession } from 'next-auth/react';
+import { mockProjectsList } from '@/lib/mock-data/projects-data';
 
 const defaultCodeFiles = [
   {
@@ -61,7 +62,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const { data: projectResponse, isLoading, refetch } = useProject(id);
   const addCommentMutation = useAddProjectComment(id);
 
-  const project = projectResponse?.data;
+  const matchedMock = mockProjectsList.find((p) => p.id === id);
+  const project = projectResponse?.data || matchedMock || mockProjectsList[0];
 
   const [activeTab, setActiveTab] = useState<'overview' | 'requirements' | 'code' | 'comments'>('overview');
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
@@ -148,20 +150,46 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const fallbackAim = project?.aim || 'Automate early detection of pulmonary nodules and chest radiography abnormalities using state-of-the-art vision transformers and 3D U-Net segmentation models.';
-  const fallbackObjectives = project?.objectives?.length ? project.objectives : [
-    'Build a real-time DICOM image preprocessing and normalization pipeline.',
-    'Implement 3D U-Net for volumetric lesion segmentation.',
-    'Serve predictions via FastAPI microservices with sub-100ms inference latency.',
-    'Package containerized workloads with Helm charts for production Kubernetes deployment.',
+  const fallbackAim = (project as any)?.aim || (project as any)?.description || 'Build and deploy an enterprise-grade AI software solution with end-to-end data pipelines, modern architectures, and validated tests.';
+  const fallbackObjectives = (project as any)?.objectives?.length ? (project as any).objectives : [
+    'Design and structure the component architecture with clean separation of concerns.',
+    'Implement core business logic, data models, and API interfaces.',
+    'Deliver responsive user interfaces with real-time feedback and state persistence.',
+    'Verify end-to-end performance and automated testing suites.',
   ];
-  const fallbackRequirements = project?.requirements?.length ? project.requirements : [
-    'Python 3.10+',
-    'PyTorch 2.1+ with CUDA 12 support',
-    'NVIDIA GPU with at least 16GB VRAM',
-    'Docker & Kubernetes cluster (Minikube or AWS EKS)',
-  ];
-  const fallbackScope = project?.scope || 'End-to-end production AI system incorporating DICOM ingest, GPU inference server, interactive web interface, and automated alert telemetry.';
+  const prerequisites = (project as any)?.prerequisites?.length
+    ? (project as any).prerequisites
+    : (project as any)?.requirements?.length
+    ? (project as any).requirements
+    : [
+        'Python 3.10+ or Node.js 18+',
+        'Git & CLI Terminal Environment',
+        'Basic understanding of algorithms and application architecture',
+      ];
+  const softwareRequired = (project as any)?.softwareRequired?.length
+    ? (project as any).softwareRequired
+    : [
+        'Node.js 18+ or Python 3.10+',
+        'Package manager (npm / pnpm / pip / uv)',
+        'VS Code or Preferred IDE',
+        'Modern Web Browser with DevTools',
+      ];
+  const setupInstructions = (project as any)?.setupInstructions?.length
+    ? (project as any).setupInstructions
+    : [
+        'Clone or download the project archive using the Download Code button.',
+        'Navigate into the project root directory in your terminal.',
+        'Install all required dependencies and packages.',
+        'Configure local environment variables (.env.local or config.yaml).',
+        'Launch the development server and test local endpoints.',
+      ];
+  const implementationSteps = (project as any)?.implementationSteps?.length
+    ? (project as any).implementationSteps
+    : fallbackObjectives;
+  const expectedOutput = (project as any)?.expectedOutput || (project as any)?.scope ||
+    'Fully operational project instance with tested features, telemetry, and interactive UI/API endpoints.';
+  const whatYouReceive = (project as any)?.whatYouReceive ||
+    'Full source code repository, architecture design diagrams, deployment manifests, environment presets, and lifetime updates.';
 
   return (
     <NexusShell>
@@ -256,7 +284,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             { id: 'overview', label: 'Overview & Aim', icon: FileText },
             { id: 'requirements', label: 'Requirements & Scope', icon: ListChecks },
             { id: 'code', label: 'Full Codebase Explorer', icon: Code },
-            { id: 'comments', label: `Reviews & Discussion (${project?.comments?.length || 0})`, icon: MessageSquare },
+            { id: 'comments', label: `Reviews & Discussion (${(project as any)?.comments?.length || 0})`, icon: MessageSquare },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -297,7 +325,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Key Deliverables & Objectives
                 </h3>
                 <div className="space-y-2">
-                  {fallbackObjectives.map((obj, i) => (
+                  {fallbackObjectives.map((obj: string, i: number) => (
                     <div key={i} className="flex items-start gap-3 p-3 bg-secondary/40 border border-border rounded-xl text-xs">
                       <div className="w-5 h-5 rounded-full bg-purple-600/20 text-purple-400 font-mono font-bold flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">
                         {i + 1}
@@ -347,28 +375,95 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
         {/* TAB 2: REQUIREMENTS & SCOPE */}
         {activeTab === 'requirements' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-6 bg-card border-border rounded-2xl space-y-4">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-amber-400" /> Prerequisites & System Requirements
-              </h3>
-              <div className="space-y-2">
-                {fallbackRequirements.map((req, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-secondary/40 border border-border rounded-xl text-xs font-mono text-foreground">
-                    <Cpu className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                    <span>{req}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Prerequisites Card */}
+              <Card className="p-6 bg-card border-border rounded-2xl space-y-4 shadow-sm">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Terminal className="w-5 h-5 text-amber-400" /> Prerequisites & Prior Knowledge
+                </h3>
+                <div className="space-y-2">
+                  {prerequisites.map((req: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-secondary/40 border border-border rounded-xl text-xs font-mono text-foreground">
+                      <Cpu className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                      <span>{req}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
 
-            <Card className="p-6 bg-card border-border rounded-2xl space-y-4">
+              {/* Software & Tools Required */}
+              <Card className="p-6 bg-card border-border rounded-2xl space-y-4 shadow-sm">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-purple-400" /> Required Software & Development Tools
+                </h3>
+                <div className="space-y-2">
+                  {softwareRequired.map((soft: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-secondary/40 border border-border rounded-xl text-xs font-mono text-foreground">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>{soft}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Setup Instructions */}
+              <Card className="p-6 bg-card border-border rounded-2xl space-y-4 shadow-sm">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <ListChecks className="w-5 h-5 text-blue-400" /> Step-by-Step Setup Instructions
+                </h3>
+                <div className="space-y-2.5">
+                  {setupInstructions.map((step: string, i: number) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-secondary/30 border border-border rounded-xl text-xs text-foreground">
+                      <div className="w-5 h-5 rounded-md bg-blue-500/20 text-blue-400 font-mono font-bold flex items-center justify-center flex-shrink-0 text-[10px] mt-0.5">
+                        {i + 1}
+                      </div>
+                      <span className="leading-relaxed">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Implementation Steps */}
+              <Card className="p-6 bg-card border-border rounded-2xl space-y-4 shadow-sm">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Code className="w-5 h-5 text-emerald-400" /> Implementation Steps & Pipeline Flow
+                </h3>
+                <div className="space-y-2.5">
+                  {implementationSteps.map((step: string, i: number) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-secondary/30 border border-border rounded-xl text-xs text-foreground">
+                      <div className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold flex items-center justify-center flex-shrink-0 text-[10px] mt-0.5">
+                        {i + 1}
+                      </div>
+                      <span className="leading-relaxed">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+
+            {/* Expected Output & Deliverables */}
+            <Card className="p-6 bg-card border-border rounded-2xl space-y-4 shadow-sm">
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <Layers className="w-5 h-5 text-purple-400" /> Architecture & Project Scope
+                <Sparkles className="w-5 h-5 text-amber-400" /> Expected Output & Verification Benchmark
               </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed bg-secondary/30 p-4 rounded-xl border border-border">
-                {fallbackScope}
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed bg-secondary/40 p-4 rounded-xl border border-border font-mono">
+                {expectedOutput}
               </p>
+
+              {!isFree && (
+                <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-purple-300">Included With Premium License ({project?.price})</span>
+                    <span className="text-[11px] font-mono font-bold text-purple-400 bg-purple-500/20 px-2 py-0.5 rounded">Commercial Access</span>
+                  </div>
+                  <p className="text-xs text-foreground/90 leading-relaxed">
+                    {whatYouReceive}
+                  </p>
+                </div>
+              )}
             </Card>
           </div>
         )}
@@ -474,13 +569,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Comments Feed */}
             <div className="space-y-4">
-              {project?.comments?.length === 0 ? (
+              {((project as any)?.comments?.length || 0) === 0 ? (
                 <Card className="p-8 text-center text-muted-foreground bg-card border-border rounded-2xl">
                   <MessageSquare className="w-8 h-8 text-purple-400 mx-auto mb-2" />
                   <p className="text-xs font-semibold">No reviews yet. Be the first to leave feedback!</p>
                 </Card>
               ) : (
-                project?.comments?.map((c) => (
+                ((project as any)?.comments || []).map((c: any) => (
                   <Card key={c.id} className="p-5 bg-card border-border rounded-2xl space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">

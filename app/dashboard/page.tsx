@@ -10,7 +10,11 @@ import { useNexus, ACADEMIC_TIERS, AcademicTier } from '@/context/nexus-context'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2, Clock, Shield, Search, X, Filter, School } from 'lucide-react';
+import {
+  ArrowRight, BookOpen, Code, Trophy, Sparkles, Play, GraduationCap, CheckCircle2,
+  Clock, Shield, Search, X, Filter, School, Compass, Briefcase, Wrench, Flame,
+  FolderKanban, Users, Bot, Wand2, Terminal
+} from 'lucide-react';
 
 import { ContinueLearningCard } from '@/components/dashboard/continue-learning-card';
 import { DailyChallengeCard } from '@/components/dashboard/daily-challenge-card';
@@ -86,10 +90,10 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const rawName = userProfile?.name || session?.user?.name || '';
-  const isPhone = !rawName || /^[0-9\s\-+]+$/.test(rawName) || rawName.includes('@nexus-mobile.ai');
-  const displayName = isPhone ? '' : rawName;
-  const firstName = displayName ? displayName.split(' ')[0] : '';
+  const rawName = (userProfile?.name || session?.user?.name || '').trim();
+  const isInvalidName = !rawName || rawName === 'undefined' || rawName === 'null' || /^[0-9\s\-+]+$/.test(rawName) || rawName.includes('@nexus-mobile.ai');
+  const displayName = isInvalidName ? '' : rawName;
+  const firstName = displayName && displayName !== 'undefined' && displayName !== 'null' ? displayName.split(' ')[0] : '';
 
   const dashboardData = apiResponse?.data;
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<'All Levels' | 'beginner' | 'intermediate' | 'advanced' | 'expert'>((userLevel as any) || 'beginner');
@@ -329,6 +333,40 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ── BEGINNER GUIDANCE & PRIMARY NEXT ACTION ── */}
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-900/40 via-indigo-950/40 to-slate-900 border border-purple-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center flex-shrink-0 shadow-inner">
+              <Compass className="w-6 h-6 text-purple-400 animate-pulse" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-foreground">New here? Start with a Learning Path.</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  Beginner Guide
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Step-by-step curriculum customized to your experience level. Explore courses, interactive math simulations, and guided code labs.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <Link href="/roadmap">
+              <Button className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-lg shadow-purple-900/40 gap-1.5 cursor-pointer">
+                <span>Start Learning Path</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+            <Link href="/careers">
+              <Button variant="outline" className="border-border text-foreground text-xs h-9 px-3.5 rounded-xl gap-1.5 cursor-pointer">
+                <Briefcase className="w-3.5 h-3.5 text-blue-400" />
+                <span>Careers Portal</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         {/* ── ACADEMIC TIER CONTINUUM SELECTOR & DR. MAYA PEDAGOGY GUIDE ── */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-purple-950/60 border border-purple-500/30 p-5 sm:p-6 shadow-xl space-y-5">
           {/* Header & Quick Selector */}
@@ -420,6 +458,156 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* ── MAJOR PLATFORM SECTIONS OVERVIEW ── */}
+        <section className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <span>AI Nexus Sections & Hub Overview</span>
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Everything you need to master Artificial Intelligence from foundation to production deployment.
+              </p>
+            </div>
+            <span className="text-xs font-mono font-bold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-xl border border-purple-500/20 w-fit">
+              9 Core Subsystems
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {[
+              {
+                id: 'learning',
+                name: 'Learning',
+                desc: 'Structured step-by-step AI curriculum covering foundational through advanced concepts.',
+                href: '/roadmap',
+                icon: BookOpen,
+                badge: 'Curriculum',
+                btnText: 'View Tracks',
+                color: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+              },
+              {
+                id: 'ai-tools',
+                name: 'AI Tools',
+                desc: 'Interactive directory of leading frameworks, libraries, and developer utilities.',
+                href: '/ai-tools',
+                icon: Wrench,
+                badge: 'Frameworks',
+                btnText: 'Explore Tools',
+                color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+              },
+              {
+                id: 'daily-challenge',
+                name: 'Daily AI Challenge',
+                desc: 'Daily byte-sized AI problem to build consistency, streak XP, and interview readiness.',
+                href: '/daily-challenge',
+                icon: Flame,
+                badge: 'Daily Streak',
+                btnText: "Today's Challenge",
+                color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+              },
+              {
+                id: 'quizzes',
+                name: 'Quizzes',
+                desc: 'Proctored ISO 17024 assessments, technical knowledge checks, and verified credentials.',
+                href: '/quizzes',
+                icon: Trophy,
+                badge: '32+ Exams',
+                btnText: 'Take Exams',
+                color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+              },
+              {
+                id: 'projects',
+                name: 'Projects',
+                desc: 'Hands-on production AI codebases with setup guides, prerequisites, and expected outputs.',
+                href: '/projects',
+                icon: FolderKanban,
+                badge: 'Codebases',
+                btnText: 'View Projects',
+                color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+              },
+              {
+                id: 'team-room',
+                name: 'Team Room',
+                desc: 'Collaborative study guilds, hackathon groups, and shared sprint workspaces.',
+                href: '/teams',
+                icon: Users,
+                badge: 'Collaborate',
+                btnText: 'Join Team Room',
+                color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+              },
+              {
+                id: 'workspace',
+                name: 'Workspace',
+                desc: 'In-browser interactive sandbox to test code, tensor calculations, and model scripts.',
+                href: '/workspace',
+                icon: Terminal,
+                badge: 'Sandbox',
+                btnText: 'Open Workspace',
+                color: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+              },
+              {
+                id: 'ai-chatbot',
+                name: 'AI Chatbot',
+                desc: 'Conversational AI tutoring and code debugging powered by local Ollama & cloud models.',
+                href: '/ollama?tab=chat',
+                icon: Bot,
+                badge: 'Local AI',
+                btnText: 'Start Chatbot',
+                color: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+              },
+              {
+                id: 'model-trainer',
+                name: 'Model Trainer',
+                desc: 'Fine-tune custom LoRA weights and evaluate small language models on your hardware.',
+                href: '/ollama?tab=trainer',
+                icon: Wand2,
+                badge: 'LoRA Fine-Tune',
+                btnText: 'Open Trainer',
+                color: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20',
+              },
+            ].map((sec) => {
+              const Icon = sec.icon;
+              return (
+                <Card
+                  key={sec.id}
+                  className="p-4 bg-card border-border rounded-2xl flex flex-col justify-between gap-3 hover:border-purple-500/40 hover:shadow-md transition-all group"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${sec.color}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-muted-foreground px-2 py-0.5 rounded-md bg-secondary border border-border">
+                        {sec.badge}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground group-hover:text-purple-300 transition-colors">
+                        {sec.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                        {sec.desc}
+                      </p>
+                    </div>
+                  </div>
+                  <Link href={sec.href} className="w-full pt-2 border-t border-border/60">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs font-semibold justify-between h-8 rounded-xl px-2.5 text-foreground hover:text-purple-300 hover:bg-purple-500/10 cursor-pointer"
+                    >
+                      <span>{sec.btnText}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Primary Action - Continue Learning */}
         <ContinueLearningCard session={dashboardData?.tabData?.liveSessions?.[0]} />

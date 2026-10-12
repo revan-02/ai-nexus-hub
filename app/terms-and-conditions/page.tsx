@@ -45,7 +45,7 @@ export default function TermsAndConditionsPage() {
             </div>
           </div>
           <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-3xl">
-            These Terms and Conditions govern your access and use of the AI Nexus Platform, courses, AI sandboxes, proctored examinations, and career services provided, managed, and maintained by <strong className="text-foreground">AalgoLabs (OPC) PVT.LTD.</strong>
+            These Terms and Conditions govern your access and use of the AI Nexus Platform, courses, AI sandboxes, proctored examinations, and career services provided and managed by <strong className="text-foreground">Manyathy Business Solutions</strong>.
           </p>
           <div className="flex flex-wrap items-center gap-4 text-[11px] text-zinc-400 pt-2 border-t border-purple-500/20">
             <span>Effective Date: <strong>January 1, 2026</strong></span>
@@ -64,11 +64,11 @@ export default function TermsAndConditionsPage() {
             <Building2 className="w-6 h-6 text-purple-400 shrink-0" />
             <div className="text-xs">
               <span className="font-bold text-foreground block">Operating & Contracting Entity</span>
-              <span className="text-zinc-300">Managed and Maintained by <strong>AalgoLabs (OPC) PVT.LTD.</strong></span>
+              <span className="text-zinc-300">Managed by <strong>Manyathy Business Solutions</strong></span>
             </div>
           </div>
           <a
-            href="mailto:legal@aalgolabs.com"
+            href="mailto:legal@manyathy.com"
             className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2 shrink-0"
           >
             <Mail className="w-3.5 h-3.5" />
@@ -96,7 +96,7 @@ export default function TermsAndConditionsPage() {
               <span>Intellectual Property & User Code Ownership</span>
             </h2>
             <p>
-              All interactive simulators, course curriculums, VTU question paper analysis tools, and platform software are the proprietary intellectual property of <strong>AalgoLabs (OPC) PVT.LTD.</strong>
+              All interactive simulators, course curriculums, VTU question paper analysis tools, and platform software are the proprietary intellectual property of <strong>Manyathy Business Solutions</strong>.
             </p>
             <p className="text-zinc-400">
               <strong>User Code Ownership:</strong> All code, machine learning architectures, and prompt scripts written and created by learners in interactive labs and sandbox environments remain 100% the intellectual property of the student/developer.
@@ -121,7 +121,7 @@ export default function TermsAndConditionsPage() {
               <span>Pricing, Payments & GST Invoicing</span>
             </h2>
             <p>
-              All course and masterclass fees are listed in Indian Rupees (INR ₹) and United States Dollars (USD $). Payments are processed through secure gateways, with GST-compliant tax invoices provided for every transaction under the corporate registration of <strong>AalgoLabs (OPC) PVT.LTD.</strong>
+              All course and masterclass fees are listed in Indian Rupees (INR ₹) and United States Dollars (USD $). Payments are processed through secure gateways, with GST-compliant tax invoices provided for every transaction under the corporate registration of <strong>Manyathy Business Solutions</strong>.
             </p>
           </Card>
 
@@ -135,10 +135,9 @@ export default function TermsAndConditionsPage() {
               These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising in connection with the platform shall be subject to the exclusive jurisdiction of the competent courts in Bengaluru, Karnataka, India.
             </p>
             <div className="p-4 bg-secondary/50 rounded-xl space-y-1 text-xs text-zinc-300 font-mono">
-              <div><strong>Operating Company:</strong> AalgoLabs (OPC) PVT.LTD.</div>
-              <div><strong>Corporate Entity:</strong> One Person Company (OPC) Private Limited</div>
+              <div><strong>Operating Company:</strong> Manyathy Business Solutions</div>
               <div><strong>Jurisdiction:</strong> Bengaluru, Karnataka, India</div>
-              <div><strong>Legal Inquiries:</strong> legal@aalgolabs.com</div>
+              <div><strong>Legal Inquiries:</strong> legal@manyathy.com</div>
             </div>
           </Card>
         </div>

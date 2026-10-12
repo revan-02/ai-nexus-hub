@@ -10,6 +10,7 @@ import { FolderKanban, Plus, ChevronRight, Star, Download, ArrowRight, FolderPlu
 import Link from 'next/link';
 import { useProjects } from '@/hooks/api/use-projects';
 import { CreateProjectModal } from '@/components/projects/create-project-modal';
+import { mockProjectsList } from '@/lib/mock-data/projects-data';
 
 export default function ProjectsPage() {
   const { data: session } = useSession();
@@ -28,77 +29,46 @@ export default function ProjectsPage() {
         id: p.id,
         title: p.name,
         desc: p.description,
-        category: p.category || 'AI & ML',
+        category: p.category || 'AI/ML',
         level: p.level || 'Intermediate',
         price: p.price || 'Free',
+        isFree: (p.price || 'Free').toLowerCase() === 'free',
         rating: p.rating || 4.9,
         downloads: p.downloads || 320,
         updated: p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : 'Just now',
-        tech: p.technologies || ['React', 'TypeScript'],
+        tech: p.technologies || ['Python', 'PyTorch'],
+        prerequisites: p.prerequisites || ['Basic programming knowledge'],
+        expectedOutput: p.expectedOutput || 'Production deployment code',
+        whatYouReceive: p.whatYouReceive || 'Full commercial source code and deployment guide',
         authorName: p.author?.name || 'Dr. Alex Morgan',
       }));
     }
-    return [
-      {
-        id: 'prj-1',
-        title: 'Multimodal Medical Radiography Agent',
-        desc: 'Deploying 3D UNet and ViT models on Kubernetes to automate early cancer screening.',
-        category: 'AI & ML',
-        level: 'Advanced',
-        price: '$49',
-        rating: 4.9,
-        downloads: 320,
-        updated: 'Just now',
-        tech: ['PyTorch', 'FastAPI', 'Kubernetes', 'DICOM'],
-        authorName: 'Sarah Johnson',
-      },
-      {
-        id: 'prj-2',
-        title: 'High-Frequency Fraud Detection Pipeline',
-        desc: 'Real-time GNN inference engine analyzing 12.5M financial transactions under 15ms.',
-        category: 'AI & ML',
-        level: 'Advanced',
-        price: '$79',
-        rating: 5.0,
-        downloads: 415,
-        updated: 'Yesterday',
-        tech: ['PyTorch Geometric', 'vLLM', 'Qdrant'],
-        authorName: 'Dr. Alex Morgan',
-      },
-      {
-        id: 'prj-3',
-        title: 'Autonomous Code Refactoring Agent',
-        desc: 'Fine-tuning LLaMA 3 70B on internal repository commits for automated PR reviews.',
-        category: 'Generative AI',
-        level: 'Intermediate',
-        price: '$39',
-        rating: 4.8,
-        downloads: 180,
-        updated: '2 days ago',
-        tech: ['LangChain', 'LoRA', 'GitHub API'],
-        authorName: 'James Wilson',
-      },
-      {
-        id: 'prj-4',
-        title: 'Real-time Video Sentiment & Eye Tracking',
-        desc: 'Computer vision pipeline detecting facial micro-expressions and gaze direction.',
-        category: 'Computer Vision',
-        level: 'Beginner',
-        price: 'Free',
-        rating: 4.7,
-        downloads: 512,
-        updated: '3 days ago',
-        tech: ['OpenCV', 'MediaPipe', 'TensorFlow'],
-        authorName: 'Anna Martinez',
-      },
-    ];
+    return mockProjectsList.map((p) => ({
+      id: p.id,
+      title: p.name,
+      desc: p.description,
+      category: p.category,
+      level: p.level,
+      price: p.price,
+      isFree: p.isFree,
+      rating: p.rating,
+      downloads: p.downloads,
+      updated: p.updatedAt,
+      tech: p.technologies,
+      prerequisites: p.prerequisites,
+      expectedOutput: p.expectedOutput,
+      whatYouReceive: p.whatYouReceive,
+      authorName: p.author.name,
+    }));
   }, [apiResponse]);
 
   const filteredProjects = useMemo(() => {
     if (selectedFilter === 'All') return projectsList;
-    if (selectedFilter === 'Free Projects') return projectsList.filter((p) => p.price.toLowerCase() === 'free');
-    if (selectedFilter === 'Premium Projects') return projectsList.filter((p) => p.price.toLowerCase() !== 'free');
-    return projectsList.filter((p) => p.category.toLowerCase().includes(selectedFilter.toLowerCase()));
+    if (selectedFilter === 'Free Projects') return projectsList.filter((p) => p.isFree || p.price.toLowerCase() === 'free');
+    if (selectedFilter === 'Premium Projects') return projectsList.filter((p) => !p.isFree && p.price.toLowerCase() !== 'free');
+    return projectsList.filter((p) =>
+      p.category.toLowerCase().replace(/[^a-z0-9]/g, '').includes(selectedFilter.toLowerCase().replace(/[^a-z0-9]/g, ''))
+    );
   }, [projectsList, selectedFilter]);
 
   return (
@@ -133,7 +103,7 @@ export default function ProjectsPage() {
 
         {/* Filter Tabs */}
         <div className="flex items-center gap-1.5 border-b border-border pb-3 overflow-x-auto scrollbar-none">
-          {['All', 'Free Projects', 'Premium Projects', 'AI & ML', 'Generative AI', 'Computer Vision'].map((filter) => (
+          {['All', 'Free Projects', 'Premium Projects', 'AI/ML', 'Generative AI', 'Web Development', 'Mobile Apps', 'Data Visualization', 'Blockchain', 'IoT'].map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
@@ -166,11 +136,11 @@ export default function ProjectsPage() {
             <p className="text-xs text-muted-foreground">Click &quot;Post Project&quot; above to publish an AI codebase to the marketplace.</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((p) => {
-              const isFree = p.price.toLowerCase() === 'free';
+              const isFree = p.isFree || p.price.toLowerCase() === 'free';
               return (
-                <Card key={p.id} className="p-6 bg-card border-border rounded-2xl space-y-4 hover:border-purple-500/40 transition-all flex flex-col justify-between group">
+                <Card key={p.id} className="p-6 bg-card border-border rounded-2xl space-y-4 hover:border-purple-500/40 transition-all flex flex-col justify-between group shadow-sm">
                   <div className="space-y-3">
                     {/* Top Pricing & Rating Badges */}
                     <div className="flex items-center justify-between">
@@ -179,7 +149,7 @@ export default function ProjectsPage() {
                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                           : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
                       }`}>
-                        {p.price}
+                        {isFree ? '100% Free' : `${p.price} License`}
                       </span>
                       <div className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                         <Star className="w-3 h-3 fill-amber-400" />
@@ -196,6 +166,28 @@ export default function ProjectsPage() {
                     </div>
 
                     <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{p.desc}</p>
+
+                    {/* Free vs Premium Specifics */}
+                    {isFree ? (
+                      <div className="p-2.5 rounded-xl bg-secondary/50 border border-border/80 text-[11px] space-y-1">
+                        <div className="text-muted-foreground font-mono">
+                          <strong className="text-foreground">Prereqs:</strong> {p.prerequisites?.[0] || 'Basic programming knowledge'}
+                        </div>
+                        <div className="text-muted-foreground font-mono truncate">
+                          <strong className="text-foreground">Output:</strong> {p.expectedOutput || 'Runnable sandbox code'}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/30 text-[11px] space-y-1">
+                        <div className="text-purple-300 font-bold flex items-center gap-1">
+                          <ShoppingBag className="w-3 h-3 text-purple-400" />
+                          <span>Commercial License: {p.price}</span>
+                        </div>
+                        <p className="text-zinc-400 text-[10px] line-clamp-2">
+                          {p.whatYouReceive || 'Full audited source code, deployment guide & commercial usage license.'}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Tech Tags */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-1">
@@ -218,7 +210,7 @@ export default function ProjectsPage() {
 
                     <Link href={`/projects/${p.id}`}>
                       <Button variant="outline" className="bg-secondary border-border hover:bg-purple-600 hover:text-white hover:border-purple-500 text-foreground text-xs h-8 px-3 rounded-xl gap-1.5 cursor-pointer transition-all">
-                        <span>Workspace</span>
+                        <span>{isFree ? 'Start Project' : 'View & Buy'}</span>
                         <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-white" />
                       </Button>
                     </Link>

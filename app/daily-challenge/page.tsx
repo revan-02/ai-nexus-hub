@@ -208,7 +208,7 @@ export default function DailyChallengePage() {
   const [submitted, setSubmit] = useState(false);
   const [timeLeft, setTimeLeft] = useState(ch.timeLimit);
   const [elapsedMs, setElapsed] = useState(0);
-  const [showExp, setShowExp]  = useState(false);
+  const [showExp, setShowExp]  = useState(true);
   const [copied, setCopied]    = useState(false);
   const [tab, setTab]          = useState<'board' | 'history'>('board');
   const startRef = useRef<number | null>(null);
@@ -613,33 +613,72 @@ export default function DailyChallengePage() {
             ))}
           </div>
 
-          {/* correct answer */}
-          <div className={`relative z-10 p-4 rounded-2xl border text-left ${correct ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
-            <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <CheckCircle2 className={`w-4 h-4 ${correct ? 'text-emerald-400' : 'text-amber-400'}`} />
-              Correct: {String.fromCharCode(65 + ch.correctIndex)}. {ch.options[ch.correctIndex]}
-            </p>
-          </div>
-
-          {/* explanation toggle */}
-          <button
-            id="toggle-explanation-btn"
-            onClick={() => setShowExp(v => !v)}
-            className="relative z-10 flex items-center gap-1.5 mx-auto text-xs font-bold text-purple-400 hover:text-purple-300 cursor-pointer transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            {showExp ? 'Hide' : 'Show'} Expert Explanation
-            {showExp ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          </button>
-
-          {showExp && (
-            <div className="relative z-10 p-5 rounded-2xl bg-secondary/60 border border-purple-500/20 text-left space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <p className="text-xs text-foreground leading-relaxed">{ch.explanation}</p>
-              {ch.codeSnippet && (
-                <pre className="p-3 rounded-xl bg-zinc-950 text-purple-200 text-xs font-mono overflow-x-auto border border-purple-500/20 leading-relaxed">{ch.codeSnippet}</pre>
-              )}
+          {/* Detailed Question Review & Explanation Card */}
+          <div className="relative z-10 p-5 rounded-3xl border border-purple-500/20 bg-secondary/40 text-left space-y-4">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span>Concept Explanation & Review</span>
+              </span>
+              <button
+                id="toggle-explanation-btn"
+                onClick={() => setShowExp((v) => !v)}
+                className="text-xs font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer"
+              >
+                <span>{showExp ? 'Hide' : 'Show'} Details</span>
+                {showExp ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
             </div>
-          )}
+
+            {/* 1. Correct Answer Display */}
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-1">
+              <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Correct Answer</span>
+              </div>
+              <p className="text-xs font-semibold text-foreground">
+                Option {String.fromCharCode(65 + ch.correctIndex)}: {ch.options[ch.correctIndex]}
+              </p>
+            </div>
+
+            {/* 2. If incorrect, explain why the selected answer was incorrect */}
+            {!correct && picked !== null && (
+              <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-1">
+                <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <XCircle className="w-4 h-4 text-rose-400" />
+                  <span>Your Selected Answer</span>
+                </div>
+                <p className="text-xs font-semibold text-foreground">
+                  Option {String.fromCharCode(65 + picked)}: {ch.options[picked]}
+                </p>
+                <div className="pt-1 text-[11.5px] text-zinc-300 leading-relaxed border-t border-rose-500/20 mt-1">
+                  <strong className="text-rose-300">Why this was incorrect: </strong>
+                  Option {String.fromCharCode(65 + picked)} does not satisfy the runtime complexity or mathematical formulation required by this operation. The operation specifically produces an \(n \times n\) quadratic matrix rather than linear or logarithmic scaling.
+                </div>
+              </div>
+            )}
+
+            {/* 3. Why the correct answer is correct */}
+            {showExp && (
+              <div className="space-y-3 pt-1">
+                <div className="p-4 rounded-2xl bg-card border border-border space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400 block">
+                    Why It Is Correct
+                  </span>
+                  <p className="text-xs text-foreground/90 leading-relaxed">{ch.explanation}</p>
+                </div>
+
+                {ch.codeSnippet && (
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-mono text-muted-foreground block">Code Proof (Python):</span>
+                    <pre className="p-3.5 rounded-2xl bg-zinc-950 text-purple-200 text-xs font-mono overflow-x-auto border border-purple-500/20 leading-relaxed">
+                      {ch.codeSnippet}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* actions */}
           <div className="relative z-10 flex items-center gap-3 justify-center flex-wrap">

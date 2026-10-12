@@ -46,7 +46,7 @@ export default function PrivacyPolicyPage() {
             </div>
           </div>
           <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-3xl">
-            This Privacy Policy outlines how AI Nexus Platform collects, utilizes, encrypts, and protects your personal, telemetry, and examination data. The platform is operated, managed, and maintained by <strong className="text-foreground">AalgoLabs (OPC) PVT.LTD.</strong>
+            This Privacy Policy outlines how AI Nexus Platform collects, utilizes, encrypts, and protects your personal, telemetry, and examination data. The platform is operated, managed, and maintained by <strong className="text-foreground">Manyathy Business Solutions</strong>.
           </p>
           <div className="flex flex-wrap items-center gap-4 text-[11px] text-zinc-400 pt-2 border-t border-purple-500/20">
             <span>Effective Date: <strong>January 1, 2026</strong></span>
@@ -65,11 +65,11 @@ export default function PrivacyPolicyPage() {
             <Building2 className="w-6 h-6 text-purple-400 shrink-0" />
             <div className="text-xs">
               <span className="font-bold text-foreground block">Data Controller & Operating Entity</span>
-              <span className="text-zinc-300">Managed and Maintained by <strong>AalgoLabs (OPC) PVT.LTD.</strong></span>
+              <span className="text-zinc-300">Managed by <strong>Manyathy Business Solutions</strong></span>
             </div>
           </div>
           <a
-            href="mailto:privacy@aalgolabs.com"
+            href="mailto:privacy@manyathy.com"
             className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2 shrink-0"
           >
             <Mail className="w-3.5 h-3.5" />
@@ -117,7 +117,7 @@ export default function PrivacyPolicyPage() {
               <span>How We Protect and Encrypt Your Data</span>
             </h2>
             <p>
-              <strong>AalgoLabs (OPC) PVT.LTD.</strong> implements rigorous cryptographic security controls across all microservices:
+              <strong>Manyathy Business Solutions</strong> implements rigorous cryptographic security controls across all microservices:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-zinc-400">
               <li><strong>Encryption at Rest & in Transit:</strong> All data is encrypted with AES-256 at rest and TLS 1.3 during network transmission.</li>
@@ -135,8 +135,8 @@ export default function PrivacyPolicyPage() {
               You have the full right to access, export, update, or permanently delete your account data and learning telemetry.
             </p>
             <div className="p-4 bg-secondary/50 rounded-xl space-y-1 text-xs text-zinc-300 font-mono">
-              <div><strong>Company:</strong> AalgoLabs (OPC) PVT.LTD.</div>
-              <div><strong>Email:</strong> privacy@aalgolabs.com / support@aalgolabs.com</div>
+              <div><strong>Company:</strong> Manyathy Business Solutions</div>
+              <div><strong>Email:</strong> privacy@manyathy.com / support@manyathy.com</div>
               <div><strong>Jurisdiction:</strong> Bengaluru, Karnataka, India</div>
             </div>
           </Card>

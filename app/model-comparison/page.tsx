@@ -59,6 +59,19 @@ export default function ModelComparisonPage() {
   const [monthlyInputTokensM, setMonthlyInputTokensM] = useState<number>(10); // in Millions
   const [monthlyOutputTokensM, setMonthlyOutputTokensM] = useState<number>(3); // in Millions
 
+  const getModelSourceUrl = (m: AIModelSpec) => {
+    if ((m as any).sourceUrl) return (m as any).sourceUrl;
+    if (m.creator === 'OpenAI') return 'https://platform.openai.com/docs/models';
+    if (m.creator === 'Anthropic') return 'https://docs.anthropic.com/en/docs/about-claude/models';
+    if (m.creator === 'Google DeepMind') return 'https://ai.google.dev/gemini-api/docs/models/gemini';
+    if (m.creator === 'DeepSeek') return 'https://api-docs.deepseek.com/';
+    if (m.creator === 'Meta') return 'https://www.llama.com/docs/model-cards-and-prompt-formats/';
+    if (m.creator === 'Mistral AI') return 'https://docs.mistral.ai/getting-started/models/';
+    if (m.creator === 'Alibaba') return 'https://github.com/QwenLM/Qwen2.5';
+    if (m.creator === 'Microsoft') return 'https://azure.microsoft.com/en-us/products/phi';
+    return 'https://huggingface.co/models';
+  };
+
   const handleCopyCode = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -377,6 +390,15 @@ export default function ModelComparisonPage() {
                       >
                         Specs
                       </Button>
+                      <a
+                        href={getModelSourceUrl(model)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-8 px-2.5 rounded-xl border border-border hover:bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center shrink-0"
+                        title="Official Documentation Source"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
                       <Link
                         href={`/ollama?model=${model.id}`}
                         className="flex-1"
@@ -796,7 +818,16 @@ export default function ModelComparisonPage() {
               </div>
 
               {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-border">
+                <a
+                  href={getModelSourceUrl(activeDetailModel)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Official Provider Documentation & Benchmarks</span>
+                </a>
                 <Button
                   onClick={() => setActiveDetailModel(null)}
                   className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-6 py-2 rounded-xl cursor-pointer"

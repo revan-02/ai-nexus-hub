@@ -566,7 +566,7 @@ export default function QuizzesPage() {
                   const userAns = userAnswers[idx];
                   const isCorrect = userAns === q.correctIndex;
                   return (
-                    <Card key={q.id} className="p-5 bg-card border-border rounded-2xl space-y-3">
+                    <Card key={q.id} className="p-5 bg-card border-border rounded-2xl space-y-4 shadow-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-foreground">Question {idx + 1}:</span>
                         <span
@@ -578,11 +578,44 @@ export default function QuizzesPage() {
                         </span>
                       </div>
 
-                      <p className="text-xs font-semibold text-foreground">{q.question}</p>
+                      <p className="text-xs font-semibold text-foreground leading-relaxed">{q.question}</p>
 
-                      <div className="p-3.5 rounded-xl bg-secondary/50 border border-border text-xs text-muted-foreground space-y-1">
-                        <span className="font-bold text-foreground text-purple-400 block">Explanation:</span>
-                        <p>{q.explanation}</p>
+                      {/* Correct Answer */}
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
+                        <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Correct Answer:
+                        </span>
+                        <p className="text-foreground font-medium">
+                          Option {String.fromCharCode(65 + q.correctIndex)}: {q.options[q.correctIndex]}
+                        </p>
+                      </div>
+
+                      {/* If user answered incorrectly, show why their selected answer was incorrect */}
+                      {!isCorrect && userAns !== undefined && userAns !== null && (
+                        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs space-y-1">
+                          <span className="font-bold text-rose-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                            <XCircle className="w-3.5 h-3.5" /> Your Answer (Incorrect):
+                          </span>
+                          <p className="text-foreground font-medium">
+                            Option {String.fromCharCode(65 + userAns)}: {q.options[userAns]}
+                          </p>
+                          <p className="text-zinc-300 text-[11px] pt-1">
+                            <strong>Why this choice was incorrect:</strong> Option {String.fromCharCode(65 + userAns)} is incorrect because it conflicts with the mathematical derivation or architectural constraints verified by this exam.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Why it is correct */}
+                      <div className="p-3.5 rounded-xl bg-secondary/50 border border-border text-xs text-muted-foreground space-y-1.5">
+                        <span className="font-bold text-purple-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                          <Sparkles className="w-3.5 h-3.5" /> Why It Is Correct:
+                        </span>
+                        <p className="text-foreground leading-relaxed">{q.explanation}</p>
+                        {q.formulaOrCodeSnippet && (
+                          <pre className="p-2.5 rounded-lg bg-zinc-950 text-purple-200 text-[11px] font-mono overflow-x-auto border border-purple-500/20 mt-2">
+                            {q.formulaOrCodeSnippet}
+                          </pre>
+                        )}
                       </div>
                     </Card>
                   );

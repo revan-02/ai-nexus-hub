@@ -667,101 +667,181 @@ function RoadmapPageInner() {
               ))}
             </div>
 
-            {/* Current Tier Info */}
-            <div className="p-4 bg-gradient-to-r from-purple-600/10 to-indigo-600/10 border border-purple-500/20 rounded-2xl">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{tierLabels[selectedRoadmapTier]?.emoji}</span>
-                <h3 className="text-base font-bold text-foreground">{tierLabels[selectedRoadmapTier]?.label} Learning Path</h3>
-                <span className="text-xs text-muted-foreground px-2 py-0.5 bg-secondary rounded-full">{tierLabels[selectedRoadmapTier]?.grade}</span>
+            {/* Current Tier Info & 5 Core Summary Metrics */}
+            <div className="p-5 bg-gradient-to-r from-purple-600/10 via-card to-indigo-600/10 border border-purple-500/20 rounded-2xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{tierLabels[selectedRoadmapTier]?.emoji}</span>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">{tierLabels[selectedRoadmapTier]?.label} Learning Path</h3>
+                    <p className="text-xs text-muted-foreground">Age-appropriate curriculum tailored for {tierLabels[selectedRoadmapTier]?.grade} students</p>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-purple-300 px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-xl w-fit">
+                  {tierLabels[selectedRoadmapTier]?.grade}
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground">{activeLearningPhases.length} stages · Age-appropriate curriculum designed for {tierLabels[selectedRoadmapTier]?.grade} students</p>
+
+              {/* 5 Prominent Required Summary Metrics */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1">
+                <div className="p-3 bg-secondary/50 rounded-xl border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">1. Topics</span>
+                  <span className="text-lg font-black font-mono text-purple-400">
+                    {activeLearningPhases.reduce((acc, p) => acc + (p.topics?.length || 0), 0)} Topics
+                  </span>
+                  <span className="text-[10px] text-muted-foreground block">Key curriculum modules</span>
+                </div>
+
+                <div className="p-3 bg-secondary/50 rounded-xl border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">2. Levels / Stages</span>
+                  <span className="text-lg font-black font-mono text-foreground">
+                    {activeLearningPhases.length} Stages
+                  </span>
+                  <span className="text-[10px] text-muted-foreground block">Sequential milestones</span>
+                </div>
+
+                <div className="p-3 bg-secondary/50 rounded-xl border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">3. Completed</span>
+                  <span className="text-lg font-black font-mono text-emerald-400">
+                    {activeLearningPhases.filter((p) => p.status === 'Completed').length} Stages
+                  </span>
+                  <span className="text-[10px] text-emerald-500/80 block">Verified finished</span>
+                </div>
+
+                <div className="p-3 bg-secondary/50 rounded-xl border border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">4. Current Progress</span>
+                  <span className="text-lg font-black font-mono text-amber-400">
+                    {Math.round(
+                      activeLearningPhases.reduce(
+                        (acc, p) => acc + (p.progress ?? (p.status === 'Completed' ? 100 : p.status === 'In Progress' ? 50 : 0)),
+                        0
+                      ) / (activeLearningPhases.length || 1)
+                    )}%
+                  </span>
+                  <span className="text-[10px] text-muted-foreground block">Overall completion</span>
+                </div>
+
+                <div className="p-3 bg-secondary/50 rounded-xl border border-border col-span-2 sm:col-span-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">5. Remaining</span>
+                  <span className="text-lg font-black font-mono text-blue-400">
+                    {activeLearningPhases.length - activeLearningPhases.filter((p) => p.status === 'Completed').length} Stages
+                  </span>
+                  <span className="text-[10px] text-muted-foreground block">Lessons to complete</span>
+                </div>
+              </div>
             </div>
 
-            {activeLearningPhases.map((p) => (
-              <Card key={p.phase} className="p-6 bg-card border-border rounded-2xl hover:border-purple-500/40 transition-all space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold font-mono rounded-lg">
-                      {p.phase}
-                    </span>
-                    <h3 className="text-base font-bold text-foreground">{p.title}</h3>
-                  </div>
+            {activeLearningPhases.map((p) => {
+              const stageProgress = p.progress ?? (p.status === 'Completed' ? 100 : p.status === 'In Progress' ? 50 : 0);
+              return (
+                <Card key={p.phase} className="p-6 bg-card border-border rounded-2xl hover:border-purple-500/40 transition-all space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="px-3 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs font-bold font-mono rounded-lg">
+                        {p.phase}
+                      </span>
+                      <h3 className="text-base font-bold text-foreground">{p.title}</h3>
+                    </div>
 
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-muted-foreground flex items-center gap-1 font-mono">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground" /> {p.duration}
-                    </span>
-                    <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] border ${
-                      p.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                      p.status === 'In Progress' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-secondary text-muted-foreground border-border'
-                    }`}>
-                      {p.status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-xs">
-                  {/* Left 7 cols: Exhaustive Topics */}
-                  <div className="lg:col-span-7 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                        <span>Key Topics Covered ({p.topics.length} Core Modules)</span>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1 font-mono">
+                        <Clock className="w-3.5 h-3.5 text-muted-foreground" /> {p.duration}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] border ${
+                        p.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                        p.status === 'In Progress' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-secondary text-muted-foreground border-border'
+                      }`}>
+                        {p.status} ({stageProgress}%)
                       </span>
                     </div>
-                    <ul className="space-y-1.5 text-muted-foreground">
-                      {p.topics.map((t: string, idx: number) => (
-                        <li key={t} className="flex items-start gap-2.5 p-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
-                          <span className="w-4 h-4 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[9px] font-mono font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                            {(idx + 1).toString().padStart(2, '0')}
-                          </span>
-                          <span className="text-[11.5px] leading-relaxed text-foreground/90">{t}</span>
-                        </li>
-                      ))}
-                    </ul>
                   </div>
 
-                  {/* Right 5 cols: Hands-on Projects & Action */}
-                  <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
-                    <div>
-                      <span className="font-bold text-foreground text-xs flex items-center gap-1.5 mb-2">
-                        <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Hands-on Milestones & Projects ({p.projects.length})</span>
-                      </span>
-                      <div className="space-y-2">
-                        {p.projects.map((proj: string) => (
-                          <Link
-                            key={proj}
-                            href={`/projects?search=${encodeURIComponent(proj)}`}
-                            className="block"
-                          >
-                            <div className="p-3 bg-secondary/50 hover:bg-secondary border border-border hover:border-purple-500/50 rounded-2xl font-semibold text-foreground flex items-center justify-between text-xs transition-all group cursor-pointer shadow-sm">
-                              <span className="group-hover:text-purple-400 transition-colors leading-snug">{proj}</span>
-                              <ArrowRight className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                          </Link>
+                  {/* Stage Progress Bar */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
+                      <span>Stage Progress</span>
+                      <span className="font-bold text-foreground">{stageProgress}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          p.status === 'Completed' ? 'bg-emerald-500' : 'bg-purple-600'
+                        }`}
+                        style={{ width: `${stageProgress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-xs">
+                    {/* Left 7 cols: Exhaustive Topics */}
+                    <div className="lg:col-span-7 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                          <span>Topics Covered ({p.topics.length} Modules)</span>
+                        </span>
+                      </div>
+                      <ul className="space-y-1.5 text-muted-foreground">
+                        {p.topics.map((t: string, idx: number) => (
+                          <li key={t} className="flex items-start gap-2.5 p-1.5 rounded-lg hover:bg-secondary/40 transition-colors">
+                            <span className="w-4 h-4 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[9px] font-mono font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                              {(idx + 1).toString().padStart(2, '0')}
+                            </span>
+                            <span className="text-[11.5px] leading-relaxed text-foreground/90">{t}</span>
+                          </li>
                         ))}
+                      </ul>
+                    </div>
+
+                    {/* Right 5 cols: Hands-on Projects & Action */}
+                    <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
+                      <div>
+                        <span className="font-bold text-foreground text-xs flex items-center gap-1.5 mb-2">
+                          <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Hands-on Milestones & Projects ({p.projects.length})</span>
+                        </span>
+                        <div className="space-y-2">
+                          {p.projects.map((proj: string) => (
+                            <Link
+                              key={proj}
+                              href={`/projects?search=${encodeURIComponent(proj)}`}
+                              className="block"
+                            >
+                              <div className="p-3 bg-secondary/50 hover:bg-secondary border border-border hover:border-purple-500/50 rounded-2xl font-semibold text-foreground flex items-center justify-between text-xs transition-all group cursor-pointer shadow-sm">
+                                <span className="group-hover:text-purple-400 transition-colors leading-snug">{proj}</span>
+                                <ArrowRight className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 ml-2 group-hover:translate-x-1 transition-transform" />
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-border flex items-center justify-between gap-3">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                          p.tier === 'Free' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                        }`}>
+                          {p.tier} Access Tier
+                        </span>
+
+                        <Link href={`/learn/${p.roomId}`}>
+                          <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2 h-9 rounded-xl gap-2 shadow-md shadow-purple-900/30 cursor-pointer">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>
+                              {p.status === 'Completed'
+                                ? 'Review Lesson'
+                                : p.status === 'In Progress'
+                                ? 'Continue Lesson'
+                                : 'Start Lesson'}
+                            </span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-
-                    <div className="pt-3 border-t border-border flex items-center justify-between gap-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                        p.tier === 'Free' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-                      }`}>
-                        {p.tier} Access Tier
-                      </span>
-
-                      <Link href={`/learn/${p.roomId}`}>
-                        <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3.5 py-1.5 h-9 rounded-xl gap-1.5 shadow-md shadow-purple-900/30 cursor-pointer">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Launch Interactive Room</span>
-                        </Button>
-                      </Link>
-                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
 
